@@ -38,9 +38,9 @@ $side_padding: 32px;
 .basable_sidebar {
   width: 242px;
   border-right: 1px solid vars.$line_color;
-  min-height: 100vh;
   padding: 0px $side_padding;
   background-color: vars.$surface_color;
+  height: 100%;
 
   .basable_logo {
     font-size: 2.25rem;
