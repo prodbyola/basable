@@ -40,7 +40,7 @@ $side_padding: 32px;
   border-right: 1px solid vars.$line_color;
   padding: 0px $side_padding;
   background-color: vars.$surface_color;
-  height: 100%;
+  min-height: 100vh;
 
   .basable_logo {
     font-size: 2.25rem;

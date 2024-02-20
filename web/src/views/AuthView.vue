@@ -6,7 +6,7 @@
     <AuthInput v-model="dbConfig.db_name" />
 </template>
 <script lang="ts" setup>
-import AuthInput from '@/AppInput.vue';
+import AuthInput from '@/components/AppInput.vue';
 import { reactive } from 'vue';
 
 const dbConfig = reactive({
