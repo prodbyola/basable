@@ -3,6 +3,7 @@
         <AppSidebar />
         <div class="basable_dashboard">
           <AppTopBar />
+          <RouterView />
         </div>
     </div>
 </template>

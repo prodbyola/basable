@@ -1,3 +1,4 @@
+@use './variables' as vars;
 @import './base.scss';
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Roboto:ital,wght@0,400;0,500;1,400;1,500&display=swap');
 
@@ -10,6 +11,11 @@
 p, h1, h2, h3, h4, h5, h6 {
   font-family: 'Poppins', sans-serif;
   font-weight: 500;
+  color: vars.$tertiary_color;
+}
+
+.subtext {
+  font-family: 'Roboto', sans-serif;
 }
 
 a,
