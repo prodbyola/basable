@@ -16,7 +16,7 @@ import AppTopBar from '@/components/layouts/AppTopBar.vue';
   display: flex;
 
   .basable_dashboard {
-    margin-left: 32px;
+    margin: 0 32px;
     width: 100%;
   }
 }
