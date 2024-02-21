@@ -2,11 +2,11 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Exec",
+            "label": "Start Web",
             "type": "shell",
-            "command": "chmod u+x dev.sh",
+            "command": "cd web && bun dev",
             "runOptions": {
-                "runOn": "folderOpen"
+                "runOn": "default"
             },
             "group": "none",
             "presentation": {
