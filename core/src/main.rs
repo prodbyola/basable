@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use axum::{http::{header::{ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE}, HeaderValue}, routing::post, Router};
 use base::ObaseDB;
-use http::login;
+use http::connect;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower::ServiceBuilder;
 
@@ -26,7 +26,7 @@ async fn main() {
             .allow_headers([ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE]);
 
     let app = Router::new()
-        .route("/app/connect", post(login))
+        .route("/app/connect", post(connect))
         .layer(
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http())

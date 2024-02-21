@@ -2,11 +2,11 @@ use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 use serde::Deserialize;
 use urlencoding::encode;
 
-use self::table::{ObaseRows, ObaseTable};
+use self::table::ObaseTable;
 
 mod table;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Config {
     username: String,
     password: String,
@@ -20,7 +20,7 @@ impl Default for Config {
         Self {
             username: String::from("root"),
             password: Default::default(),
-            host: String::from("root"),
+            host: String::from("localhost"),
             port: 3306,
             db_name: Default::default(),
         }
@@ -57,8 +57,15 @@ impl ObaseDB {
 
     fn pool(&mut self) -> Pool {
         self.pool.clone().unwrap()
-    } 
+    }
 
+    /// Creates an instance of `ObasaTable` from its string name.
+    pub fn table(&mut self, table_name: &str) -> ObaseTable {
+        let conn = self.pool().get_conn().unwrap();
+        ObaseTable::new(conn, table_name)
+    }
+
+    /// Runs a query to retrieve all tables (names) in the database as a list of string.
     pub fn table_names(&mut self) -> Vec<String> {
         let conn = &mut self.pool().get_conn().unwrap();
 
@@ -83,10 +90,29 @@ impl ObaseDB {
 
         res
     }
+}
 
-    pub fn read_table_rows(&mut self, name: &str) -> ObaseRows {
-        let conn = self.pool().get_conn().unwrap();
-        let mut table = ObaseTable::new(conn, name);
-        table.load_rows()
+#[cfg(test)]
+mod test {
+    use super::{ObaseDB, Config};
+
+    #[test]
+    fn test_db(){
+        let db_name = "basable";
+        let mut config = Config::default();
+        config.db_name = String::from(db_name);
+        config.username = String::from(db_name);
+        config.password = String::from("Basable@2024");
+
+        let mut db = ObaseDB::new(config);
+
+        let table_names = db.table_names();
+        if !table_names.is_empty() {
+            let mut table = db.table(table_names.first().unwrap());
+            let cols = table.show_columns();
+
+            assert!(cols.is_ok())
+        }
     }
+
 }

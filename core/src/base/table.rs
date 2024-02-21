@@ -1,14 +1,20 @@
-use mysql::{consts::ColumnType, prelude::Queryable, Params, PooledConn, Row, Statement, Value};
+use mysql::{
+    consts::ColumnType, error::Error as MySqlError, prelude::Queryable, Params, PooledConn, Row,
+    Statement, Value,
+};
 use serde::Serialize;
 
-pub struct ObaseTable<'a> {
-    name: &'a str,
+pub struct ObaseTable {
+    name: String,
     conn: PooledConn,
 }
 
-impl<'a> ObaseTable<'a> {
-    pub fn new(conn: PooledConn, name: &'a str) -> Self {
-        ObaseTable { name, conn }
+impl ObaseTable {
+    pub fn new(conn: PooledConn, name: &str) -> Self {
+        ObaseTable {
+            name: String::from(name),
+            conn,
+        }
     }
 
     fn read_rows(&mut self) -> (Statement, Vec<Row>) {
@@ -16,8 +22,42 @@ impl<'a> ObaseTable<'a> {
         let query = format!(r#"SELECT * FROM {}"#, self.name);
 
         let stmt = conn.prep(query).unwrap();
-        let res = conn.exec(stmt.clone(), Params::Empty).unwrap();
-        (stmt, res)
+        let rows = conn.exec(stmt.clone(), Params::Empty).unwrap();
+        (stmt, rows)
+    }
+
+    pub fn show_columns(&mut self) -> Result<Vec<String>, MySqlError> {
+        let conn = &mut self.conn;
+        let query = format!(
+            r#"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{}'"#,
+            self.name
+        );
+
+        let stmt = conn.prep(query)?;
+        let rows: Vec<Row> = conn.exec(stmt.clone(), Params::Empty)?;
+
+        let mut cols = Vec::with_capacity(rows.len());
+
+        for row in rows {
+            let cn = "COLUMN_NAME";
+
+            if let Some(value) = row.get(cn) {
+                match value {
+                    Value::Bytes(v) => {
+                        let v = String::from_utf8(v).unwrap();
+                        cols.push(v)
+                    }
+                    _ => println!(
+                        "Unexpected column type {}, {}, {}",
+                        file!(),
+                        line!(),
+                        column!()
+                    ),
+                }
+            }
+        }
+
+        Ok(cols)
     }
 
     pub fn load_rows(&mut self) -> ObaseRows {
