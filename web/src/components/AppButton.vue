@@ -18,6 +18,7 @@ defineProps<{
     align-items: center;
     justify-content: center;
     background-color: v-bind('bgColor ?? "#FF5151"');
+    cursor: pointer;
 
     p {
         color: v-bind('textColor ?? "white"');

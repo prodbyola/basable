@@ -6,6 +6,6 @@ if [ "$1" = "web" ]; then
 
 else
     cd core
-    cargo run
+    cargo watch -x run
 
 fi

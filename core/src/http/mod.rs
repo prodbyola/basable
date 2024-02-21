@@ -14,10 +14,17 @@ pub(crate) async fn connect(
 
     *db = new_db;
 
-    let tables = &db.table_names();
+    let table_names = &db.table_names();
+    let mut cols = Vec::new();
+
+    if !table_names.is_empty() {
+        let mut table = db.table(table_names.first().unwrap());
+        cols = table.show_columns().unwrap();
+    }
 
     let data = json!({
-        "tables": tables
+        "tables": table_names,
+        "columns": cols
     });
 
     serde_json::to_string(&data).unwrap()
