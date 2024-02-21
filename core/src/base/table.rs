@@ -26,6 +26,7 @@ impl ObaseTable {
         (stmt, rows)
     }
 
+    /// Gets a string list of column names in the table 
     pub fn show_columns(&mut self) -> Result<Vec<String>, MySqlError> {
         let conn = &mut self.conn;
         let query = format!(
