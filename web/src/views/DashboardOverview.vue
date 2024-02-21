@@ -80,10 +80,10 @@ onMounted(() => {
 
   .dashboard_page__content {
     display: flex;
-    column-gap: 12px;
+    column-gap: 32px;
 
     .dashboard_main {
-      width: 66%;
+      width: 64%;
   
       .dash_statboard {
         display: flex;

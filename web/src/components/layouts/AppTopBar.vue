@@ -1,7 +1,7 @@
 <template>
     <div class="basable_topbar">
         <div class="search_bar">
-            <AppInput placeholder="Search" class="search_input">
+            <AppInput placeholder="Search" class="search_input" bottom-slot="0">
                 <template v-slot:append>
                     <BasableIcon name="search" width="18px" />
                 </template>

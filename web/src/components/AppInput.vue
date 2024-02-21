@@ -8,6 +8,7 @@
 defineProps<{
     type?: string
     placeholder?: string
+    bottomSlot?: string
 }>()
 
 const model = defineModel()
@@ -23,12 +24,14 @@ const model = defineModel()
     height: 44px;
     width: 100%;
     padding: 0 18px;
+    margin-top: v-bind('bottomSlot ?? "16px"');
 
     input {
         outline: none;
         border: none;
         background-color: transparent;
         height: 100%;
+        width: 100%;
     }
 
     input:focus {
