@@ -26,7 +26,7 @@ async fn main() {
             .allow_headers([ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE]);
 
     let app = Router::new()
-        .route("/app/login", post(login))
+        .route("/app/connect", post(login))
         .layer(
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http())
