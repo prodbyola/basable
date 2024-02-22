@@ -9,8 +9,8 @@
       </select>
       <input v-else :type="type" :placeholder="placeholder" v-model="model" />
       <slot name="append"></slot>
-      <p v-if="hint" class="input_hint">{{ hint }}</p>
     </div>
+    <p v-if="hint" class="input_hint subtext">{{ hint }}</p>
   </div>
 </template>
 <script lang="ts" setup>
@@ -37,6 +37,8 @@ const model = defineModel()
 
   .input_hint {
     font-size: .62rem;
+    font-weight: normal;
+    color: rgba(0, 0, 0, 0.623);
   }
 
   .basable_input {

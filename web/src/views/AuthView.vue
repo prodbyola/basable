@@ -28,7 +28,7 @@
           label="Date Column"
           type="select"
           :options="dbData?.columns"
-          hint="Select a column that helps you track when a record was added to the table. This is typically a 'created_at' column."
+          hint="Select a column that helps you track when a record was added to the table. This is typically a 'created_at' or 'joined_on' column."
         />
         <AppButton label="Continue" class="action_btn" />
       </template>

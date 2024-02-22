@@ -1,4 +1,4 @@
-use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
+use mysql::{prelude::Queryable, error::Error as MySqlError, Opts, Params, Pool, Row};
 use serde::Deserialize;
 use urlencoding::encode;
 
@@ -66,8 +66,8 @@ impl ObaseDB {
     }
 
     /// Runs a query to retrieve all tables (names) in the database as a list of string.
-    pub fn table_names(&mut self) -> Vec<String> {
-        let conn = &mut self.pool().get_conn().unwrap();
+    pub fn table_names(&mut self) -> Result<Vec<String>, MySqlError> {
+        let conn = &mut self.pool().get_conn()?;
 
         let query = format!(
             r#"SELECT *
@@ -88,7 +88,19 @@ impl ObaseDB {
             }
         }
 
-        res
+        Ok(res)
+    }
+
+    pub fn first_table_name(&mut self) -> Result<Option<String>, MySqlError> {
+        let tbs = self.table_names()?;
+        let mut f = None;
+
+        if !tbs.is_empty() {
+            f = Some(tbs[0].to_owned());
+        } 
+
+        Ok(f)
+
     }
 }
 
@@ -96,22 +108,35 @@ impl ObaseDB {
 mod test {
     use super::{ObaseDB, Config};
 
-    #[test]
-    fn test_db(){
+    fn create_db() -> ObaseDB {
         let db_name = "basable";
         let mut config = Config::default();
         config.db_name = String::from(db_name);
         config.username = String::from(db_name);
         config.password = String::from("Basable@2024");
 
-        let mut db = ObaseDB::new(config);
+        ObaseDB::new(config)
+    }
 
-        let table_names = db.table_names();
-        if !table_names.is_empty() {
-            let mut table = db.table(table_names.first().unwrap());
+    #[test]
+    fn test_show_columns(){
+        let mut db = create_db();
+
+        if let Some(tb) = db.first_table_name().unwrap() {
+            let mut table = db.table(&tb);
             let cols = table.show_columns();
 
             assert!(cols.is_ok())
+        }
+    }
+
+    #[test]
+    fn test_row_count(){
+        let mut db = create_db();
+
+        if let Some(tb) = db.first_table_name().unwrap() {
+            let mut table = db.table(&tb);
+            table.count();
         }
     }
 

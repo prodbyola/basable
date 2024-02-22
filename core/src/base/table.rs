@@ -1,5 +1,5 @@
 use mysql::{
-    consts::ColumnType, error::Error as MySqlError, prelude::Queryable, Params, PooledConn, Row,
+    consts::ColumnType, error::Error as MySqlError, prelude::{FromRow, Queryable}, Params, PooledConn, Row,
     Statement, Value,
 };
 use serde::Serialize;
@@ -17,29 +17,40 @@ impl ObaseTable {
         }
     }
 
-    fn read_rows(&mut self) -> (Statement, Vec<Row>) {
+    fn query(&mut self, query: String) -> Result<(Statement, Vec<Row>), MySqlError> {
         let conn = &mut self.conn;
-        let query = format!(r#"SELECT * FROM {}"#, self.name);
 
-        let stmt = conn.prep(query).unwrap();
-        let rows = conn.exec(stmt.clone(), Params::Empty).unwrap();
-        (stmt, rows)
+        let stmt = conn.prep(query)?;
+        let results = conn.exec(stmt.clone(), Params::Empty)?;
+        Ok((stmt, results))
     }
 
+    fn query_first<T: FromRow>(&mut self, query: String) -> Result<Option<T>, MySqlError> {
+        let conn = &mut self.conn;
+        conn.query_first(query)
+    }
+
+    pub fn count(&mut self) -> Result<u64, MySqlError> {
+        let query = format!("SELECT COUNT(*) FROM {}", self.name);
+
+        if let Ok(Some(count)) = self.query_first::<u64>(query) {
+            return Ok(count);
+        }
+
+        Ok(0)
+    }
     /// Gets a string list of column names in the table 
     pub fn show_columns(&mut self) -> Result<Vec<String>, MySqlError> {
-        let conn = &mut self.conn;
         let query = format!(
             r#"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{}'"#,
             self.name
         );
 
-        let stmt = conn.prep(query)?;
-        let rows: Vec<Row> = conn.exec(stmt.clone(), Params::Empty)?;
+        let (_, res) = self.query(query)?;
 
-        let mut cols = Vec::with_capacity(rows.len());
+        let mut cols = Vec::with_capacity(res.len());
 
-        for row in rows {
+        for row in res {
             let cn = "COLUMN_NAME";
 
             if let Some(value) = row.get(cn) {
@@ -61,8 +72,8 @@ impl ObaseTable {
         Ok(cols)
     }
 
-    pub fn load_rows(&mut self) -> ObaseRows {
-        let (stmt, rows) = self.read_rows();
+    pub fn load_rows(&mut self) -> Result<ObaseRows, MySqlError> {
+        let (stmt, rows) = self.query(format!(r#"SELECT * FROM {}"#, self.name))?;
         let cols = stmt.columns();
 
         let mut row_data = Vec::with_capacity(rows.len());
@@ -82,7 +93,7 @@ impl ObaseTable {
             row_data.push(row_cols);
         }
 
-        row_data
+        Ok(row_data)
     }
 }
 

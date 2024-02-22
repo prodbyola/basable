@@ -14,7 +14,7 @@ pub(crate) async fn connect(
 
     *db = new_db;
 
-    let table_names = &db.table_names();
+    let table_names = &db.table_names().unwrap();
     let mut cols = Vec::new();
 
     if !table_names.is_empty() {
