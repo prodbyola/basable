@@ -3,17 +3,34 @@
     <div class="auth_card">
       <template v-if="stage === 1">
         <h3>Welcome! Please create a connection.</h3>
-        <AuthInput v-model="dbConfig.username" placeholder="Username" />
-        <AuthInput v-model="dbConfig.password" placeholder="Password" type="password" />
-        <AuthInput v-model="dbConfig.host" placeholder="Host" />
-        <AuthInput v-model="dbConfig.port" placeholder="Port" type="number" />
-        <AuthInput v-model="dbConfig.db_name" placeholder="DB Name" />
+        <AuthInput v-model="dbConfig.username" placeholder="Username" label="Username" />
+        <AuthInput
+          v-model="dbConfig.password"
+          placeholder="Password"
+          label="Password"
+          type="password"
+        />
+        <AuthInput v-model="dbConfig.host" placeholder="Host" label="Host" />
+        <AuthInput v-model="dbConfig.port" placeholder="Port" label="Port" type="number" />
+        <AuthInput v-model="dbConfig.db_name" placeholder="DB Name" label="DB Name" />
         <AppButton label="Create Connection" class="action_btn" @click="connect" />
       </template>
       <template v-else-if="stage === 2">
-        <AuthInput v-model="selections.defaultTable" type="select" :options="dbData?.tables" />
-        <AuthInput v-model="selections.createdAt" type="select" :options="dbData?.columns" />
-        <AppButton label="Continue" class="action_btn" @click="connect" />
+        <AuthInput
+          v-model="selections.defaultTable"
+          label="Select Table"
+          type="select"
+          :options="dbData?.tables"
+          hint="Select a table you would like to load from your database."
+        />
+        <AuthInput
+          v-model="selections.createdAt"
+          label="Date Column"
+          type="select"
+          :options="dbData?.columns"
+          hint="Select a column that helps you track when a record was added to the table. This is typically a 'created_at' column."
+        />
+        <AppButton label="Continue" class="action_btn" />
       </template>
     </div>
   </div>
@@ -71,7 +88,7 @@ const connect = async () => {
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    width: 480px;
+    width: 428px;
 
     .action_btn {
       width: 300px;
