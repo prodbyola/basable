@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+
+use axum::extract::Query;
 use axum::{extract::State, Json};
 use serde_json::json;
 
@@ -15,17 +18,35 @@ pub(crate) async fn connect(
     *db = new_db;
 
     let table_names = &db.table_names().unwrap();
-    let mut cols = Vec::new();
 
-    if !table_names.is_empty() {
-        let mut table = db.table(table_names.first().unwrap());
-        cols = table.show_columns().unwrap();
-    }
+    serde_json::to_string(&table_names).unwrap()
+}
+
+pub(crate) async fn columns(
+    State(state): State<AppState>,
+    Query(params): Query<HashMap<String, String>>
+) -> String {
+    let mut db = state.db.lock().unwrap();
+    let mut table = db.table(params.get("table").unwrap());
+
+    let cols = table.show_columns().unwrap();
+
+    serde_json::to_string(&cols).unwrap()
+}
+
+pub(crate) async fn dashboard(
+    State(state): State<AppState>,
+    Query(params): Query<HashMap<String, String>>
+) -> String {
+    let mut db = state.db.lock().unwrap();
+    let mut table = db.table(params.get("table").unwrap());
+
+    let count = table.count().unwrap();
 
     let data = json!({
-        "tables": table_names,
-        "columns": cols
+        "count": count
     });
+
 
     serde_json::to_string(&data).unwrap()
 }

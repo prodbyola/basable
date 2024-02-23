@@ -17,20 +17,22 @@
       </template>
       <template v-else-if="stage === 2">
         <AuthInput
-          v-model="selections.defaultTable"
+          :model-value="appState.currentTable"
           label="Select Table"
           type="select"
-          :options="dbData?.tables"
+          :options="appState.tables"
           hint="Select a table you would like to load from your database."
+          @update:model-value="createTable"
         />
         <AuthInput
-          v-model="selections.createdAt"
+          :model-value="appState.table?.createdAtColumn"
           label="Date Column"
           type="select"
-          :options="dbData?.columns"
+          :options="appState.table?.columnList"
+          @update:model-value="updateDateColumn"
           hint="Select a column that helps you track when a record was added to the table. This is typically a 'created_at' or 'joined_on' column."
         />
-        <AppButton label="Continue" class="action_btn" />
+        <AppButton label="Continue" class="action_btn" @click="loadDashboard" />
       </template>
     </div>
   </div>
@@ -41,9 +43,11 @@ import AppButton from '@/components/AppButton.vue'
 
 import { reactive, ref } from 'vue'
 import { ApiService } from '@/request'
+import { useState } from '@/stores'
 
 const svc = ApiService.find()
 const stage = ref(1)
+const appState = useState()
 
 const dbConfig = reactive({
   username: 'root',
@@ -53,27 +57,30 @@ const dbConfig = reactive({
   db_name: ''
 })
 
-const dbData = ref<{
-  tables: string[]
-  columns: string[]
-}>()
-
-const selections = ref({
-  defaultTable: '',
-  createdAt: ''
-})
-
 const connect = async () => {
   svc
     .request({
-      path: 'app/connect',
+      path: 'connect',
       method: 'POST',
       data: dbConfig
     })
     .then((resp) => {
-      dbData.value = resp?.data
+      appState.tables = resp?.data
       stage.value += 1
     })
+}
+
+const createTable = (tb: string) => {
+  appState.currentTable = tb
+  appState.table?.loadColumList()
+}
+
+const updateDateColumn = (col: string) => {
+  if (appState.table) appState.table.createdAtColumn = col
+}
+
+const loadDashboard = () => {
+  appState.table?.loadDashboard()
 }
 </script>
 <style lang="scss" scoped>

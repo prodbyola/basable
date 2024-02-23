@@ -2,7 +2,7 @@
   <div class="input_container">
     <label v-if="label">{{ label }}</label>
     <div class="basable_input">
-      <select v-if="type === 'select'">
+      <select v-if="type === 'select'" v-model="model">
         <template v-if="options">
           <option v-for="(opt, index) in options" :key="index">{{ opt }}</option>
         </template>
@@ -24,6 +24,7 @@ defineProps<{
 }>()
 
 const model = defineModel()
+defineEmits(['update:model-value'])
 </script>
 <style lang="scss" scoped>
 .input_container {
