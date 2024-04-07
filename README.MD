@@ -4,13 +4,15 @@ Basable is an open-source software designed to provide comprehensive data manage
 
 ## Features
 
-- **Data Management**: Basable allows users to efficiently manage large datasets from multiple sources - Relational Databases, NoSQL, Cloud Databases or Files (CSV, Feather, Json...etc). Perform basic CRUD operations. Import and export data. Perform complex queries. Basable provides a seamless experience for transporting, transforming and handling data.
+- **Data Management**: Basable allows users to efficiently manage large datasets from multiple sources - [Relational Databases](https://www.oracle.com/ng/database/what-is-a-relational-database/#:~:text=In%20a%20relational%20database%2C%20each,the%20relationships%20among%20data%20points.), NoSQL, Cloud Databases or Files (CSV, Feather, Json...etc). Perform basic CRUD operations. Import and export data. Perform complex queries. Basable provides a seamless experience for transporting, transforming and handling data.
 
 - **Data Visualization**: Visualize your data in meaningful ways with Basable's powerful visualization tools. Create interactive charts, graphs, and dashboards to gain valuable insights from your data.
 
 - **Business Insight**: Basable offers tools for analyzing business data and extracting actionable insights. Whether you're tracking key performance indicators or identifying trends, Basable helps you make informed decisions.
 
 - **Manage Database Connections**: Basable simplifies the management of multiple database connections through a single account. Say goodbye to the hassle of juggling numerous login credentials. With just one Basable account, you gain centralized control over your connections and data management projects.
+
+- **Data Security**: We offer a secure data management solution. Basable ensures the privacy of your data by abstaining from collection or inspection, and by implementing measures to restrict access to authenticated users only.
 
 - **Enhanced Collaboration**: Effortlessly collaborate with developers, data analysts, marketing teams, and other stakeholders using Basable. Our platform fosters seamless teamwork, streamlining data management processes for enhanced productivity.
 
