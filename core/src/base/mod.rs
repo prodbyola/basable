@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use mysql::{prelude::Queryable, error::Error as MySqlError, Opts, Params, Pool, Row};
 use serde::Deserialize;
 use urlencoding::encode;
@@ -5,6 +6,18 @@ use urlencoding::encode;
 use self::table::ObaseTable;
 
 mod table;
+
+pub enum CountDateSelection {
+    Day,
+    Month,
+    Year
+}
+
+pub struct RowCountOption {
+    pub date: Option<String>,
+    pub date_column: String,
+    pub date_selection: CountDateSelection
+}
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Config {
@@ -104,9 +117,30 @@ impl ObaseDB {
     }
 }
 
+pub fn try_parse_date(date_str: &str) -> Option<NaiveDate> {
+    // List of potential date formats to try
+    let date_formats = [
+        "%Y-%m-%d", // Format: YYYY-MM-DD
+        "%m/%d/%Y", // Format: MM/DD/YYYY
+        "%d/%m/%Y", // Format: DD/MM/YYYY
+        // Add more formats as needed
+    ];
+
+    // Try parsing the date using each format
+    for format in date_formats {
+        if let Ok(parsed_date) = NaiveDate::parse_from_str(date_str, format) {
+            return Some(parsed_date);
+        }
+    }
+
+    // If none of the formats succeeded, return None
+    None
+}
+
+
 #[cfg(test)]
 mod test {
-    use super::{ObaseDB, Config};
+    use super::{Config, ObaseDB, RowCountOption};
 
     fn create_db() -> ObaseDB {
         let db_name = "basable";
@@ -134,10 +168,18 @@ mod test {
     fn test_row_count(){
         let mut db = create_db();
 
-        if let Some(tb) = db.first_table_name().unwrap() {
-            let mut table = db.table(&tb);
-            table.count();
-        }
+        let mut table = db.table("swp");
+        table.row_count(None).unwrap();
+
+        let opt = RowCountOption{
+            date: Some(String::from("1/1/1981")),
+            date_column: String::from("date"),
+            date_selection: crate::base::CountDateSelection::Day
+        };
+
+        let today = table.row_count(Some(opt)).unwrap();
+
+        println!("today {}", today);
     }
 
 }

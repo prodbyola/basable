@@ -3,6 +3,7 @@ import type { ApiService } from "@/request";
 export class Table {
     private _columnList: string[] = []
     private _rows: unknown[] = []
+    private _rowCount = 0
 
     createdAtColumn: string | undefined
 
@@ -16,6 +17,10 @@ export class Table {
 
     get rows() {
         return this._rows
+    }
+
+    get rowCount(){
+        return this._rowCount
     }
 
     constructor(private _name: string, private svc: ApiService){}
@@ -36,6 +41,13 @@ export class Table {
         await this.svc.request({
             path,
             method: 'GET'
-        }).then((resp) => console.log(resp?.data))
+        }).then((resp) => {
+            const data = resp?.data
+            console.log(data)
+            
+            if(data) {
+                this._rowCount = data['row_count']
+            }
+        })
     }
 }

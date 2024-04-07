@@ -127,6 +127,7 @@ const iconHeight = props.height ?? iconWidth
 @use '../assets/_variables' as vars;
 
 .basable_icon {
+  cursor: pointer;
   height: v-bind('iconHeight');
   width: v-bind('iconWidth');
 

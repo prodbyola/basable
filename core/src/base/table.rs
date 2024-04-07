@@ -1,7 +1,14 @@
+use std::str::FromStr;
+
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, Utc};
 use mysql::{
-    consts::ColumnType, error::Error as MySqlError, prelude::{FromRow, Queryable}, Params, PooledConn, Row,
-    Statement, Value,
+    consts::ColumnType,
+    error::Error as MySqlError,
+    prelude::{FromRow, Queryable},
+    Params, PooledConn, Row, Statement, Value,
 };
+
+use super::{try_parse_date, RowCountOption};
 use serde::Serialize;
 
 pub struct ObaseTable {
@@ -30,8 +37,32 @@ impl ObaseTable {
         conn.query_first(query)
     }
 
-    pub fn count(&mut self) -> Result<u64, MySqlError> {
-        let query = format!("SELECT COUNT(*) FROM {}", self.name);
+    pub fn row_count(&mut self, opt: Option<RowCountOption>) -> Result<u64, MySqlError> {
+        let mut query = format!("SELECT COUNT(*) FROM {}", self.name);
+
+        if let Some(opt) = opt {
+            let col = opt.date_column;
+            let fmt = "%Y-%m-%d";
+
+            let date = match opt.date {
+                Some(d) => {
+                    let tm = try_parse_date(&d).unwrap();
+                    tm.to_string()
+                }
+                None => {
+                    let utc = Utc::now();
+                    let local = utc.with_timezone(&Local);
+                    local.format(fmt).to_string()
+                }
+            };
+
+            println!("date: {}", date);
+
+            query = format!(
+                "SELECT COUNT(*) AS records_added_on_date FROM {} WHERE DATE({}) = {}",
+                self.name, col, date
+            );
+        }
 
         if let Ok(Some(count)) = self.query_first::<u64>(query) {
             return Ok(count);
@@ -39,7 +70,8 @@ impl ObaseTable {
 
         Ok(0)
     }
-    /// Gets a string list of column names in the table 
+
+    /// Gets a string list of column names in the table
     pub fn show_columns(&mut self) -> Result<Vec<String>, MySqlError> {
         let query = format!(
             r#"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{}'"#,
