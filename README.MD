@@ -18,7 +18,7 @@ Basable is an open-source software designed to provide comprehensive data manage
 
 - **Traffic Monitor**: Smoothly integrate Basable into your websites and webpages to track web traffic, activities, and usage patterns. Gain valuable insights into your website visitors' behavior, empowering you to make informed decisions to enhance user experience and optimize performance.
 
-**Deploy Anyhow**: The flexibility of Basable allows you to choose between installing it on your local device or deploying it to a remote server. This empowers you to access your data wherever you go, giving you the freedom to select the option that best suits your needs.
+- **Deploy Anyhow**: The flexibility of Basable allows you to choose between installing it on your local device or deploying it to a remote server. This empowers you to access your data wherever you go, giving you the freedom to select the option that best suits your needs.
 
 ## Setting Up Development Environment
 
