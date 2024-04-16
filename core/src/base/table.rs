@@ -1,6 +1,4 @@
-use std::str::FromStr;
-
-use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, Utc};
+use chrono::{Local, Utc};
 use mysql::{
     consts::ColumnType,
     error::Error as MySqlError,
@@ -11,14 +9,14 @@ use mysql::{
 use super::{try_parse_date, RowCountOption};
 use serde::Serialize;
 
-pub struct ObaseTable {
+pub(crate) struct MysqlTable {
     name: String,
     conn: PooledConn,
 }
 
-impl ObaseTable {
+impl MysqlTable {
     pub fn new(conn: PooledConn, name: &str) -> Self {
-        ObaseTable {
+        MysqlTable {
             name: String::from(name),
             conn,
         }
@@ -83,6 +81,8 @@ impl ObaseTable {
         let mut cols = Vec::with_capacity(res.len());
 
         for row in res {
+            println!("row: {:?}", row);
+
             let cn = "COLUMN_NAME";
 
             if let Some(value) = row.get(cn) {

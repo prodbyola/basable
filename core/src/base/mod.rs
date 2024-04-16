@@ -1,11 +1,11 @@
 use chrono::NaiveDate;
 use mysql::{prelude::Queryable, error::Error as MySqlError, Opts, Params, Pool, Row};
-use serde::Deserialize;
-use urlencoding::encode;
 
-use self::table::ObaseTable;
+use crate::types::{BasableConnection, Config};
 
-mod table;
+use self::table::MysqlTable;
+
+pub mod table;
 
 pub enum CountDateSelection {
     Day,
@@ -19,67 +19,36 @@ pub struct RowCountOption {
     pub date_selection: CountDateSelection
 }
 
-#[derive(Deserialize, Clone, Debug)]
-pub struct Config {
-    username: String,
-    password: String,
-    host: String,
-    port: u16,
-    db_name: String,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            username: String::from("root"),
-            password: Default::default(),
-            host: String::from("localhost"),
-            port: 3306,
-            db_name: Default::default(),
-        }
-    }
-}
-
-impl Config {
-    pub fn build_url(&self) -> String {
-        format!(
-            "mysql://{}:{}@{}:{}/{}",
-            encode(self.username.as_str()),
-            encode(self.password.as_str()),
-            self.host,
-            self.port,
-            self.db_name
-        )
-    }
-}
-
+/// An instance of Basable Database
 #[derive(Clone, Default)]
-pub struct ObaseDB {
+pub struct MysqlConn {
     pool: Option<Pool>,
     config: Config,
 }
 
-impl ObaseDB {
-    pub fn new(config: Config) -> Self {
+impl MysqlConn {
+    fn pool(&mut self) -> Pool {
+        self.pool.clone().unwrap()
+    }
+}
+
+impl BasableConnection for MysqlConn {
+    fn new(config: Config) -> Self {
         let url = config.build_url();
         let opts = Opts::from_url(&url).unwrap();
         let pool = Pool::new(opts).unwrap();
 
-        ObaseDB { pool: Some(pool), config }
+        MysqlConn { pool: Some(pool), config }
     }
 
-    fn pool(&mut self) -> Pool {
-        self.pool.clone().unwrap()
-    }
-
-    /// Creates an instance of `ObasaTable` from its string name.
-    pub fn table(&mut self, table_name: &str) -> ObaseTable {
+    /// Creates an instance of `BasableTable` from its string name.
+    fn get_table(&mut self, table_name: &str) -> MysqlTable {
         let conn = self.pool().get_conn().unwrap();
-        ObaseTable::new(conn, table_name)
+        MysqlTable::new(conn, table_name)
     }
 
     /// Runs a query to retrieve all tables (names) in the database as a list of string.
-    pub fn table_names(&mut self) -> Result<Vec<String>, MySqlError> {
+    fn table_names(&mut self) -> Result<Vec<String>, MySqlError> {
         let conn = &mut self.pool().get_conn()?;
 
         let query = format!(
@@ -104,7 +73,7 @@ impl ObaseDB {
         Ok(res)
     }
 
-    pub fn first_table_name(&mut self) -> Result<Option<String>, MySqlError> {
+    fn first_table_name(&mut self) -> Result<Option<String>, MySqlError> {
         let tbs = self.table_names()?;
         let mut f = None;
 
@@ -140,16 +109,18 @@ pub fn try_parse_date(date_str: &str) -> Option<NaiveDate> {
 
 #[cfg(test)]
 mod test {
-    use super::{Config, ObaseDB, RowCountOption};
+    use crate::types::BasableConnection;
 
-    fn create_db() -> ObaseDB {
+    use super::{Config, MysqlConn, RowCountOption};
+
+    fn create_db() -> MysqlConn {
         let db_name = "basable";
         let mut config = Config::default();
         config.db_name = String::from(db_name);
         config.username = String::from(db_name);
         config.password = String::from("Basable@2024");
 
-        ObaseDB::new(config)
+        BasableConnection::new(config)
     }
 
     #[test]
@@ -157,7 +128,7 @@ mod test {
         let mut db = create_db();
 
         if let Some(tb) = db.first_table_name().unwrap() {
-            let mut table = db.table(&tb);
+            let mut table = db.get_table(&tb);
             let cols = table.show_columns();
 
             assert!(cols.is_ok())
@@ -168,7 +139,7 @@ mod test {
     fn test_row_count(){
         let mut db = create_db();
 
-        let mut table = db.table("swp");
+        let mut table = db.get_table("swp");
         table.row_count(None).unwrap();
 
         let opt = RowCountOption{

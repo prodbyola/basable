@@ -1,34 +1,50 @@
 use std::collections::HashMap;
+use std::future::Future;
 
-use axum::extract::Query;
+use axum::extract::{Query, Request};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
 use axum::{extract::State, Json};
+use axum_macros::debug_handler;
 use chrono::{Local, Utc};
 use serde_json::json;
 
-use crate::base::{Config, ObaseDB, RowCountOption};
-use crate::AppState;
+use crate::base::RowCountOption;
+use crate::types::Config;
+use crate::{AppState, AuthExtractor};
 
+/// POST: Creates a new database connection. It expects `Config` as request's body.
+#[debug_handler]
 pub(crate) async fn connect(
     State(state): State<AppState>,
-    Json(config): Json<Config>, 
-) -> String {
+    AuthExtractor(user): AuthExtractor,
+    Json(config): Json<Config>,
 
-    let mut db = state.db.lock().unwrap();
-    let new_db = ObaseDB::new(config);
+) -> impl IntoResponse {
 
-    *db = new_db;
+    let mut bsbl = state.instance.lock().unwrap();
+    // let user = match bsbl.find_user(&config.user_id) {
+    //     Some(mut user) => {
+    //         user.switch_connection(&config);
+    //         user
+    //     },
+    //     None => bsbl.create_guest_user(&config)
+    // };
 
-    let table_names = &db.table_names().unwrap();
+    // let mut conn = user.connection.unwrap();
+    // let table_names = conn.table_names().unwrap();
 
-    serde_json::to_string(&table_names).unwrap()
+    // serde_json::to_string(&table_names).unwrap()
+    String::new()
 }
 
+/// GET: Retrieves a list of columns. 
 pub(crate) async fn columns(
     State(state): State<AppState>,
     Query(params): Query<HashMap<String, String>>
 ) -> String {
-    let mut db = state.db.lock().unwrap();
-    let mut table = db.table(params.get("table").unwrap());
+    let mut bsbl = state.instance.lock().unwrap();
+    let mut table = db.get_table(params.get("table").unwrap());
 
     let cols = table.show_columns().unwrap();
 
@@ -44,7 +60,7 @@ pub(crate) async fn dashboard(
 
     let mut db = state.db.lock().unwrap();
 
-    let mut tb = db.table(tbn);
+    let mut tb = db.get_table(tbn);
     let rc = tb.row_count(None).unwrap();
 
     match col {
