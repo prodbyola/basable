@@ -1,144 +1,100 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
-use mysql::{Error as MySqlError, PooledConn};
-use serde::Deserialize;
-use urlencoding::encode;
 use crate::base::{table::MysqlTable, MysqlConn};
+use mysql::Error as MySqlError;
 
-#[derive(Deserialize, Clone, Debug)]
-pub(crate) enum RDMS {
-    Mysql,
-    Postgress,
-    Oracle
-}
+use self::{
+    auth::User,
+    config::{Config, SourceType, RDMS},
+};
 
-#[derive(Deserialize, Clone, Debug)]
-pub(crate) enum NoSql { Sqlite }
+pub(crate) mod auth;
+pub(crate) mod config;
 
-#[derive(Deserialize, Clone, Debug)]
-pub(crate) enum SourceType {
-    RDMS(RDMS), NoSql, File
-}
-
-#[derive(Deserialize, Clone, Debug)]
-pub(crate) struct Config {
-    pub username: String,
-    pub password: String,
-    pub host: String,
-    pub port: u16,
-    pub db_name: String,
-    pub source_type: Option<SourceType>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            username: String::from("root"),
-            password: Default::default(),
-            host: String::from("localhost"),
-            port: 3306,
-            db_name: Default::default(),
-            source_type: None,
-        }
-    }
-}
-
-impl Config {
-    pub fn build_url(&self) -> String {
-        format!(
-            "mysql://{}:{}@{}:{}/{}",
-            encode(self.username.as_str()),
-            encode(self.password.as_str()),
-            self.host,
-            self.port,
-            self.db_name
-        )
-    }
-}
+type SharedConnection = Arc<Mutex<dyn BasableConnection>>;
 
 pub(crate) trait BasableConnection: Send + Sync {
-    fn new(conn: Config) -> Self where Self: Sized;
+    fn new(conn: Config) -> Self
+    where
+        Self: Sized;
     fn get_table(&mut self, table_name: &str) -> MysqlTable;
     fn table_names(&mut self) -> Result<Vec<String>, MySqlError>;
     fn first_table_name(&mut self) -> Result<Option<String>, MySqlError>;
 }
 
-pub(crate) struct User {
-    pub is_logged: bool,
-    pub connection: Option<Box<dyn BasableConnection>>,
-}
-
-impl User {
-    /// TODO: Make this method fallible.
-    pub(crate) fn create_connection(config: &Config) -> Option<Box<dyn BasableConnection>> {
-        if let Some(src) = config.source_type {
-            let db_src = match src {
-                SourceType::RDMS(db) => {
-                    match db {
-                        RDMS::Mysql => MysqlConn::new(config.clone()),
-                        _ => todo!(),
-                    }
-                },
-                _ => todo!()
-            };
-
-            Some(Box::new(db_src))
-        } else {
-            None
-        }
-    }
-
-    /// TODO: Make this method fallible.
-    pub(crate) fn switch_connection(&mut self, config: &Config) {
-        let connection = User::create_connection(&config).unwrap();
-        self.connection = Some(connection);
-    }
-
-    pub(crate) fn validate(&self) -> bool {
-        false
-    }
-
-    pub(crate) fn logout(&mut self){
-        // TODO: Close connection
-    }
-}
-
 #[derive(Default)]
 pub(crate) struct Basable {
-    pub users: HashMap<String, User>
+    pub users: HashMap<String, User>,
+    pub connections: HashMap<String, SharedConnection>,
 }
 
 impl Basable {
-    fn add_user(&mut self, id: String, user: User){
-        self.users.insert(id, user);
+    /// TODO: Make this method fallible.
+    pub(crate) fn create_connection(config: &Config) -> Option<SharedConnection> {
+        let db_src = match config.source_type() {
+            SourceType::RDMS(db) => match db {
+                RDMS::Mysql => MysqlConn::new(config.clone()),
+                _ => todo!(),
+            },
+            _ => todo!(),
+        };
+
+        Some(Arc::new(Mutex::new(db_src)))
     }
 
-    /// Creates a new guest user and add them to basable
+    pub(crate) fn get_connection(&self, user_id: &str) -> Option<&SharedConnection> {
+        self.connections.get(user_id)
+    }
+
+    /// Creates a new guest user, create a new connection for the user using the `Config`
+    /// and add the user to Basable. It returns new session-id for user
+    ///
     /// TODO: Make this method fallible.
-    pub(crate) fn create_guest_user(&mut self, req_ip: &str, config: &Config) -> (String, &User) {
-        let connection = User::create_connection(&config);
-        
+    pub(crate) fn create_guest_user(&mut self, req_ip: String, config: &Config) -> String {
+        let session_id = String::from(req_ip); // jwt encode the ip
+
         let user = User {
-            connection,
+            id: session_id,
             is_logged: false,
         };
 
-        let session_id = String::from(req_ip); // jwt encode the ip
-        self.add_user(session_id, user);
+        self.add_user(user.clone());
 
-        let user = self.find_user(&session_id).unwrap();
-        (session_id, user)
+        if let Some(conn) = Basable::create_connection(&config) {
+            self.add_connection(user.id.clone(), conn);
+        }
+
+        user.id
     }
 
+    pub(crate) fn save_new_config(&mut self, config: &Config, user_id: &str) {
+        let user = self
+            .find_user(user_id)
+            .expect("Unable to find user with id");
+        user.save_new_config(config);
+    }
 
     pub(crate) fn find_user(&self, user_id: &str) -> Option<&User> {
         self.users.get(user_id)
     }
 
-    pub(crate)fn log_user_out(&mut self, user_id: &str){
+    pub(crate) fn log_user_out(&mut self, user_id: &str) {
         if let Some(user) = self.find_user(user_id) {
             user.logout();
-            self.users.remove(user_id);            
+            self.users.remove(user_id);
         }
+    }
+
+    fn add_user(&mut self, user: User) {
+        let id = user.id.clone();
+        self.users.insert(id, user);
+    }
+
+    fn add_connection(&mut self, user_id: String, conn: SharedConnection) {
+        // TODO: Find and close existing connection before insert a new one.
+        self.connections.insert(user_id, conn);
     }
 }

@@ -1,10 +1,10 @@
-use std::sync::{Arc, Mutex};
+use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
-use axum::{async_trait, extract::{FromRef, FromRequestParts}, http::{header::{ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE}, request::Parts, HeaderValue, StatusCode}, routing::{get, post}, RequestPartsExt, Router};
-use http::{columns, connect, dashboard};
+use axum::{async_trait, extract::{FromRef, FromRequestParts}, http::{header::{ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE}, request::Parts, HeaderValue, StatusCode}, routing::post, RequestPartsExt, Router};
+use http::connect;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower::ServiceBuilder;
-use types::{Basable, User};
+use types::{auth::User, Basable};
 
 mod base;
 mod http;
@@ -13,7 +13,7 @@ mod types;
 /// Extracts information about the current `User` by inspeacting the Authorization
 /// header. If Authorization is not provided, it checks for `B-Session-Id`, which should
 /// be provided for guest users. If none of this is found, the `User` is `None`.
-pub(crate) struct AuthExtractor(Option<&'static User>);
+pub(crate) struct AuthExtractor(Option<User>);
 
 #[async_trait]
 impl <S> FromRequestParts<S> for AuthExtractor
@@ -31,9 +31,9 @@ where
         let state = parts
             .extract_with_state::<AppState, _>(state)
             .await
-            .map_err(|e| (e))?;
+            .unwrap();
 
-        let bsbl = state.instance.lock().unwrap();
+        let mut bsbl = state.instance.lock().unwrap();
         let mut id = parts.headers.get("Authorization");
 
         // If Authorization header does not exist, use session-id to retrieve guest user.
@@ -45,6 +45,7 @@ where
             let id = auth.to_str().expect("Unable to get user id");
 
             if let Some(user) = bsbl.users.get(id) {
+
                 let mut u = None;
 
                 // If this is an Authorization header(token), validate user from Basable server 
@@ -52,7 +53,7 @@ where
                 match parts.headers.get("Authorization") {
                     Some(_) => {
                         if user.validate() {
-                            u = Some(user);
+                            u = Some(user.to_owned());
                         }
                     },
                     None => {
@@ -83,7 +84,7 @@ S: Send + Sync
 {
     type Rejection = (StatusCode, &'static str);
  
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(_parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         Ok(Self::from_ref(state))
     }
 }
@@ -110,6 +111,6 @@ async fn main() {
         )
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:9000").await.unwrap();
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap();
 }

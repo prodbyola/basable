@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use mysql::{prelude::Queryable, error::Error as MySqlError, Opts, Params, Pool, Row};
 
-use crate::types::{BasableConnection, Config};
+use crate::types::{config::Config, BasableConnection};
 
 use self::table::MysqlTable;
 
@@ -27,7 +27,7 @@ pub struct MysqlConn {
 }
 
 impl MysqlConn {
-    fn pool(&mut self) -> Pool {
+    fn pool(&self) -> Pool {
         self.pool.clone().unwrap()
     }
 }
