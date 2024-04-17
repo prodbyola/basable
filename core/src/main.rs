@@ -1,9 +1,10 @@
 use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
-use axum::{async_trait, extract::{FromRef, FromRequestParts}, http::{header::{ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE}, request::Parts, HeaderValue, StatusCode}, routing::post, RequestPartsExt, Router};
+use axum::{async_trait, extract::{FromRef, FromRequestParts, MatchedPath, Request}, http::{header::{ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE}, request::Parts, HeaderValue, StatusCode}, routing::post, RequestPartsExt, Router};
 use http::connect;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower::ServiceBuilder;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use types::{auth::User, Basable};
 
 mod base;
@@ -91,6 +92,14 @@ S: Send + Sync
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "basable=debug,tower_http=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     let instance = Arc::new(Mutex::new(Basable::default()));
     let state = AppState { instance };
 
@@ -106,11 +115,27 @@ async fn main() {
         // .route("/dashboard", get(dashboard))
         .layer(
             ServiceBuilder::new()
-                .layer(TraceLayer::new_for_http())
+                .layer(
+                    TraceLayer::new_for_http()
+                        .make_span_with(|req: &Request| {
+                            let method = req.method();
+                            let uri = req.uri();
+
+                            let matched_path = req
+                                .extensions()
+                                .get::<MatchedPath>()
+                                .map(|matched_path| matched_path.as_str());
+
+                            tracing::debug_span!("request", %method, %uri, matched_path)
+                        })
+                        .on_failure(())
+                )
                 .layer(cors)
         )
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:9000").await.unwrap();
+    
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap();
 }
