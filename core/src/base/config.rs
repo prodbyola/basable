@@ -44,7 +44,7 @@ pub(crate) struct Config {
     pub port: u16,
     pub db_name: String,
     source_type: String,
-    source_value: String
+    source: String
 }
 
 impl Default for Config {
@@ -55,8 +55,8 @@ impl Default for Config {
             host: String::from("localhost"),
             port: 3306,
             db_name: Default::default(),
-            source_type: Default::default(),
-            source_value: Default::default()
+            source_type: String::from("rdms"),
+            source: String::from("mysql")
         }
     }
 }
@@ -74,6 +74,6 @@ impl Config {
     }
 
     pub fn source_type(&self) -> SourceType {
-        SourceType::from_str(&self.source_type, &self.source_value)
+        SourceType::from_str(&self.source_type, &self.source)
     }
 }

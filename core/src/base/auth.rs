@@ -1,4 +1,4 @@
-use super::Config;
+use super::config::Config;
 
 #[derive(Clone)]
 pub(crate) struct User {

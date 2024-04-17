@@ -3,26 +3,26 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::base::{table::MysqlTable, MysqlConn};
-use mysql::Error as MySqlError;
+use crate::imp::rdms::mysql::{table::MysqlTable, MysqlConn};
+use serde::{Deserialize, Serialize};
+use crate::User;
 
-use self::{
-    auth::User,
-    config::{Config, SourceType, RDMS},
-};
+use super::{config::{Config, SourceType, RDMS}, AppError, ConnectionStatus, SharedConnection};
 
-pub(crate) mod auth;
-pub(crate) mod config;
-
-type SharedConnection = Arc<Mutex<dyn BasableConnection>>;
+#[derive(Serialize, Deserialize)]
+pub(crate) struct ConnectionDetails {
+    pub status: ConnectionStatus
+}
 
 pub(crate) trait BasableConnection: Send + Sync {
-    fn new(conn: Config) -> Self
+    type Error;
+    fn new(conn: Config) -> Result<Self, Self::Error>
     where
         Self: Sized;
+    fn get_details(&self) -> Result<ConnectionDetails, Self::Error>;
     fn get_table(&mut self, table_name: &str) -> MysqlTable;
-    fn table_names(&mut self) -> Result<Vec<String>, MySqlError>;
-    fn first_table_name(&mut self) -> Result<Option<String>, MySqlError>;
+    fn table_names(&self) -> Result<Vec<String>, Self::Error>;
+    fn first_table_name(&mut self) -> Result<Option<String>, Self::Error>;
 }
 
 #[derive(Default)]
@@ -33,16 +33,16 @@ pub(crate) struct Basable {
 
 impl Basable {
     /// TODO: Make this method fallible.
-    pub(crate) fn create_connection(config: &Config) -> Option<SharedConnection> {
+    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharedConnection>, AppError> {
         let db_src = match config.source_type() {
             SourceType::RDMS(db) => match db {
-                RDMS::Mysql => MysqlConn::new(config.clone()),
+                RDMS::Mysql => MysqlConn::new(config.clone())?,
                 _ => todo!(),
             },
             _ => todo!(),
         };
 
-        Some(Arc::new(Mutex::new(db_src)))
+        Ok(Some(Arc::new(Mutex::new(db_src))))
     }
 
     pub(crate) fn get_connection(&self, user_id: &str) -> Option<&SharedConnection> {
@@ -53,7 +53,7 @@ impl Basable {
     /// and add the user to Basable. It returns new session-id for user
     ///
     /// TODO: Make this method fallible.
-    pub(crate) fn create_guest_user(&mut self, req_ip: String, config: &Config) -> String {
+    pub(crate) fn create_guest_user(&mut self, req_ip: String, config: &Config) -> Result<String, AppError> {
         let session_id = String::from(req_ip); // jwt encode the ip
 
         let user = User {
@@ -63,11 +63,11 @@ impl Basable {
 
         self.add_user(user.clone());
 
-        if let Some(conn) = Basable::create_connection(&config) {
+        if let Some(conn) = Basable::create_connection(&config)? {
             self.add_connection(user.id.clone(), conn);
         }
 
-        user.id
+        Ok(user.id)
     }
 
     pub(crate) fn save_new_config(&mut self, config: &Config, user_id: &str) {

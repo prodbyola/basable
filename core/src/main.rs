@@ -5,11 +5,12 @@ use http::connect;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower::ServiceBuilder;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use types::{auth::User, Basable};
+use base::auth::User;
+use base::foundation::Basable;
 
-mod base;
+mod imp;
 mod http;
-mod types;
+mod base;
 
 /// Extracts information about the current `User` by inspeacting the Authorization
 /// header. If Authorization is not provided, it checks for `B-Session-Id`, which should

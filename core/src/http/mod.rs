@@ -1,10 +1,11 @@
 use std::net::SocketAddr;
 
 use axum::extract::ConnectInfo;
-use axum::response::IntoResponse;
 use axum::{extract::State, Json};
 use axum_macros::debug_handler;
-use crate::types::config::Config;
+use crate::base::config::Config;
+use crate::base::foundation::{BasableConnection, ConnectionDetails};
+use crate::base::AppError;
 use crate::{AppState, AuthExtractor};
 
 /// POST: Creates a new database connection. It expects `Config` as request's body.
@@ -15,7 +16,7 @@ pub(crate) async fn connect(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(config): Json<Config>,
 
-) -> impl IntoResponse {
+) -> Result<Json<ConnectionDetails>, AppError> {
 
     let mut bsbl = state.instance.lock().unwrap();
     
@@ -26,18 +27,20 @@ pub(crate) async fn connect(
         },
         None => {
             let iddr = addr.ip().to_string();
-            println!("addr: {}", addr);
-            let sid = bsbl.create_guest_user(iddr, &config);
+            let sid = bsbl.create_guest_user(iddr, &config).expect("Unable to create user");
             sid
         },
     };
 
     let conn = bsbl.get_connection(&user_id).unwrap().to_owned();
 
-    let mut conn = conn.lock().unwrap();
-    let table_names = conn.table_names().unwrap();
-    serde_json::to_string(&table_names).unwrap()
+    let conn: std::sync::MutexGuard<'_, dyn BasableConnection<Error = AppError>> = conn.lock().unwrap();
+    let details = conn.get_details();
 
+    match details {
+        Ok(data) => Ok(Json(data)),
+        Err(e) => Err(e)
+    }
 }
 
 // pub(crate) async fn columns(
