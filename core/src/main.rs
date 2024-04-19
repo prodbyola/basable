@@ -21,6 +21,8 @@ use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use crate::http::create_guest_user;
+
 mod base;
 mod http;
 mod imp;
@@ -125,8 +127,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/connect", post(connect))
-        // .route("/columns", get(columns))
-        // .route("/dashboard", get(dashboard))
+        .route("/create-guest", post(create_guest_user))
         .layer(
             ServiceBuilder::new()
                 .layer(

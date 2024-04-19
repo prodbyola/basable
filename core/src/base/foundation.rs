@@ -61,7 +61,7 @@ impl Basable {
     /// and add the user to Basable. It returns new session-id for user
     ///
     /// TODO: Make this method fallible.
-    pub(crate) fn create_guest_user(&mut self, req_ip: &str, config: &Config) -> Result<JwtSession, AppError> {
+    pub(crate) fn create_guest_user(&mut self, req_ip: &str) -> Result<JwtSession, AppError> {
         let session_id = create_jwt(req_ip)?; // jwt encode the ip
 
         let user = User {
@@ -70,10 +70,6 @@ impl Basable {
         };
 
         self.add_user(user.clone());
-
-        if let Some(conn) = Basable::create_connection(&config)? {
-            self.add_connection(user.id.clone(), conn);
-        }
 
         Ok(session_id)
     }
@@ -101,7 +97,7 @@ impl Basable {
         self.users.insert(id, user);
     }
 
-    fn add_connection(&mut self, user_id: String, conn: SharedConnection) {
+    pub(crate) fn add_connection(&mut self, user_id: String, conn: SharedConnection) {
         // TODO: Find and close existing connection before insert a new one.
         self.connections.insert(user_id, conn);
     }
