@@ -14,7 +14,7 @@ use axum::{
     routing::post,
     RequestPartsExt, Router,
 };
-use base::auth::{decode_jwt, User};
+use base::{auth::{decode_jwt, User}, AppError};
 use base::foundation::Basable;
 use http::connect;
 use tower::ServiceBuilder;
@@ -38,7 +38,7 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = (StatusCode, &'static str);
+    type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let mut extractor = AuthExtractor(None);
@@ -64,6 +64,8 @@ where
             let mut user_id = None;
 
             if is_guest {
+                tracing::debug!("User is a guest!");
+
                 match decode_jwt(hv) {
                     Ok(id) => user_id = Some(id),
                     Err(e) => {
@@ -71,11 +73,13 @@ where
                             bsbl.log_user_out(&id);
                         }
 
-                        return Err((e.0, "User not authenticated"))
+                        return Err(e)
                     }
                 };
             } else {
                 // validate user from remote server
+                let err = AppError(StatusCode::NOT_IMPLEMENTED, String::from("Authorization for registered users not implemented. Please use 'B-Session-Id' header."));
+                return Err(err)
             }
 
             if let Some(user_id) = user_id {
@@ -84,7 +88,8 @@ where
                 }
             }
         } else {
-            return Err((StatusCode::UNAUTHORIZED, "User not authenticated"))
+            let err = AppError(StatusCode::UNAUTHORIZED, String::from("User not authenticated"));
+            return Err(err)
         }
 
         Ok(extractor)

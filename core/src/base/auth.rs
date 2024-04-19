@@ -12,7 +12,7 @@ use super::{config::Config, AppError};
 const BEARER: &str = "Bearer ";
 const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct User {
     pub id: String,
     pub is_logged: bool,
@@ -40,8 +40,10 @@ pub(crate) struct JwtSession {
 }
 
 pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
+
+    // Token expiration is two hours
     let exp = Utc::now()
-        .checked_add_signed(chrono::Duration::seconds(120))
+        .checked_add_signed(chrono::Duration::seconds(7200))
         .expect("Invalid timestamp")
         .timestamp() as usize;
 
@@ -59,11 +61,13 @@ pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
 
 pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<String, AppError> {
     let token = extract_jwt(header_value)?;
+
     let decoded = decode::<Claims>(
-        &token, 
-        &DecodingKey::from_secret(JWT_SECRET), 
-        &Validation::new(Algorithm::HS512)
-    ).map_err(|e| AppError(StatusCode::UNAUTHORIZED, e.to_string()))?;
+        &token,
+        &DecodingKey::from_secret(JWT_SECRET),
+        &Validation::new(Algorithm::HS512),
+    )
+    .map_err(|e| AppError(StatusCode::UNAUTHORIZED, e.to_string()))?;
 
     Ok(decoded.claims.sub)
 }
