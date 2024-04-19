@@ -74,6 +74,8 @@ where
                         return Err((e.0, "User not authenticated"))
                     }
                 };
+            } else {
+                // validate user from remote server
             }
 
             if let Some(user_id) = user_id {
@@ -120,7 +122,7 @@ async fn main() {
     let instance = Arc::new(Mutex::new(Basable::default()));
     let state = AppState { instance };
 
-    // We created CORS middleware to enable connection from Vue Development server
+    // We add CORS middleware to enable connection from Vue Development server
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
         .allow_headers([ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE]);

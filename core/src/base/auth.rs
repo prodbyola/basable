@@ -19,10 +19,6 @@ pub(crate) struct User {
 }
 
 impl User {
-    pub(crate) fn validate(&self) -> bool {
-        false
-    }
-
     pub(crate) fn logout(&self) {
         // TODO: Close connection
     }
