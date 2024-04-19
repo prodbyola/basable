@@ -13,7 +13,7 @@ pub(crate) type TableSummaries = Vec<TableSummary>;
 type SharedConnection = Arc<Mutex<dyn BasableConnection<Error = AppError>>>;
 
 #[derive(Debug)]
-pub(crate) struct AppError(StatusCode, String);
+pub(crate) struct AppError(pub StatusCode, pub String);
 impl Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.0, self.1)

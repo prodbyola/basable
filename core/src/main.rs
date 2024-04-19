@@ -1,32 +1,46 @@
-use std::{net::SocketAddr, sync::{Arc, Mutex}};
+use std::{
+    net::SocketAddr,
+    sync::{Arc, Mutex},
+};
 
-use axum::{async_trait, extract::{FromRef, FromRequestParts, MatchedPath, Request}, http::{header::{ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE}, request::Parts, HeaderValue, StatusCode}, routing::post, RequestPartsExt, Router};
-use http::connect;
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tower::ServiceBuilder;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use base::auth::User;
+use axum::{
+    async_trait,
+    extract::{FromRef, FromRequestParts, MatchedPath, Request},
+    http::{
+        header::{ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, AUTHORIZATION, CONTENT_TYPE},
+        request::Parts,
+        HeaderValue, StatusCode,
+    },
+    routing::post,
+    RequestPartsExt, Router,
+};
+use base::auth::{decode_jwt, User};
 use base::foundation::Basable;
+use http::connect;
+use tower::ServiceBuilder;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod imp;
-mod http;
 mod base;
+mod http;
+mod imp;
 
-/// Extracts information about the current `User` by inspeacting the Authorization
+/// Extracts information about the current `User` by inspecting the Authorization
 /// header. If Authorization is not provided, it checks for `B-Session-Id`, which should
 /// be provided for guest users. If none of this is found, the `User` is `None`.
 pub(crate) struct AuthExtractor(Option<User>);
 
 #[async_trait]
-impl <S> FromRequestParts<S> for AuthExtractor
+impl<S> FromRequestParts<S> for AuthExtractor
 where
     AppState: FromRef<S>,
-    S: Send + Sync 
+    S: Send + Sync,
 {
     type Rejection = (StatusCode, &'static str);
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection>{
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let mut extractor = AuthExtractor(None);
+        let mut is_guest = false;
 
         // Get app state and basable instance
         // https://docs.rs/axum/0.6.4/axum/extract/struct.State.html#for-library-authors
@@ -36,37 +50,37 @@ where
             .unwrap();
 
         let mut bsbl = state.instance.lock().unwrap();
-        let mut id = parts.headers.get("Authorization");
+        let mut auth_value = parts.headers.get(AUTHORIZATION);
 
         // If Authorization header does not exist, use session-id to retrieve guest user.
-        if let None = id {
-            id = parts.headers.get("B-Session-Id");
+        if let None = auth_value {
+            is_guest = true;
+            auth_value = parts.headers.get("B-Session-Id");
         }
- 
-        if let Some(auth) = id {
-            let id = auth.to_str().expect("Unable to get user id");
 
-            if let Some(user) = bsbl.users.get(id) {
+        if let Some(hv) = auth_value {
+            let mut user_id = None;
 
-                let mut u = None;
-
-                // If this is an Authorization header(token), validate user from Basable server 
-                // before proceeding. If user is not valid, log them out and return an error.
-                match parts.headers.get("Authorization") {
-                    Some(_) => {
-                        if user.validate() {
-                            u = Some(user.to_owned());
+            if is_guest {
+                match decode_jwt(hv) {
+                    Ok(id) => user_id = Some(id),
+                    Err(e) => {
+                        if let Some(id) = user_id {
+                            bsbl.log_user_out(&id);
                         }
-                    },
-                    None => {
-                        bsbl.log_user_out(id);
-                        return Err((StatusCode::PROXY_AUTHENTICATION_REQUIRED, "Authentication failed"));
+
+                        return Err((e.0, "User not authenticated"))
                     }
-                }
-
-
-                extractor = AuthExtractor(u);
+                };
             }
+
+            if let Some(user_id) = user_id {
+                if let Some(user) = bsbl.users.get(&user_id)  {
+                    extractor = AuthExtractor(Some(user.clone()));
+                }
+            }
+        } else {
+            return Err((StatusCode::UNAUTHORIZED, "User not authenticated"))
         }
 
         Ok(extractor)
@@ -79,13 +93,13 @@ pub(crate) struct AppState {
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for AppState 
+impl<S> FromRequestParts<S> for AppState
 where
-Self: FromRef<S>,
-S: Send + Sync
+    Self: FromRef<S>,
+    S: Send + Sync,
 {
     type Rejection = (StatusCode, &'static str);
- 
+
     async fn from_request_parts(_parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         Ok(Self::from_ref(state))
     }
@@ -105,10 +119,9 @@ async fn main() {
     let state = AppState { instance };
 
     // We created CORS middleware to enable connection from Vue Development server
-    let cors =
-        CorsLayer::new()
-            .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
-            .allow_headers([ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE]);
+    let cors = CorsLayer::new()
+        .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
+        .allow_headers([ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE]);
 
     let app = Router::new()
         .route("/connect", post(connect))
@@ -129,14 +142,19 @@ async fn main() {
 
                             tracing::debug_span!("request", %method, %uri, matched_path)
                         })
-                        .on_failure(())
+                        .on_failure(()),
                 )
-                .layer(cors)
+                .layer(cors),
         )
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:9000").await.unwrap();
-    
+
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }
