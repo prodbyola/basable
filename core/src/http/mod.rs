@@ -3,10 +3,18 @@ use std::net::SocketAddr;
 use axum::extract::ConnectInfo;
 use axum::{extract::State, Json};
 use axum_macros::debug_handler;
+use serde::Serialize;
+use crate::base::auth::JwtSession;
 use crate::base::config::Config;
 use crate::base::foundation::{BasableConnection, ConnectionDetails};
 use crate::base::AppError;
 use crate::{AppState, AuthExtractor};
+
+#[derive(Default, Serialize)]
+pub(crate) struct ConnectionResponse {
+    session: Option<JwtSession>,
+    details: ConnectionDetails
+}
 
 /// POST: Creates a new database connection. It expects `Config` as request's body.
 #[debug_handler]
@@ -16,88 +24,38 @@ pub(crate) async fn connect(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(config): Json<Config>,
 
-) -> Result<Json<ConnectionDetails>, AppError> {
+) -> Result<Json<ConnectionResponse>, AppError> {
 
+    let mut resp = ConnectionResponse::default();
     let mut bsbl = state.instance.lock().unwrap();
     
     let user_id = match user {
         Some(u) => {
-            bsbl.save_new_config(&config, &u.id);
+            if u.is_logged {
+                bsbl.save_new_config(&config, &u.id);
+            }
+            
             String::from(&u.id)
         },
         None => {
             let iddr = addr.ip().to_string();
-            let sid = bsbl.create_guest_user(iddr, &config).expect("Unable to create user");
-            sid
+            
+            let session = bsbl.create_guest_user(&iddr, &config).expect("Unable to create user");
+            resp.session = Some(session);
+
+            iddr
         },
     };
 
     let conn = bsbl.get_connection(&user_id).unwrap().to_owned();
 
     let conn: std::sync::MutexGuard<'_, dyn BasableConnection<Error = AppError>> = conn.lock().unwrap();
-    let details = conn.get_details();
+    resp.details = conn.get_details()?;
 
-    match details {
-        Ok(data) => Ok(Json(data)),
-        Err(e) => Err(e)
-    }
+    Ok(Json(resp))
+
+    // match details {
+    //     Ok(data) => Ok(Json(data)),
+    //     Err(e) => Err(e)
+    // }
 }
-
-// pub(crate) async fn columns(
-//     State(state): State<AppState>,
-//     Query(params): Query<HashMap<String, String>>
-// ) -> String {
-//     let mut bsbl = state.instance.lock().unwrap();
-//     let mut table = db.get_table(params.get("table").unwrap());
-
-//     let cols = table.show_columns().unwrap();
-
-//     serde_json::to_string(&cols).unwrap()
-// }
-
-// pub(crate) async fn dashboard(
-//     State(state): State<AppState>,
-//     Query(params): Query<HashMap<String, String>>
-// ) -> String {
-//     let tbn = params.get("table").unwrap();
-//     let col = params.get("created_at");
-
-//     let mut db = state.db.lock().unwrap();
-
-//     let mut tb = db.get_table(tbn);
-//     let rc = tb.row_count(None).unwrap();
-
-//     match col {
-//         Some(col) => {
-//             let date_column = String::from(col);
-//             let day = match params.get("day") {
-//                 Some(d) => String::from(d),
-//                 None => {
-//                     let utc = Utc::now();
-//                     let local = utc.with_timezone(&Local);
-//                     local.format("%Y-%m-%d").to_string()
-//                 }
-//             };
-
-//             let opt = RowCountOption { 
-//                 date: Some(day),
-//                 date_column,
-//                 date_selection: crate::base::CountDateSelection::Day
-//             };
-
-//             let count = tb.row_count(Some(opt)).unwrap();
-//             println!("count: {}", count);
-//         }
-//         None => {
-//             // Send a ws message indicating user didn't specify a 
-//             // `created_at` column.
-//         }
-//     }
-
-//     let data = json!({
-//         "row_count": rc
-//     });
-
-
-//     serde_json::to_string(&data).unwrap()
-// }

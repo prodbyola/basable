@@ -4,14 +4,24 @@ use std::{
 };
 
 use crate::imp::rdms::mysql::{table::MysqlTable, MysqlConn};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use crate::User;
 
-use super::{config::{Config, SourceType, RDMS}, AppError, ConnectionStatus, SharedConnection};
+use super::{auth::{create_jwt, JwtSession}, config::{Config, SourceType, RDMS}, AppError, ConnectionStatus, SharedConnection, TableSummaries};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
+pub(crate) struct TableSummary {
+    pub name: String,
+    pub row_count: u32,
+    pub created: Option<String>,
+    pub updated: Option<String>,
+}
+
+#[derive(Serialize, Default)]
 pub(crate) struct ConnectionDetails {
-    pub status: ConnectionStatus
+    pub tables: TableSummaries,
+    pub status: ConnectionStatus,
+    pub variables: ConnectionStatus
 }
 
 pub(crate) trait BasableConnection: Send + Sync {
@@ -21,8 +31,6 @@ pub(crate) trait BasableConnection: Send + Sync {
         Self: Sized;
     fn get_details(&self) -> Result<ConnectionDetails, Self::Error>;
     fn get_table(&mut self, table_name: &str) -> MysqlTable;
-    fn table_names(&self) -> Result<Vec<String>, Self::Error>;
-    fn first_table_name(&mut self) -> Result<Option<String>, Self::Error>;
 }
 
 #[derive(Default)]
@@ -53,11 +61,11 @@ impl Basable {
     /// and add the user to Basable. It returns new session-id for user
     ///
     /// TODO: Make this method fallible.
-    pub(crate) fn create_guest_user(&mut self, req_ip: String, config: &Config) -> Result<String, AppError> {
-        let session_id = String::from(req_ip); // jwt encode the ip
+    pub(crate) fn create_guest_user(&mut self, req_ip: &str, config: &Config) -> Result<JwtSession, AppError> {
+        let session_id = create_jwt(req_ip)?; // jwt encode the ip
 
         let user = User {
-            id: session_id,
+            id: req_ip.to_owned(),
             is_logged: false,
         };
 
@@ -67,7 +75,7 @@ impl Basable {
             self.add_connection(user.id.clone(), conn);
         }
 
-        Ok(user.id)
+        Ok(session_id)
     }
 
     pub(crate) fn save_new_config(&mut self, config: &Config, user_id: &str) {

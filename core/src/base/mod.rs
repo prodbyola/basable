@@ -2,17 +2,18 @@ use std::{collections::HashMap, fmt::Display, sync::{Arc, Mutex}};
 
 use axum::{body::Body, http::{Response, StatusCode}, response::IntoResponse};
 
-use self::foundation::BasableConnection;
+use self::foundation::{BasableConnection, TableSummary};
 
 pub(crate) mod auth;
 pub(crate) mod config;
 pub(crate) mod foundation;
 
-#[derive(Debug)]
-pub(crate) struct AppError(StatusCode, String);
 pub(crate) type ConnectionStatus = HashMap<String, String>;
+pub(crate) type TableSummaries = Vec<TableSummary>;
 type SharedConnection = Arc<Mutex<dyn BasableConnection<Error = AppError>>>;
 
+#[derive(Debug)]
+pub(crate) struct AppError(StatusCode, String);
 impl Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.0, self.1)
