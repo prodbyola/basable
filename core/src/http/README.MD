@@ -1,6 +1,8 @@
 # http module
 This module contains all http REST request handlers for Basable. All examples in this documentation are written in Javascript/Typescript using [axios library](https://axios-http.com/docs/intro). However, any other client-side implementation will work in similar ways.  
 
+## API Documentation
+
 ### POST: /create-guest 
 Creates a Basable guest `User` and returns a `JwtSession`. The created `User` is unregistered but has access to Basable protected routes via [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token) token. The generated user token has a 2hrs lifespan (by default) and must be passed as `B-Session-Id` into subsequent request headers.
 
@@ -22,7 +24,7 @@ console.log(session)
 //     "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMjcuMC4wLjEiLCJleHAiOjE3MTM2OTY4MTl9.mNJ7NXxF9iW8Tgqf-tt9nlUSqi2NvxcIdM1x6kcuzqpWsp2sQtcCkBa98g-ApCZqCTkz6YgA9D6WbwoBUHBNXA",
 //     "exp": 7200
 // }
-```
+```    
 
 ### POST: /connect
 Initiates a new `BasableConnection` for current user. It expects `Config` as request's body. If user is registered (not guest user), it saves the associated `Config` for them for easier subsequent access.
