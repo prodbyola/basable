@@ -10,7 +10,7 @@ use axum::{extract::State, Json};
 use axum_macros::debug_handler;
 
 
-/// POST: Creates a new database connection. It expects `Config` as request's body.
+/// POST: Creates a new `BasableConnection` for current user. It expects `Config` as request's body.
 #[debug_handler]
 pub(crate) async fn connect(
     State(state): State<AppState>,

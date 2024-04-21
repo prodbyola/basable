@@ -1,15 +1,13 @@
 use std::collections::HashMap;
 
 use chrono::NaiveDate;
-use mysql::{Result, Value};
+use mysql::Result;
 use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 use time::Date;
 
 use crate::base::config::Config;
 use crate::base::foundation::{BasableConnection, ConnectionDetails, TableSummary};
 use crate::base::{AppError, ConnectionStatus, TableSummaries};
-
-use self::table::MysqlTable;
 
 pub mod table;
 
@@ -72,12 +70,12 @@ impl MysqlConn {
 
     fn get_table_summary(&self) -> Result<TableSummaries, AppError> {
         let query = format!("
-            SELECT table_name, table_rows, create_time, update_time
-            FROM information_schema.tables
-            WHERE table_schema = '{}'
-            ORDER BY table_name;
-        ", self.config.db_name
-    );
+                SELECT table_name, table_rows, create_time, update_time
+                FROM information_schema.tables
+                WHERE table_schema = '{}'
+                ORDER BY table_name;
+            ", self.config.db_name.clone().unwrap()
+        );
 
         let results = self.exec_query(&query)?;
         let tables: Vec<TableSummary> = results.iter().map(|res|{
@@ -116,12 +114,6 @@ impl BasableConnection for MysqlConn {
         let tables = self.get_table_summary()?;
         Ok(ConnectionDetails { tables, status, variables })
     }
-
-    /// Creates an instance of `BasableTable` from its string name.
-    fn get_table(&mut self, table_name: &str) -> MysqlTable {
-        let conn = self.pool().get_conn().unwrap();
-        MysqlTable::new(conn, table_name)
-    }
 }
 
 pub fn try_parse_date(date_str: &str) -> Option<NaiveDate> {
@@ -146,20 +138,17 @@ pub fn try_parse_date(date_str: &str) -> Option<NaiveDate> {
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        base::{foundation::BasableConnection, AppError},
-        imp::rdms::mysql::CountDateSelection,
-    };
+    use crate::base::{foundation::BasableConnection, AppError};
 
-    use super::{Config, MysqlConn, RowCountOption};
+    use super::{Config, MysqlConn};
 
     fn create_db() -> Result<MysqlConn, AppError> {
         let db_name = "basable";
         let mut config = Config::default();
 
-        config.db_name = String::from(db_name);
-        config.username = String::from(db_name);
-        config.password = String::from("Basable@2024");
+        config.db_name = Some(String::from(db_name));
+        config.username = Some(String::from(db_name));
+        config.password = Some(String::from("Basable@2024"));
 
         BasableConnection::new(config)
     }
@@ -168,25 +157,6 @@ mod test {
     fn test_table_count_summary() -> Result<(), AppError> {
         let db = create_db()?;
         db.get_table_summary()?;
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_row_count() -> Result<(), AppError> {
-        let mut db = create_db()?;
-
-        let mut table = db.get_table("swp");
-        table.row_count(None).unwrap();
-
-        let opt = RowCountOption {
-            date: Some(String::from("1/1/1981")),
-            date_column: String::from("date"),
-            date_selection: CountDateSelection::Day,
-        };
-
-        let today = table.row_count(Some(opt));
-        assert!(today.is_ok());
 
         Ok(())
     }

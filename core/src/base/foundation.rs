@@ -3,11 +3,11 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::imp::rdms::mysql::{table::MysqlTable, MysqlConn};
+use crate::imp::databsae::mysql::MysqlConn;
 use serde::Serialize;
 use crate::User;
 
-use super::{auth::{create_jwt, JwtSession}, config::{Config, SourceType, RDMS}, AppError, ConnectionStatus, SharedConnection, TableSummaries};
+use super::{auth::{create_jwt, JwtSession}, config::{Config, SourceType, Database}, AppError, ConnectionStatus, SharedConnection, TableSummaries};
 
 #[derive(Serialize)]
 pub(crate) struct TableSummary {
@@ -30,7 +30,6 @@ pub(crate) trait BasableConnection: Send + Sync {
     where
         Self: Sized;
     fn get_details(&self) -> Result<ConnectionDetails, Self::Error>;
-    fn get_table(&mut self, table_name: &str) -> MysqlTable;
 }
 
 #[derive(Default)]
@@ -43,8 +42,8 @@ impl Basable {
     /// TODO: Make this method fallible.
     pub(crate) fn create_connection(config: &Config) -> Result<Option<SharedConnection>, AppError> {
         let db_src = match config.source_type() {
-            SourceType::RDMS(db) => match db {
-                RDMS::Mysql => MysqlConn::new(config.clone())?,
+            SourceType::Database(db) => match db {
+                Database::Mysql => MysqlConn::new(config.clone())?,
                 _ => todo!(),
             },
             _ => todo!(),

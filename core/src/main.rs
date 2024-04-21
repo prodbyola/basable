@@ -16,6 +16,7 @@ use axum::{
 };
 use base::{auth::{decode_jwt, User}, AppError};
 use base::foundation::Basable;
+use dotenv::dotenv;
 use http::connect;
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
@@ -116,6 +117,8 @@ where
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+    
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
