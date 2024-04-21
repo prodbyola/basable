@@ -45,7 +45,7 @@ where
         let mut extractor = AuthExtractor(None);
         let mut is_guest = false;
 
-        // Get app state and basable instance
+        // Extract app state and get basable instance
         // https://docs.rs/axum/0.6.4/axum/extract/struct.State.html#for-library-authors
         let state = parts
             .extract_with_state::<AppState, _>(state)
@@ -65,8 +65,6 @@ where
             let mut user_id = None;
 
             if is_guest {
-                tracing::debug!("User is a guest!");
-
                 match decode_jwt(hv) {
                     Ok(id) => user_id = Some(id),
                     Err(e) => {

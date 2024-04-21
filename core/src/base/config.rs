@@ -51,13 +51,13 @@ impl SourceType {
 /// Configuration options for a new `BasableConnection`.
 #[derive(Deserialize, Clone, Debug)]
 pub(crate) struct Config {
+    source_type: String,
+    source: String,
     pub username: Option<String>,
     pub password: Option<String>,
     pub host: Option<String>,
     pub port: Option<u16>,
     pub db_name: Option<String>,
-    source_type: String,
-    source: String
 }
 
 impl Default for Config {

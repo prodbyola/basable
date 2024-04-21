@@ -6,11 +6,27 @@ use crate::base::foundation::{Basable, BasableConnection, ConnectionDetails};
 use crate::base::AppError;
 use crate::{AppState, AuthExtractor};
 use axum::extract::ConnectInfo;
+use axum::http::StatusCode;
 use axum::{extract::State, Json};
 use axum_macros::debug_handler;
 
 
-/// POST: Creates a new `BasableConnection` for current user. It expects `Config` as request's body.
+#[debug_handler]
+pub(crate) async fn create_guest_user(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+) -> Result<Json<JwtSession>, AppError> {
+    let mut bsbl = state.instance.lock().unwrap();
+
+    let addr = addr.ip().to_string();
+    let session = bsbl.create_guest_user(&addr)?;
+
+    Ok(Json(session))
+}
+
+/// POST: /connect 
+/// 
+/// Creates a new `BasableConnection` for current user. It expects `Config` as request's body.
 #[debug_handler]
 pub(crate) async fn connect(
     State(state): State<AppState>,
@@ -34,22 +50,11 @@ pub(crate) async fn connect(
                 conn.lock().unwrap();
     
             resp = conn.get_details()?;
-        }
-
+        } 
+    } else {
+        return Err(AppError(StatusCode::NOT_FOUND, String::from("User not found! Please try to login again.")))
     }
 
+
     Ok(Json(resp))
-}
-
-#[debug_handler]
-pub(crate) async fn create_guest_user(
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    State(state): State<AppState>,
-) -> Result<Json<JwtSession>, AppError> {
-    let mut bsbl = state.instance.lock().unwrap();
-
-    let addr = addr.ip().to_string();
-    let session = bsbl.create_guest_user(&addr)?;
-
-    Ok(Json(session))
 }
