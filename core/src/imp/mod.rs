@@ -1,1 +1,1 @@
-pub(crate) mod databsae;
+pub(crate) mod database;

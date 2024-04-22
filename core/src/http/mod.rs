@@ -4,14 +4,19 @@ use crate::base::auth::JwtSession;
 use crate::base::config::Config;
 use crate::base::foundation::{Basable, BasableConnection, ConnectionDetails};
 use crate::base::AppError;
-use crate::{AppState, AuthExtractor};
+use crate::AppState;
 use axum::extract::ConnectInfo;
 use axum::http::StatusCode;
 use axum::{extract::State, Json};
 use axum_macros::debug_handler;
+use crate::http::middlewares::AuthExtractor;
 
+pub(crate) mod middlewares;
 
 #[debug_handler]
+/// POST: /create-guest 
+/// 
+/// Creates a Basable guest `User` and returns a `JwtSession`.
 pub(crate) async fn create_guest_user(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
@@ -24,10 +29,10 @@ pub(crate) async fn create_guest_user(
     Ok(Json(session))
 }
 
+#[debug_handler]
 /// POST: /connect 
 /// 
 /// Creates a new `BasableConnection` for current user. It expects `Config` as request's body.
-#[debug_handler]
 pub(crate) async fn connect(
     State(state): State<AppState>,
     AuthExtractor(user): AuthExtractor,
@@ -38,7 +43,7 @@ pub(crate) async fn connect(
 
     if let Some(user) = user {
         if user.is_logged {
-            bsbl.save_new_config(&config, &user.id);
+            bsbl.save_config(&config, &user.id);
         }
 
         if let Some(conn) = Basable::create_connection(&config)? {

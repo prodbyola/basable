@@ -7,14 +7,13 @@ use axum::{
     async_trait,
     extract::{FromRef, FromRequestParts, MatchedPath, Request},
     http::{
-        header::{ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, AUTHORIZATION, CONTENT_TYPE},
+        header::{ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE},
         request::Parts,
         HeaderValue, StatusCode,
     },
-    routing::post,
-    RequestPartsExt, Router,
+    routing::post, Router,
 };
-use base::{auth::{decode_jwt, User}, AppError};
+use base::auth::User;
 use base::foundation::Basable;
 use dotenv::dotenv;
 use http::connect;
@@ -27,73 +26,6 @@ use crate::http::create_guest_user;
 mod base;
 mod http;
 mod imp;
-
-/// Extracts information about the current `User` by inspecting the Authorization
-/// header. If Authorization is not provided, it checks for `B-Session-Id`, which should
-/// be provided for guest users. If none of this is found, the `User` is `None`.
-pub(crate) struct AuthExtractor(Option<User>);
-
-#[async_trait]
-impl<S> FromRequestParts<S> for AuthExtractor
-where
-    AppState: FromRef<S>,
-    S: Send + Sync,
-{
-    type Rejection = AppError;
-
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let mut extractor = AuthExtractor(None);
-        let mut is_guest = false;
-
-        // Extract app state and get basable instance
-        // https://docs.rs/axum/0.6.4/axum/extract/struct.State.html#for-library-authors
-        let state = parts
-            .extract_with_state::<AppState, _>(state)
-            .await
-            .unwrap();
-
-        let mut bsbl = state.instance.lock().unwrap();
-        let mut auth_value = parts.headers.get(AUTHORIZATION);
-
-        // If Authorization header does not exist, use session-id to retrieve guest user.
-        if let None = auth_value {
-            is_guest = true;
-            auth_value = parts.headers.get("B-Session-Id");
-        }
-
-        if let Some(hv) = auth_value {
-            let mut user_id = None;
-
-            if is_guest {
-                match decode_jwt(hv) {
-                    Ok(id) => user_id = Some(id),
-                    Err(e) => {
-                        if let Some(id) = user_id {
-                            bsbl.log_user_out(&id);
-                        }
-
-                        return Err(e)
-                    }
-                };
-            } else {
-                // validate user from remote server
-                let err = AppError(StatusCode::NOT_IMPLEMENTED, String::from("Authorization for registered users not implemented. Please use 'B-Session-Id' header."));
-                return Err(err)
-            }
-
-            if let Some(user_id) = user_id {
-                if let Some(user) = bsbl.users.get(&user_id)  {
-                    extractor = AuthExtractor(Some(user.clone()));
-                }
-            }
-        } else {
-            let err = AppError(StatusCode::UNAUTHORIZED, String::from("User not authenticated"));
-            return Err(err)
-        }
-
-        Ok(extractor)
-    }
-}
 
 #[derive(Clone)]
 pub(crate) struct AppState {

@@ -24,7 +24,7 @@ impl User {
     }
 
     /// Saves this `Config` for user and create new connection using the `Config`.
-    pub(crate) fn save_new_config(&self, config: &Config) {}
+    pub(crate) fn save_config(&self, config: &Config) {}
 }
 
 #[derive(Deserialize, Serialize)]
