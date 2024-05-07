@@ -68,9 +68,13 @@ impl MysqlConn {
         let tables: Vec<TableSummary> = results.iter().map(|res|{
             let created = res.get("CREATE_TIME") as Option<Date>;
             let updated = res.get("CREATE_TIME") as Option<Date>;
-            
+            let name: String = res.get("TABLE_NAME").unwrap();
+
+            let col_count = self.get_column_count(&name).unwrap();
+
             TableSummary {
-                name: res.get("TABLE_NAME").unwrap(),
+                name,
+                col_count,
                 row_count: res.get("TABLE_ROWS").unwrap(),
                 created: created.map_or(None, |d| Some(d.to_string())),
                 updated: updated.map_or(None, |d| Some(d.to_string()))
@@ -78,6 +82,21 @@ impl MysqlConn {
         }).collect();
 
         Ok(tables)
+    }
+
+    fn get_column_count(&self, tb_name: &str) -> Result<u32, AppError> {
+        let query = format!("
+                SELECT count(*) 
+                FROM information_schema.columns 
+                WHERE table_schema = '{}' and table_name = '{}'
+                ORDER BY table_name;
+            ", self.config.db_name.clone().unwrap(), tb_name
+        );
+
+        let qr = self.exec_query(&query)?;
+        let c: u32 = qr.first().map_or(0, |r| r.get("count(*)").unwrap());
+
+        Ok(c)
     }
 }
 

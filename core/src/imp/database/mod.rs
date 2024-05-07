@@ -11,6 +11,7 @@ pub(crate) type TableSummaries = Vec<TableSummary>;
 pub(crate) struct TableSummary {
     pub name: String,
     pub row_count: u32,
+    pub col_count: u32,
     pub created: Option<String>,
     pub updated: Option<String>,
 }
