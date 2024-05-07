@@ -5,8 +5,10 @@ use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 use time::Date;
 
 use crate::base::config::Config;
-use crate::base::foundation::{BasableConnection, ConnectionDetails, TableSummary};
-use crate::base::{AppError, ConnectionStatus, TableSummaries};
+use crate::base::foundation::BasableConnection;
+use crate::base::AppError;
+
+use super::{ConnectionStatus, DatabaseConnectionDetails, TableSummaries, TableSummary};
 
 /// MySQL implementation of `BasableConnection`
 #[derive(Clone, Default)]
@@ -93,11 +95,11 @@ impl BasableConnection for MysqlConn {
         })
     }
 
-    fn get_details(&self) -> Result<ConnectionDetails, AppError> {
+    fn get_details(&self) -> Result<DatabaseConnectionDetails, AppError> {
         let status = self.show_status()?;
         let variables = self.show_variables()?;
         let tables = self.get_table_summary()?;
-        Ok(ConnectionDetails { tables, status, variables })
+        Ok(DatabaseConnectionDetails { tables, status, variables })
     }
 }
 

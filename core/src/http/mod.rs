@@ -2,8 +2,9 @@ use std::net::SocketAddr;
 
 use crate::base::auth::JwtSession;
 use crate::base::config::Config;
-use crate::base::foundation::{Basable, BasableConnection, ConnectionDetails};
+use crate::base::foundation::{Basable, BasableConnection};
 use crate::base::AppError;
+use crate::imp::database::DatabaseConnectionDetails;
 use crate::AppState;
 use axum::extract::ConnectInfo;
 use axum::http::StatusCode;
@@ -37,8 +38,8 @@ pub(crate) async fn connect(
     State(state): State<AppState>,
     AuthExtractor(user): AuthExtractor,
     Json(config): Json<Config>,
-) -> Result<Json<ConnectionDetails>, AppError> {
-    let mut resp = ConnectionDetails::default();
+) -> Result<Json<DatabaseConnectionDetails>, AppError> {
+    let mut resp = DatabaseConnectionDetails::default();
     let mut bsbl = state.instance.lock().unwrap();
 
     if let Some(user) = user {

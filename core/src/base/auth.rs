@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{config::Config, AppError};
 
-// JWT_SECRET should be defined by the installer and saved in env variables.
+// JWT_SECRET should be defined by the installer and saved in platform env variables.
 // You can generate one at https://djecrety.ir
 const BEARER: &str = "Bearer ";
 const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";

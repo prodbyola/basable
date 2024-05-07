@@ -1,15 +1,13 @@
-use std::{collections::HashMap, fmt::Display, sync::{Arc, Mutex}};
+use std::{fmt::Display, sync::{Arc, Mutex}};
 
 use axum::{body::Body, http::{Response, StatusCode}, response::IntoResponse};
 
-use self::foundation::{BasableConnection, TableSummary};
+use self::foundation::BasableConnection;
 
 pub(crate) mod auth;
 pub(crate) mod config;
 pub(crate) mod foundation;
 
-pub(crate) type ConnectionStatus = HashMap<String, String>;
-pub(crate) type TableSummaries = Vec<TableSummary>;
 type SharedConnection = Arc<Mutex<dyn BasableConnection<Error = AppError>>>;
 
 #[derive(Debug)]

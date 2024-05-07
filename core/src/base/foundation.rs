@@ -3,34 +3,24 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::imp::database::mysql::MysqlConn;
-use serde::Serialize;
+use crate::imp::database::{mysql::MysqlConn, DatabaseConnectionDetails};
 use crate::User;
 
-use super::{auth::{create_jwt, JwtSession}, config::{Config, SourceType, Database}, AppError, ConnectionStatus, SharedConnection, TableSummaries};
-
-#[derive(Serialize)]
-pub(crate) struct TableSummary {
-    pub name: String,
-    pub row_count: u32,
-    pub created: Option<String>,
-    pub updated: Option<String>,
-}
-
-#[derive(Serialize, Default)]
-pub(crate) struct ConnectionDetails {
-    pub tables: TableSummaries,
-    pub status: ConnectionStatus,
-    pub variables: ConnectionStatus
-}
+use super::{
+    auth::{create_jwt, JwtSession},
+    config::{Config, Database, SourceType},
+    AppError, SharedConnection,
+};
 
 /// Basable base trait that must be implemented by every instance of connection in Basable.
+/// 
+/// Check `imp` module for different implementations of this trait.
 pub(crate) trait BasableConnection: Send + Sync {
     type Error;
     fn new(conn: Config) -> Result<Self, Self::Error>
     where
         Self: Sized;
-    fn get_details(&self) -> Result<ConnectionDetails, Self::Error>;
+    fn get_details(&self) -> Result<DatabaseConnectionDetails, Self::Error>;
 }
 
 #[derive(Default)]
