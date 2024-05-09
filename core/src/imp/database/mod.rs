@@ -4,7 +4,7 @@ use serde::Serialize;
 
 pub(crate) mod mysql;
 
-pub(crate) type ConnectionStatus = HashMap<String, String>;
+pub(crate) type DBVersion = HashMap<String, String>;
 pub(crate) type TableSummaries = Vec<TableSummary>;
 
 #[derive(Serialize)]
@@ -17,8 +17,8 @@ pub(crate) struct TableSummary {
 }
 
 #[derive(Serialize, Default)]
-pub(crate) struct DatabaseConnectionDetails {
+pub(crate) struct DbConnectionDetails {
     pub tables: TableSummaries,
-    pub status: ConnectionStatus,
-    pub variables: ConnectionStatus,
+    pub version: DBVersion,
+    pub db_size: f64,
 }

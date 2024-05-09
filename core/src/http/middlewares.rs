@@ -1,6 +1,7 @@
 use axum::{async_trait, extract::{FromRef, FromRequestParts}, http::{header::AUTHORIZATION, request::Parts, StatusCode}, RequestPartsExt};
 
-use crate::{base::{auth::{decode_jwt, User}, AppError}, AppState};
+use crate::base::{auth::{decode_jwt, User}, AppError};
+use crate::http::app::AppState;
 
 /// Extracts information about the current `User` by inspecting the Authorization
 /// header. If Authorization is not provided, it checks for `B-Session-Id`, which should

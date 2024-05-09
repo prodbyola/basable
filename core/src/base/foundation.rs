@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::imp::database::{mysql::MysqlConn, DatabaseConnectionDetails};
+use crate::imp::database::{mysql::MysqlConn, DbConnectionDetails};
 use crate::User;
 
 use super::{
@@ -20,7 +20,7 @@ pub(crate) trait BasableConnection: Send + Sync {
     fn new(conn: Config) -> Result<Self, Self::Error>
     where
         Self: Sized;
-    fn get_details(&self) -> Result<DatabaseConnectionDetails, Self::Error>;
+    fn get_details(&self) -> Result<DbConnectionDetails, Self::Error>;
 }
 
 #[derive(Default)]
