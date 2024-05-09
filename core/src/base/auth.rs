@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{config::Config, AppError};
 
-// JWT_SECRET should be defined by the installer and saved in env variables.
+// JWT_SECRET should be defined by the installer and saved in platform env variables.
 // You can generate one at https://djecrety.ir
 const BEARER: &str = "Bearer ";
 const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
@@ -24,7 +24,7 @@ impl User {
     }
 
     /// Saves this `Config` for user and create new connection using the `Config`.
-    pub(crate) fn save_new_config(&self, config: &Config) {}
+    pub(crate) fn save_config(&self, config: &Config) {}
 }
 
 #[derive(Deserialize, Serialize)]
@@ -40,23 +40,24 @@ pub(crate) struct JwtSession {
 }
 
 pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
+    let exp_time = 7200;
 
     // Token expiration is two hours
     let exp = Utc::now()
-        .checked_add_signed(chrono::Duration::seconds(7200))
+        .checked_add_signed(chrono::Duration::seconds(exp_time.clone()))
         .expect("Invalid timestamp")
         .timestamp() as usize;
 
     let claims = Claims {
         sub: user_id.to_owned(),
-        exp: exp.clone(),
+        exp,
     };
 
     let header = Header::new(Algorithm::HS512);
     let token = encode(&header, &claims, &EncodingKey::from_secret(JWT_SECRET))
         .map_err(|e| AppError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    Ok(JwtSession { token, exp })
+    Ok(JwtSession { token, exp: exp_time as usize })
 }
 
 pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<String, AppError> {
