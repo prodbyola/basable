@@ -5,16 +5,24 @@ use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 use time::Date;
 
 use crate::base::config::Config;
-use crate::base::foundation::BasableConnection;
+use crate::base::foundation::{BasableConnection, BasableTable};
 use crate::base::AppError;
 
-use super::{DBVersion, DbConnectionDetails, TableSummaries, TableSummary};
+use super::{DBVersion, DbConnectionDetails, TableConfig, TableList};
 
 /// MySQL implementation of `BasableConnection`
 #[derive(Clone, Default)]
 pub struct MysqlConn {
+    /// Database connection pool
     pool: Option<Pool>,
+
+    /// Connection options
     config: Config,
+
+    /// A map of table configurations for the current connection. This map is
+    /// saved for guest users/connections. Otherwise, configurations are saved on
+    /// remote server.
+    table_configs: Option<HashMap<String, TableConfig>>,
 }
 
 impl MysqlConn {
@@ -54,40 +62,6 @@ impl MysqlConn {
         Ok(data)
     }
 
-    fn table_summary(&self) -> Result<TableSummaries, AppError> {
-        let query = format!(
-            "
-                SELECT table_name, table_rows, create_time, update_time
-                FROM information_schema.tables
-                WHERE table_schema = '{}'
-                ORDER BY table_name;
-            ",
-            self.config.db_name.clone().unwrap()
-        );
-
-        let results = self.exec_query(&query)?;
-        let tables: Vec<TableSummary> = results
-            .iter()
-            .map(|res| {
-                let created = res.get("CREATE_TIME") as Option<Date>;
-                let updated = res.get("CREATE_TIME") as Option<Date>;
-                let name: String = res.get("TABLE_NAME").unwrap();
-
-                let col_count = self.get_column_count(&name).unwrap();
-
-                TableSummary {
-                    name,
-                    col_count,
-                    row_count: res.get("TABLE_ROWS").unwrap(),
-                    created: created.map_or(None, |d| Some(d.to_string())),
-                    updated: updated.map_or(None, |d| Some(d.to_string())),
-                }
-            })
-            .collect();
-
-        Ok(tables)
-    }
-
     fn get_column_count(&self, tb_name: &str) -> Result<u32, AppError> {
         let query = format!(
             "
@@ -116,14 +90,16 @@ impl MysqlConn {
                 FROM information_schema.tables 
                 WHERE table_schema = '{}'
                 GROUP BY table_schema
-            ", db, db);
+            ",
+            db, db
+        );
 
         let qr = self.exec_query(&query)?;
 
         // db size is returned in MB, we may want to write a function
         // to convert for GB, TB...etc
-        let size: f64 = qr.first().map_or(0.0, |r|{
-            let s:String = r.get("size").unwrap();
+        let size: f64 = qr.first().map_or(0.0, |r| {
+            let s: String = r.get("size").unwrap();
             s.parse().unwrap()
         });
 
@@ -142,19 +118,93 @@ impl BasableConnection for MysqlConn {
         Ok(MysqlConn {
             pool: Some(pool),
             config,
+            table_configs: None,
         })
     }
 
-    fn get_details(&self) -> Result<DbConnectionDetails, AppError> {
+    fn details(&self) -> Result<DbConnectionDetails, AppError> {
         let version = self.show_version()?;
-        let tables = self.table_summary()?;
+        let tables = self.load_tables()?;
         let size = self.db_size()?;
 
         Ok(DbConnectionDetails {
             tables,
             version,
-            db_size: size
+            db_size: size,
         })
+    }
+
+    fn load_tables(&self) -> Result<TableList, AppError> {
+        let query = format!(
+            "
+                SELECT table_name, table_rows, create_time, update_time
+                FROM information_schema.tables
+                WHERE table_schema = '{}'
+                ORDER BY table_name;
+            ",
+            self.config.db_name.clone().unwrap()
+        );
+
+        let results = self.exec_query(&query)?;
+        let tables: Vec<BasableTable> = results
+            .iter()
+            .map(|res| {
+                let created = res.get("CREATE_TIME") as Option<Date>;
+                let updated = res.get("CREATE_TIME") as Option<Date>;
+                let name: String = res.get("TABLE_NAME").unwrap();
+
+                let col_count = self.get_column_count(&name).unwrap();
+
+                BasableTable {
+                    name,
+                    col_count,
+                    row_count: res.get("TABLE_ROWS").unwrap(),
+                    created: created.map_or(None, |d| Some(d.to_string())),
+                    updated: updated.map_or(None, |d| Some(d.to_string())),
+                }
+            })
+            .collect();
+
+        Ok(tables)
+    }
+
+    fn table_exists(&self, name: &str) -> Result<bool, Self::Error> {
+        let q = format!(
+            "
+                SELECT count(*) 
+                FROM information_schema.tables
+                WHERE table_schema = '{}' AND table_name = '{}'
+            ",
+            self.config.db_name.clone().unwrap(),
+            name
+        );
+
+        let qr = self.exec_query(&q)?;
+        let exists = qr.first().map_or(false, |r| r.get("count(*)").unwrap());
+
+        Ok(exists)
+    }
+
+    fn save_table_config(
+        &mut self,
+        table_name: &str,
+        table_config: TableConfig,
+        save_local: bool,
+    ) -> Result<(), Self::Error> {
+        if save_local {
+            println!("spath {}", &table_config.special_columns.as_ref().unwrap().first().unwrap().path);
+
+            let mut configs = self.table_configs.clone().unwrap_or_default();
+            configs.insert(String::from(table_name), table_config);
+            self.table_configs = Some(configs);
+
+            println!("saved {}", self.table_configs.is_some())
+        } else {
+            //TODO: Save remotely...
+        }
+
+        // self.table_configs = Some(configs);
+        Ok(())
     }
 }
 
@@ -180,8 +230,9 @@ mod test {
     #[test]
     fn test_table_count_summary() -> Result<(), AppError> {
         let db = create_db()?;
-        db.table_summary()?;
+        db.load_tables()?;
         db.db_size()?;
+        db.table_exists("swp")?;
 
         Ok(())
     }

@@ -3,7 +3,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::imp::database::{mysql::MysqlConn, DbConnectionDetails};
+use serde::Serialize;
+
+use crate::imp::database::{mysql::MysqlConn, DbConnectionDetails, TableConfig};
 use crate::User;
 
 use super::{
@@ -12,15 +14,44 @@ use super::{
     AppError, SharedConnection,
 };
 
+pub(crate) type TableList = Vec<BasableTable>;
+
+#[derive(Serialize, Clone)]
+pub(crate) struct BasableTable {
+    pub name: String,
+    pub row_count: u32,
+    pub col_count: u32,
+    pub created: Option<String>,
+    pub updated: Option<String>,
+}
+
 /// Basable base trait that must be implemented by every instance of connection in Basable.
-/// 
+///
 /// Check `imp` module for different implementations of this trait.
 pub(crate) trait BasableConnection: Send + Sync {
     type Error;
+    /// A new instance of BasableConnection
     fn new(conn: Config) -> Result<Self, Self::Error>
     where
         Self: Sized;
-    fn get_details(&self) -> Result<DbConnectionDetails, Self::Error>;
+
+    /// Details about the connection
+    fn details(&self) -> Result<DbConnectionDetails, Self::Error>;
+
+    /// Load table summaries
+    fn load_tables(&self) -> Result<TableList, Self::Error>;
+
+    /// Check if a table with the given name exists in the database connection.
+    fn table_exists(&self, name: &str) -> Result<bool, Self::Error>;
+
+    /// Saves a table configuration. If `save_local` is true, it saves in memore using 
+    /// `BasableConnection` instance. Otherwise, it saves to remote server.
+    fn save_table_config(
+        &mut self,
+        table_name: &str,
+        table_config: TableConfig,
+        save_local: bool,
+    ) -> Result<(), Self::Error>;
 }
 
 #[derive(Default)]

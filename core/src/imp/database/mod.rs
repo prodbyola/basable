@@ -1,24 +1,88 @@
 use std::collections::HashMap;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+use crate::base::foundation::TableList;
 
 pub(crate) mod mysql;
 
 pub(crate) type DBVersion = HashMap<String, String>;
-pub(crate) type TableSummaries = Vec<TableSummary>;
-
-#[derive(Serialize)]
-pub(crate) struct TableSummary {
-    pub name: String,
-    pub row_count: u32,
-    pub col_count: u32,
-    pub created: Option<String>,
-    pub updated: Option<String>,
-}
 
 #[derive(Serialize, Default)]
 pub(crate) struct DbConnectionDetails {
-    pub tables: TableSummaries,
+    pub tables: TableList,
     pub version: DBVersion,
     pub db_size: f64,
+}
+
+#[derive(Deserialize, Clone)]
+/// Table column used for querying table history such as when a row was added or when a row was updated.
+pub(crate) struct HistoryColumn {
+    name: String,
+    format: String,
+    has_time: bool,
+}
+
+#[derive(Deserialize, Clone)]
+/// The type of `SpecialColumn`
+pub(crate) enum SpecialValueType {
+    Image, Audio, Video, PDF, Webpage
+}
+
+#[derive(Deserialize, Clone)]
+/// Special columns are columns whose values should lead to some sort of media types.
+pub(crate) struct SpecialColumn {
+    name: String,
+    special_type: SpecialValueType,
+    path: String,
+}
+
+#[derive(Deserialize, Clone)]
+/// The action that should trigger `NotifyEvent`.
+enum NotifyTrigger {
+    Create, Update, Delete
+}
+
+#[derive(Deserialize, Clone)]
+/// When shoult `NotifyEvent` get triggered around `NotifyTrigger`.
+pub(crate) enum NotifyTriggerTime {
+    Before, After
+}
+
+#[derive(Deserialize, Clone)]
+/// The REST API method expected by the webhook URL.
+pub(crate) enum NotifyEventMethod {
+    Get, Post, Delete, Put, Patch
+}
+
+#[derive(Deserialize, Clone)]
+/// What should happen to the operation `NotifyTrigger` when there's notification error?
+/// Let's say there's a server error from the webhook URL, should we proceed or fail the operation? 
+pub(crate) enum OnNotifyError {
+    Fail, Proceed
+}
+
+#[derive(Deserialize, Clone)]
+/// Event sent to a given webhook URL based on certain `NotifyTrigger`
+pub(crate) struct NotifyEvent {
+    trigger: NotifyTrigger,
+    trigger_time: NotifyTriggerTime,
+    method: NotifyEventMethod,
+    url: String,
+    on_error: OnNotifyError,
+}
+
+#[derive(Deserialize, Clone)]
+pub(crate) struct TableConfig {
+    /// Column for querying when a row was created.
+    created_column: Option<HistoryColumn>,
+
+    /// Column for querying when a row was updated.
+    updated_column: Option<HistoryColumn>,
+
+    /// Special columns that return `SpecialValueType`
+    special_columns: Option<Vec<SpecialColumn>>,
+
+    /// Notification events for this table.
+    events: Option<Vec<NotifyEvent>>
 }
