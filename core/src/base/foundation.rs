@@ -52,6 +52,12 @@ pub(crate) trait BasableConnection: Send + Sync {
         table_config: TableConfig,
         save_local: bool,
     ) -> Result<(), Self::Error>;
+
+    fn get_table_config(
+        &mut self,
+        table_name: &str,
+        get_local: bool,
+    ) -> Result<TableConfig, Self::Error>;
 }
 
 #[derive(Default)]

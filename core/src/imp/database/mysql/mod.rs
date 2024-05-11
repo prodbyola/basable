@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use axum::http::StatusCode;
 use mysql::Result;
 use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 use time::Date;
@@ -192,19 +193,42 @@ impl BasableConnection for MysqlConn {
         save_local: bool,
     ) -> Result<(), Self::Error> {
         if save_local {
-            println!("spath {}", &table_config.special_columns.as_ref().unwrap().first().unwrap().path);
-
             let mut configs = self.table_configs.clone().unwrap_or_default();
+
             configs.insert(String::from(table_name), table_config);
             self.table_configs = Some(configs);
-
-            println!("saved {}", self.table_configs.is_some())
         } else {
             //TODO: Save remotely...
         }
 
         // self.table_configs = Some(configs);
         Ok(())
+    }
+
+    fn get_table_config(
+        &mut self,
+        table_name: &str,
+        get_local: bool,
+    ) -> Result<TableConfig, Self::Error> {
+
+        let err_msg = "Unable to retrieve local config";
+        let err= AppError::new(StatusCode::INTERNAL_SERVER_ERROR, &err_msg);
+        
+        if get_local {
+            if let Some(tbs) = &self.table_configs {
+                match tbs.get(table_name) {
+                    Some(config) => {
+                        let c = config.clone();
+                        Ok(c)
+                    },
+                    None => Err(err)
+                }
+            } else {
+                Err(err)
+            }
+        } else {
+            Err(err)
+        }
     }
 }
 
