@@ -1,55 +1,13 @@
 use std::sync::{Arc, Mutex};
 
-use uuid::Uuid;
-
-use super::table::{TableConfig, TableList};
-use crate::imp::database::{mysql::MysqlConn, DbConnectionDetails};
+use crate::imp::database::mysql::MysqlConn;
 use crate::User;
 
 use super::{
     auth::{create_jwt, JwtSession},
     config::{Config, Database, SourceType},
-    AppError, SharedConnection,
+    AppError, BasableConnection, SharedConnection,
 };
-
-/// Basable base trait that must be implemented by every instance of connection in Basable.
-///
-/// Check `imp` module for different implementations of this trait.
-pub(crate) trait BasableConnection: Send + Sync {
-    type Error;
-    /// A new instance of BasableConnection
-    fn new(conn: Config, user_id: &str) -> Result<Self, Self::Error>
-    where
-        Self: Sized;
-
-    fn get_id(&self) -> Uuid;
-
-    fn get_user_id(&self) -> &str;
-
-    /// Details about the connection
-    fn details(&self) -> Result<DbConnectionDetails, Self::Error>;
-
-    /// Load table summaries
-    fn load_tables(&self) -> Result<TableList, Self::Error>;
-
-    /// Check if a table with the given name exists in the database connection.
-    fn table_exists(&self, name: &str) -> Result<bool, Self::Error>;
-
-    /// Saves a table configuration. If `save_local` is true, it saves in memore using
-    /// `BasableConnection` instance. Otherwise, it saves to remote server.
-    fn save_table_config(
-        &mut self,
-        table_name: &str,
-        table_config: TableConfig,
-        save_local: bool,
-    ) -> Result<(), Self::Error>;
-
-    fn get_table_config(
-        &mut self,
-        table_name: &str,
-        get_local: bool,
-    ) -> Result<TableConfig, Self::Error>;
-}
 
 #[derive(Default)]
 pub(crate) struct Basable {
@@ -59,7 +17,10 @@ pub(crate) struct Basable {
 
 impl Basable {
     /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
-    pub(crate) fn create_connection(config: &Config, user_id: &str) -> Result<Option<SharedConnection>, AppError> {
+    pub(crate) fn create_connection(
+        config: &Config,
+        user_id: &str,
+    ) -> Result<Option<SharedConnection>, AppError> {
         let conn = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => MysqlConn::new(config.clone(), user_id)?,
@@ -76,10 +37,10 @@ impl Basable {
         for conn in &self.connections {
             let c = conn.lock().unwrap();
             if c.get_user_id() == user_id {
-                return Some(conn)
+                return Some(conn);
             }
         }
-        
+
         None
     }
 

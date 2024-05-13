@@ -7,7 +7,7 @@ use time::Date;
 use uuid::Uuid;
 
 use crate::base::config::Config;
-use crate::base::foundation::BasableConnection;
+use crate::base::BasableConnection;
 use crate::base::table::{TableConfig, TableDetails};
 use crate::base::AppError;
 
@@ -249,7 +249,7 @@ impl BasableConnection for MysqlConn {
 
 #[cfg(test)]
 mod test {
-    use crate::base::{foundation::BasableConnection, AppError};
+    use crate::base::{BasableConnection, AppError};
 
     use super::{Config, MysqlConn};
 

@@ -2,8 +2,8 @@ use axum::routing::post;
 use axum::Router;
 
 use crate::base::config::Config;
-use crate::base::foundation::{Basable, BasableConnection};
-use crate::base::AppError;
+use crate::base::foundation::Basable;
+use crate::base::{AppError, BasableConnection};
 use crate::http::app::AppState;
 use crate::http::middlewares::AuthExtractor;
 use crate::imp::database::DbConnectionDetails;
