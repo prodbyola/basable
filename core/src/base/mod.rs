@@ -7,6 +7,7 @@ use self::foundation::BasableConnection;
 pub(crate) mod auth;
 pub(crate) mod config;
 pub(crate) mod foundation;
+pub(crate) mod table;
 
 type SharedConnection = Arc<Mutex<dyn BasableConnection<Error = AppError>>>;
 

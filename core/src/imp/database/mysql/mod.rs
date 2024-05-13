@@ -4,16 +4,21 @@ use axum::http::StatusCode;
 use mysql::Result;
 use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 use time::Date;
+use uuid::Uuid;
 
 use crate::base::config::Config;
-use crate::base::foundation::{BasableConnection, BasableTable};
+use crate::base::foundation::BasableConnection;
+use crate::base::table::{TableConfig, TableDetails};
 use crate::base::AppError;
 
-use super::{DBVersion, DbConnectionDetails, TableConfig, TableList};
+use super::{DBVersion, DbConnectionDetails, TableList};
 
 /// MySQL implementation of `BasableConnection`
 #[derive(Clone, Default)]
 pub struct MysqlConn {
+    id: Uuid,
+    user_id: String,
+
     /// Database connection pool
     pool: Option<Pool>,
 
@@ -111,16 +116,26 @@ impl MysqlConn {
 impl BasableConnection for MysqlConn {
     type Error = AppError;
 
-    fn new(config: Config) -> Result<Self, AppError> {
+    fn new(config: Config, user_id: &str) -> Result<Self, AppError> {
         let url = config.build_url();
         let opts = Opts::from_url(&url).unwrap();
         let pool = Pool::new(opts)?;
 
         Ok(MysqlConn {
+            id: Uuid::new_v4(),
+            user_id: String::from(user_id),
             pool: Some(pool),
             config,
             table_configs: None,
         })
+    }
+
+    fn get_id(&self) -> Uuid {
+        self.id
+    }
+
+    fn get_user_id(&self) -> &str {
+        &self.user_id
     }
 
     fn details(&self) -> Result<DbConnectionDetails, AppError> {
@@ -147,7 +162,7 @@ impl BasableConnection for MysqlConn {
         );
 
         let results = self.exec_query(&query)?;
-        let tables: Vec<BasableTable> = results
+        let tables: Vec<TableDetails> = results
             .iter()
             .map(|res| {
                 let created = res.get("CREATE_TIME") as Option<Date>;
@@ -156,7 +171,7 @@ impl BasableConnection for MysqlConn {
 
                 let col_count = self.get_column_count(&name).unwrap();
 
-                BasableTable {
+                TableDetails {
                     name,
                     col_count,
                     row_count: res.get("TABLE_ROWS").unwrap(),
@@ -201,7 +216,6 @@ impl BasableConnection for MysqlConn {
             //TODO: Save remotely...
         }
 
-        // self.table_configs = Some(configs);
         Ok(())
     }
 
@@ -227,6 +241,7 @@ impl BasableConnection for MysqlConn {
                 Err(err)
             }
         } else {
+            // TODO: Get config remotely.
             Err(err)
         }
     }
@@ -248,7 +263,7 @@ mod test {
         config.host = Some(String::from("localhost"));
         config.port = Some(3306);
 
-        BasableConnection::new(config)
+        BasableConnection::new(config, "test_user")
     }
 
     #[test]

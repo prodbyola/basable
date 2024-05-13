@@ -34,8 +34,8 @@ async fn connect(
             bsbl.save_config(&config, &user.id);
         }
 
-        if let Some(conn) = Basable::create_connection(&config)? {
-            bsbl.add_connection(user.id.clone(), conn);
+        if let Some(conn) = Basable::create_connection(&config, &user.id)? {
+            bsbl.add_connection(conn);
 
             let conn = bsbl.get_connection(&user.id).unwrap().to_owned();
             let conn: std::sync::MutexGuard<'_, dyn BasableConnection<Error = AppError>> =

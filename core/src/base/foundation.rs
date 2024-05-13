@@ -1,11 +1,9 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use serde::Serialize;
+use uuid::Uuid;
 
-use crate::imp::database::{mysql::MysqlConn, DbConnectionDetails, TableConfig};
+use super::table::{TableConfig, TableList};
+use crate::imp::database::{mysql::MysqlConn, DbConnectionDetails};
 use crate::User;
 
 use super::{
@@ -14,26 +12,19 @@ use super::{
     AppError, SharedConnection,
 };
 
-pub(crate) type TableList = Vec<BasableTable>;
-
-#[derive(Serialize, Clone)]
-pub(crate) struct BasableTable {
-    pub name: String,
-    pub row_count: u32,
-    pub col_count: u32,
-    pub created: Option<String>,
-    pub updated: Option<String>,
-}
-
 /// Basable base trait that must be implemented by every instance of connection in Basable.
 ///
 /// Check `imp` module for different implementations of this trait.
 pub(crate) trait BasableConnection: Send + Sync {
     type Error;
     /// A new instance of BasableConnection
-    fn new(conn: Config) -> Result<Self, Self::Error>
+    fn new(conn: Config, user_id: &str) -> Result<Self, Self::Error>
     where
         Self: Sized;
+
+    fn get_id(&self) -> Uuid;
+
+    fn get_user_id(&self) -> &str;
 
     /// Details about the connection
     fn details(&self) -> Result<DbConnectionDetails, Self::Error>;
@@ -44,7 +35,7 @@ pub(crate) trait BasableConnection: Send + Sync {
     /// Check if a table with the given name exists in the database connection.
     fn table_exists(&self, name: &str) -> Result<bool, Self::Error>;
 
-    /// Saves a table configuration. If `save_local` is true, it saves in memore using 
+    /// Saves a table configuration. If `save_local` is true, it saves in memore using
     /// `BasableConnection` instance. Otherwise, it saves to remote server.
     fn save_table_config(
         &mut self,
@@ -62,16 +53,16 @@ pub(crate) trait BasableConnection: Send + Sync {
 
 #[derive(Default)]
 pub(crate) struct Basable {
-    pub users: HashMap<String, User>,
-    pub connections: HashMap<String, SharedConnection>,
+    pub users: Vec<User>,
+    pub connections: Vec<SharedConnection>,
 }
 
 impl Basable {
     /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
-    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharedConnection>, AppError> {
+    pub(crate) fn create_connection(config: &Config, user_id: &str) -> Result<Option<SharedConnection>, AppError> {
         let conn = match config.source_type() {
             SourceType::Database(db) => match db {
-                Database::Mysql => MysqlConn::new(config.clone())?,
+                Database::Mysql => MysqlConn::new(config.clone(), user_id)?,
                 _ => todo!(),
             },
             _ => todo!(),
@@ -82,7 +73,14 @@ impl Basable {
 
     /// Gets a user's active `BasableConnection`.
     pub(crate) fn get_connection(&self, user_id: &str) -> Option<&SharedConnection> {
-        self.connections.get(user_id)
+        for conn in &self.connections {
+            let c = conn.lock().unwrap();
+            if c.get_user_id() == user_id {
+                return Some(conn)
+            }
+        }
+        
+        None
     }
 
     /// Creates a new guest user using the request `SocketAddr`
@@ -109,26 +107,38 @@ impl Basable {
 
     /// Get an active `User` with the `user_id` from Basable's active users.
     pub(crate) fn find_user(&self, user_id: &str) -> Option<&User> {
-        self.users.get(user_id)
+        for u in &self.users {
+            if u.id == user_id {
+                return Some(u);
+            }
+        }
+
+        None
+    }
+
+    /// Get a user's position index
+    pub(crate) fn user_index(&self, user_id: &str) -> Option<usize> {
+        self.users.iter().position(|u| u.id == user_id)
     }
 
     /// Remove the user from Basable's active users.
     pub(crate) fn log_user_out(&mut self, user_id: &str) {
         if let Some(user) = self.find_user(user_id) {
+            let i = self.user_index(user_id).unwrap();
             user.logout();
-            self.users.remove(user_id);
+            self.users.remove(i);
         }
     }
 
     /// Adds a user to Basable's active user.
     fn add_user(&mut self, user: User) {
-        let id = user.id.clone();
-        self.users.insert(id, user);
+        // let id = user.id.clone();
+        self.users.push(user);
     }
 
     /// Adds a `BasableConnection` to active connections.
-    pub(crate) fn add_connection(&mut self, user_id: String, conn: SharedConnection) {
-        // TODO: Find and close existing connection before insert a new one.
-        self.connections.insert(user_id, conn);
+    pub(crate) fn add_connection(&mut self, conn: SharedConnection) {
+        // TODO: Find and close existing connection before inserting a new one.
+        self.connections.push(conn);
     }
 }

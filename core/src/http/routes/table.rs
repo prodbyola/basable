@@ -7,9 +7,8 @@ use axum::{
 use axum_macros::debug_handler;
 
 use crate::{
-    base::AppError,
+    base::{table::TableConfig, AppError},
     http::{app::AppState, middlewares::AuthExtractor},
-    imp::database::TableConfig,
 };
 
 #[debug_handler]

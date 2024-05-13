@@ -70,7 +70,7 @@ where
 
             match user_id {
                 Some(user_id) => {
-                    match bsbl.users.get(&user_id) {
+                    match bsbl.find_user(&user_id) {
                         Some(user) => {
                             return Ok(AuthExtractor(Some(user.clone())))
                         },
