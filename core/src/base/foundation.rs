@@ -44,6 +44,10 @@ impl Basable {
         None
     }
 
+    pub(crate) fn conn_index(&self, user_id: &str) -> Option<usize> {
+        self.connections.iter().position(|c| c.lock().unwrap().get_user_id() == user_id)
+    }
+
     /// Creates a new guest user using the request `SocketAddr`
     pub(crate) fn create_guest_user(&mut self, req_ip: &str) -> Result<JwtSession, AppError> {
         let session_id = create_jwt(req_ip)?; // jwt encode the ip
@@ -97,9 +101,12 @@ impl Basable {
         self.users.push(user);
     }
 
-    /// Adds a `BasableConnection` to active connections.
-    pub(crate) fn add_connection(&mut self, conn: SharedConnection) {
-        // TODO: Find and close existing connection before inserting a new one.
+    /// Remove any existing user's `BasableConnection` and add this.
+    pub(crate) fn add_connection(&mut self, user_id: &str, conn: SharedConnection) {
+        if let Some(index) = self.conn_index(user_id) {
+            self.connections.remove(index);
+        }
+
         self.connections.push(conn);
     }
 }

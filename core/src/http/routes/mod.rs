@@ -30,14 +30,16 @@ async fn connect(
     let mut bsbl = state.instance.lock().unwrap();
 
     if let Some(user) = user {
+        let user_id = user.id;
+
         if user.is_logged {
-            bsbl.save_config(&config, &user.id);
+            bsbl.save_config(&config, &user_id);
         }
 
-        if let Some(conn) = Basable::create_connection(&config, &user.id)? {
-            bsbl.add_connection(conn);
+        if let Some(conn) = Basable::create_connection(&config, &user_id)? {
+            bsbl.add_connection(&user_id, conn);
 
-            let conn = bsbl.get_connection(&user.id).unwrap().to_owned();
+            let conn = bsbl.get_connection(&user_id).unwrap().to_owned();
             let conn: std::sync::MutexGuard<'_, dyn BasableConnection<Error = AppError>> =
                 conn.lock().unwrap();
 
