@@ -21,6 +21,7 @@ async fn create_guest_user(
     Ok(Json(session))
 }
 
+/// Routes for user session management and authentication
 pub(super) fn auth_routes () -> Router<AppState> {
     Router::new()
         .route("/guest", post(create_guest_user))

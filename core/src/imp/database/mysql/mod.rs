@@ -173,7 +173,7 @@ impl BasableConnection for MysqlConn {
 
                 let table = Table {
                     name: name.clone(),
-                    conn_id: self.id.clone(),
+                    // conn_id: self.id.clone(),
                     config: None
                 };
 

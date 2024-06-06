@@ -23,7 +23,7 @@ impl User {
         // TODO: Close connection
     }
 
-    /// Saves this `Config` for user and create new connection using the `Config`.
+    /// Saves connection `Config` for user and create new connection using the `Config`.
     pub(crate) fn save_config(&self, config: &Config) {}
 }
 

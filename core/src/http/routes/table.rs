@@ -82,6 +82,7 @@ async fn get_configuration(
     ))
 }
 
+/// Routes for database table management
 pub(super) fn table_routes() -> Router<AppState> {
     Router::new()
         .route("/configurations/:table_name", put(save_configuration))

@@ -2,7 +2,6 @@ use std::sync::{Arc, Mutex};
 
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use super::AppError;
 
@@ -81,7 +80,7 @@ pub(crate) struct TableConfig {
 #[derive(Clone)]
 pub(crate) struct Table {
     pub name: String,
-    pub conn_id: Uuid,
+    // pub conn_id: Uuid,
     pub config: Option<TableConfig>
 }
 
