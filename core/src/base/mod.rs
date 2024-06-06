@@ -1,11 +1,12 @@
 use std::{fmt::Display, sync::{Arc, Mutex}};
 
 use axum::{body::Body, http::{Response, StatusCode}, response::IntoResponse};
+use table::SharedTable;
 use uuid::Uuid;
 
 use crate::imp::database::DbConnectionDetails;
 
-use self::{config::Config, table::{TableConfig, TableList}};
+use self::{config::Config, table::TableSummaries};
 
 pub(crate) mod auth;
 pub(crate) mod config;
@@ -27,28 +28,15 @@ pub(crate) trait BasableConnection: Send + Sync {
     fn get_user_id(&self) -> &str;
 
     /// Details about the connection
-    fn details(&self) -> Result<DbConnectionDetails, Self::Error>;
+    fn details(&mut self) -> Result<DbConnectionDetails, Self::Error>;
 
-    /// Load table summaries
-    fn load_tables(&self) -> Result<TableList, Self::Error>;
+    /// Load connection tables from DB source and return table summaries
+    fn load_tables(&mut self) -> Result<TableSummaries, Self::Error>;
 
     /// Check if a table with the given name exists in the database connection.
     fn table_exists(&self, name: &str) -> Result<bool, Self::Error>;
 
-    /// Saves a table configuration. If `save_local` is true, it saves in memore using
-    /// `BasableConnection` instance. Otherwise, it saves to remote server.
-    fn save_table_config(
-        &mut self,
-        table_name: &str,
-        table_config: TableConfig,
-        save_local: bool,
-    ) -> Result<(), Self::Error>;
-
-    fn get_table_config(
-        &mut self,
-        table_name: &str,
-        get_local: bool,
-    ) -> Result<TableConfig, Self::Error>;
+    fn get_table(&self, name: &str) -> Option<SharedTable>;
 }
 
 

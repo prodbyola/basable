@@ -1,6 +1,6 @@
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
-use axum::http::StatusCode;
 use mysql::Result;
 use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 use time::Date;
@@ -8,10 +8,10 @@ use uuid::Uuid;
 
 use crate::base::config::Config;
 use crate::base::BasableConnection;
-use crate::base::table::{TableConfig, TableDetails};
+use crate::base::table::{SharedTable, Table, TableList, TableSummary};
 use crate::base::AppError;
 
-use super::{DBVersion, DbConnectionDetails, TableList};
+use super::{DBVersion, DbConnectionDetails, TableSummaries};
 
 /// MySQL implementation of `BasableConnection`
 #[derive(Clone, Default)]
@@ -19,16 +19,16 @@ pub struct MysqlConn {
     id: Uuid,
     user_id: String,
 
+    /// An abstraction of database connection table list
+    tables: TableList,
+
     /// Database connection pool
     pool: Option<Pool>,
 
     /// Connection options
     config: Config,
 
-    /// A map of table configurations for the current connection. This map is
-    /// saved for guest users/connections. Otherwise, configurations are saved on
-    /// remote server.
-    table_configs: Option<HashMap<String, TableConfig>>,
+    // table_configs: Option<HashMap<String, TableConfig>>,
 }
 
 impl MysqlConn {
@@ -126,7 +126,7 @@ impl BasableConnection for MysqlConn {
             user_id: String::from(user_id),
             pool: Some(pool),
             config,
-            table_configs: None,
+            tables: Vec::new()
         })
     }
 
@@ -138,7 +138,7 @@ impl BasableConnection for MysqlConn {
         &self.user_id
     }
 
-    fn details(&self) -> Result<DbConnectionDetails, AppError> {
+    fn details(&mut self) -> Result<DbConnectionDetails, AppError> {
         let version = self.show_version()?;
         let tables = self.load_tables()?;
         let size = self.db_size()?;
@@ -150,7 +150,7 @@ impl BasableConnection for MysqlConn {
         })
     }
 
-    fn load_tables(&self) -> Result<TableList, AppError> {
+    fn load_tables(&mut self) -> Result<TableSummaries, AppError> {
         let query = format!(
             "
                 SELECT table_name, table_rows, create_time, update_time
@@ -162,7 +162,7 @@ impl BasableConnection for MysqlConn {
         );
 
         let results = self.exec_query(&query)?;
-        let tables: Vec<TableDetails> = results
+        let tables: Vec<TableSummary> = results
             .iter()
             .map(|res| {
                 let created = res.get("CREATE_TIME") as Option<Date>;
@@ -171,7 +171,16 @@ impl BasableConnection for MysqlConn {
 
                 let col_count = self.get_column_count(&name).unwrap();
 
-                TableDetails {
+                let table = Table {
+                    name: name.clone(),
+                    conn_id: self.id.clone(),
+                    config: None
+                };
+
+                self.tables = Vec::new();
+                self.tables.push(Arc::new(Mutex::new(table)));
+
+                TableSummary {
                     name,
                     col_count,
                     row_count: res.get("TABLE_ROWS").unwrap(),
@@ -201,50 +210,18 @@ impl BasableConnection for MysqlConn {
         Ok(exists)
     }
 
-    fn save_table_config(
-        &mut self,
-        table_name: &str,
-        table_config: TableConfig,
-        save_local: bool,
-    ) -> Result<(), Self::Error> {
-        if save_local {
-            let mut configs = self.table_configs.clone().unwrap_or_default();
+    fn get_table(&self, name: &str) -> Option<SharedTable> {
+        for table in &self.tables {
+            let t = table.lock().unwrap();
 
-            configs.insert(String::from(table_name), table_config);
-            self.table_configs = Some(configs);
-        } else {
-            //TODO: Save remotely...
-        }
-
-        Ok(())
-    }
-
-    fn get_table_config(
-        &mut self,
-        table_name: &str,
-        get_local: bool,
-    ) -> Result<TableConfig, Self::Error> {
-
-        let err_msg = "Unable to retrieve local config";
-        let err= AppError::new(StatusCode::INTERNAL_SERVER_ERROR, &err_msg);
-        
-        if get_local {
-            if let Some(tbs) = &self.table_configs {
-                match tbs.get(table_name) {
-                    Some(config) => {
-                        let c = config.clone();
-                        Ok(c)
-                    },
-                    None => Err(err)
-                }
-            } else {
-                Err(err)
+            if t.name == name {
+                return Some(table.clone())
             }
-        } else {
-            // TODO: Get config remotely.
-            Err(err)
         }
-    }
+
+        None
+    } 
+    
 }
 
 #[cfg(test)]
@@ -268,7 +245,7 @@ mod test {
 
     #[test]
     fn test_table_count_summary() -> Result<(), AppError> {
-        let db = create_db()?;
+        let mut db = create_db()?;
         db.load_tables()?;
         db.db_size()?;
         db.table_exists("swp")?;

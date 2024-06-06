@@ -21,7 +21,7 @@ async fn save_configuration(
     if let Some(user) = user {
         let bsbl = state.instance.lock().unwrap();
         let conn = bsbl.get_connection(&user.id).unwrap();
-        let mut conn = conn.lock().unwrap();
+        let conn = &mut conn.lock().unwrap();
 
         let exists = conn.table_exists(&table_name)?;
 
@@ -31,7 +31,12 @@ async fn save_configuration(
             return Err(AppError::new(StatusCode::NOT_FOUND, &msg));
         }
 
-        conn.save_table_config(&table_name, config, !user.is_logged)?;
+        let table = conn.get_table(&table_name);
+
+        if let Some(table) = table  {
+            let mut table = table.lock().unwrap();
+            table.save_config(config, !user.is_logged)?;
+        }
 
         return Ok(String::from("Operation successful."));
     }
@@ -47,11 +52,11 @@ async fn get_configuration(
     Path(table_name): Path<String>,
     AuthExtractor(user): AuthExtractor,
     State(state): State<AppState>,
-) -> Result<Json<TableConfig>, AppError> {
+) -> Result<Json<Option<TableConfig>>, AppError> {
     if let Some(user) = user {
         let bsbl = state.instance.lock().unwrap();
         let conn = bsbl.get_connection(&user.id).unwrap();
-        let mut conn = conn.lock().unwrap();
+        let conn = conn.lock().unwrap();
 
         let exists = conn.table_exists(&table_name)?;
 
@@ -61,7 +66,12 @@ async fn get_configuration(
             return Err(AppError::new(StatusCode::NOT_FOUND, &msg));
         }
 
-        let config = conn.get_table_config(&table_name, !user.is_logged)?;
+        let mut config = None;
+        if let Some(table) = conn.get_table(&table_name) {
+            let table = table.lock().unwrap();
+            config = table.get_config(!user.is_logged)?;
+        }
+        
 
         return Ok(Json(config));
     }

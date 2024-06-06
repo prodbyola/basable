@@ -1,4 +1,10 @@
+use std::sync::{Arc, Mutex};
+
+use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use super::AppError;
 
 #[derive(Deserialize, Serialize, Clone)]
 /// Table column used for querying table history such as when a row was added or when a row was updated.
@@ -72,15 +78,40 @@ pub(crate) struct TableConfig {
     events: Option<Vec<NotifyEvent>>
 }
 
+#[derive(Clone)]
 pub(crate) struct Table {
-    name: String,
-    conn_id: String
+    pub name: String,
+    pub conn_id: Uuid,
+    pub config: Option<TableConfig>
 }
 
-pub(crate) type TableList = Vec<TableDetails>;
+impl Table {
+    pub fn save_config(&mut self, config: TableConfig, save_local: bool) -> Result<(), AppError> {
+        if save_local {
+            self.config = Some(config);
+        } else {
+            // TODO: Save to remote server
+        }
+
+        Ok(())
+    }
+
+    pub fn get_config(&self, get_local: bool) -> Result<Option<TableConfig>, AppError> {
+        if get_local {
+            return Ok(self.config.clone())
+        } else {
+            // TODO: Get from remote server
+            return Err(AppError::new(StatusCode::NOT_IMPLEMENTED, "Not implemented"))
+        }
+    }
+}
+
+pub(crate) type TableSummaries = Vec<TableSummary>;
+pub(crate) type SharedTable = Arc<Mutex<Table>>;
+pub(crate) type TableList = Vec<SharedTable>;
 
 #[derive(Serialize, Clone)]
-pub(crate) struct TableDetails {
+pub(crate) struct TableSummary {
     pub name: String,
     pub row_count: u32,
     pub col_count: u32,
