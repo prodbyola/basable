@@ -20,8 +20,8 @@ async fn save_configuration(
 ) -> Result<String, AppError> {
     if let Some(user) = user {
         let bsbl = state.instance.lock().unwrap();
-        let conn = bsbl.get_connection(&user.id).unwrap();
-        let conn = &mut conn.lock().unwrap();
+        let conn = bsbl.get_user_connection(&user.id).unwrap();
+        let conn = conn.lock().unwrap();
 
         let exists = conn.table_exists(&table_name)?;
 
@@ -33,7 +33,7 @@ async fn save_configuration(
 
         let table = conn.get_table(&table_name);
 
-        if let Some(table) = table  {
+        if let Some(table) = table {
             let mut table = table.lock().unwrap();
             table.save_config(config, !user.is_logged)?;
         }
@@ -55,7 +55,7 @@ async fn get_configuration(
 ) -> Result<Json<Option<TableConfig>>, AppError> {
     if let Some(user) = user {
         let bsbl = state.instance.lock().unwrap();
-        let conn = bsbl.get_connection(&user.id).unwrap();
+        let conn = bsbl.get_user_connection(&user.id).unwrap();
         let conn = conn.lock().unwrap();
 
         let exists = conn.table_exists(&table_name)?;
@@ -71,7 +71,6 @@ async fn get_configuration(
             let table = table.lock().unwrap();
             config = table.get_config(!user.is_logged)?;
         }
-        
 
         return Ok(Json(config));
     }
@@ -82,9 +81,30 @@ async fn get_configuration(
     ))
 }
 
+#[debug_handler]
+async fn get_columns(
+    Path(table_name): Path<String>,
+    AuthExtractor(user): AuthExtractor,
+    State(state): State<AppState>,
+) -> Result<(), AppError> {
+    if let Some(user) = user {
+        let bsbl = state.instance.lock().unwrap();
+        let conn = bsbl.get_user_connection(&user.id).unwrap();
+        let conn = conn.lock().unwrap();
+        
+        if let Some(table) = conn.get_table(&table_name)  {
+            let table = table.lock().unwrap();
+            table.get_columns(&bsbl)?;
+        }
+    }
+
+    Ok(())
+}
+
 /// Routes for database table management
 pub(super) fn table_routes() -> Router<AppState> {
     Router::new()
         .route("/configurations/:table_name", put(save_configuration))
         .route("/configurations/:table_name", get(get_configuration))
+        .route("/columns/:table_name", get(get_columns))
 }

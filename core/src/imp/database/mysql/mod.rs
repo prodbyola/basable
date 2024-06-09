@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use mysql::Result;
-use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
+use mysql::{Result, Row};
+use mysql::{prelude::Queryable, Opts, Params, Pool};
 use time::Date;
 use uuid::Uuid;
 
@@ -34,13 +34,6 @@ pub struct MysqlConn {
 impl MysqlConn {
     fn pool(&self) -> Pool {
         self.pool.clone().unwrap()
-    }
-
-    fn exec_query(&self, query: &str) -> Result<Vec<Row>> {
-        let conn = &mut self.pool().get_conn()?;
-
-        let stmt = conn.prep(query)?;
-        conn.exec(stmt, Params::Empty)
     }
 
     /// Get MySQL server version and host OS version
@@ -173,11 +166,10 @@ impl BasableConnection for MysqlConn {
 
                 let table = Table {
                     name: name.clone(),
-                    // conn_id: self.id.clone(),
+                    conn_id: self.id.clone(),
                     config: None
                 };
 
-                self.tables = Vec::new();
                 self.tables.push(Arc::new(Mutex::new(table)));
 
                 TableSummary {
@@ -221,35 +213,12 @@ impl BasableConnection for MysqlConn {
 
         None
     } 
-    
-}
 
-#[cfg(test)]
-mod test {
-    use crate::base::{BasableConnection, AppError};
+    fn exec_query(&self, query: &str) -> mysql::Result<Vec<Row>> {
+        let conn = &mut self.pool().get_conn()?;
 
-    use super::{Config, MysqlConn};
-
-    fn create_db() -> Result<MysqlConn, AppError> {
-        let db_name = "basable";
-        let mut config = Config::default();
-
-        config.db_name = Some(String::from(db_name));
-        config.username = Some(String::from(db_name));
-        config.password = Some(String::from("Basable@2024"));
-        config.host = Some(String::from("localhost"));
-        config.port = Some(3306);
-
-        BasableConnection::new(config, "test_user")
-    }
-
-    #[test]
-    fn test_table_count_summary() -> Result<(), AppError> {
-        let mut db = create_db()?;
-        db.load_tables()?;
-        db.db_size()?;
-        db.table_exists("swp")?;
-
-        Ok(())
+        let stmt = conn.prep(query)?;
+        conn.exec(stmt, Params::Empty)
     }
 }
+

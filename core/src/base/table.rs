@@ -2,8 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-use super::AppError;
+use super::{foundation::Basable, AppError};
 
 #[derive(Deserialize, Serialize, Clone)]
 /// Table column used for querying table history such as when a row was added or when a row was updated.
@@ -16,7 +17,11 @@ pub(crate) struct HistoryColumn {
 #[derive(Deserialize, Serialize, Clone)]
 /// The type of `SpecialColumn`
 pub(crate) enum SpecialValueType {
-    Image, Audio, Video, PDF, Webpage
+    Image,
+    Audio,
+    Video,
+    PDF,
+    Webpage,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -30,26 +35,34 @@ pub(crate) struct SpecialColumn {
 #[derive(Deserialize, Serialize, Clone)]
 /// The action that should trigger `NotifyEvent`.
 enum NotifyTrigger {
-    Create, Update, Delete
+    Create,
+    Update,
+    Delete,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 /// When should `NotifyEvent` get triggered around `NotifyTrigger`.
 pub(crate) enum NotifyTriggerTime {
-    Before, After
+    Before,
+    After,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 /// The REST API method expected by the webhook URL.
 pub(crate) enum NotifyEventMethod {
-    Get, Post, Delete, Put, Patch
+    Get,
+    Post,
+    Delete,
+    Put,
+    Patch,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 /// What should happen to the operation `NotifyTrigger` when there's notification error?
-/// Let's say there's a server error from the webhook URL, should we proceed or fail the operation? 
+/// Let's say there's a server error from the webhook URL, should we proceed or fail the operation?
 pub(crate) enum OnNotifyError {
-    Fail, Proceed
+    Fail,
+    Proceed,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -74,14 +87,14 @@ pub(crate) struct TableConfig {
     special_columns: Option<Vec<SpecialColumn>>,
 
     /// Notification events for this table.
-    events: Option<Vec<NotifyEvent>>
+    events: Option<Vec<NotifyEvent>>,
 }
 
 #[derive(Clone)]
 pub(crate) struct Table {
     pub name: String,
-    // pub conn_id: Uuid,
-    pub config: Option<TableConfig>
+    pub conn_id: Uuid,
+    pub config: Option<TableConfig>,
 }
 
 impl Table {
@@ -97,11 +110,43 @@ impl Table {
 
     pub fn get_config(&self, get_local: bool) -> Result<Option<TableConfig>, AppError> {
         if get_local {
-            return Ok(self.config.clone())
+            return Ok(self.config.clone());
         } else {
             // TODO: Get from remote server
-            return Err(AppError::new(StatusCode::NOT_IMPLEMENTED, "Not implemented"))
+            return Err(AppError::new(
+                StatusCode::NOT_IMPLEMENTED,
+                "Not implemented",
+            ));
         }
+    }
+
+    pub(crate) fn get_columns(&self, bsbl: &Basable) -> Result<(), AppError> {
+        println!("About to get connection...");
+        if let Some(conn) = bsbl.get_connection(&self.conn_id) {
+            println!("About to lock connection...");
+            let conn = conn.lock().unwrap();
+            println!("Connecttion locked...");
+
+            let query = format!(
+                "
+                    SELECT column_name, column_type, is_nullable, column_default 
+                    FROM information_schema.columns 
+                    WHERE table_name = '{}'
+                ",
+                self.name
+            );
+
+
+            println!("Running query...");
+            let result = conn.exec_query(&query)?;
+            println!("Result received...");
+
+            for r in result {
+                println!("{:?}", r);
+            }
+        }
+
+        Ok(())
     }
 }
 

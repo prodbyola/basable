@@ -39,7 +39,7 @@ async fn connect(
         if let Some(conn) = Basable::create_connection(&config, &user_id)? {
             bsbl.add_connection(&user_id, conn);
 
-            let conn = bsbl.get_connection(&user_id).unwrap().to_owned();
+            let conn = bsbl.get_user_connection(&user_id).unwrap().to_owned();
             let mut conn: std::sync::MutexGuard<'_, dyn BasableConnection<Error = AppError>> =
                 conn.lock().unwrap();
 

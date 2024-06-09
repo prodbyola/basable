@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex};
 
+use uuid::Uuid;
+
 use crate::imp::database::mysql::MysqlConn;
 use crate::User;
 
@@ -33,7 +35,7 @@ impl Basable {
     }
 
     /// Gets a user's active `BasableConnection`.
-    pub(crate) fn get_connection(&self, user_id: &str) -> Option<&SharedConnection> {
+    pub(crate) fn get_user_connection(&self, user_id: &str) -> Option<&SharedConnection> {
         for conn in &self.connections {
             let c = conn.lock().unwrap();
             if c.get_user_id() == user_id {
@@ -44,8 +46,23 @@ impl Basable {
         None
     }
 
+    pub(crate) fn get_connection(&self, id: &Uuid) -> Option<&SharedConnection> {
+        for conn in &self.connections {
+            println!("Before lock {}", self.connections.len());
+            let c = conn.lock().unwrap();
+            println!("After lock {}", self.connections.len());
+            if c.get_id() == *id {
+                return Some(conn);
+            }
+        }
+
+        None
+    }
+
     pub(crate) fn conn_index(&self, user_id: &str) -> Option<usize> {
-        self.connections.iter().position(|c| c.lock().unwrap().get_user_id() == user_id)
+        self.connections
+            .iter()
+            .position(|c| c.lock().unwrap().get_user_id() == user_id)
     }
 
     /// Creates a new guest user using the request `SocketAddr`
