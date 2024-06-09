@@ -2,9 +2,8 @@ use std::sync::{Arc, Mutex};
 
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-use super::{foundation::Basable, AppError};
+use super::{AppError, Connector};
 
 #[derive(Deserialize, Serialize, Clone)]
 /// Table column used for querying table history such as when a row was added or when a row was updated.
@@ -93,7 +92,6 @@ pub(crate) struct TableConfig {
 #[derive(Clone)]
 pub(crate) struct Table {
     pub name: String,
-    pub conn_id: Uuid,
     pub config: Option<TableConfig>,
 }
 
@@ -120,30 +118,24 @@ impl Table {
         }
     }
 
-    pub(crate) fn get_columns(&self, bsbl: &Basable) -> Result<(), AppError> {
+    pub(crate) fn get_columns(&self, conn: &dyn Connector) -> Result<(), AppError> {
         println!("About to get connection...");
-        if let Some(conn) = bsbl.get_connection(&self.conn_id) {
-            println!("About to lock connection...");
-            let conn = conn.lock().unwrap();
-            println!("Connecttion locked...");
-
-            let query = format!(
-                "
-                    SELECT column_name, column_type, is_nullable, column_default 
-                    FROM information_schema.columns 
-                    WHERE table_name = '{}'
-                ",
-                self.name
-            );
+        let query = format!(
+            "
+                SELECT column_name, column_type, is_nullable, column_default 
+                FROM information_schema.columns 
+                WHERE table_name = '{}'
+            ",
+            self.name
+        );
 
 
-            println!("Running query...");
-            let result = conn.exec_query(&query)?;
-            println!("Result received...");
+        println!("Running query...");
+        let result = conn.exec_query(&query)?;
+        println!("Result received...");
 
-            for r in result {
-                println!("{:?}", r);
-            }
+        for r in result {
+            println!("{:?}", r);
         }
 
         Ok(())

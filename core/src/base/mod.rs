@@ -1,3 +1,4 @@
+use core::str;
 use std::{
     fmt::Display,
     sync::{Arc, Mutex},
@@ -22,37 +23,46 @@ pub(crate) mod foundation;
 pub(crate) mod table;
 
 /// A sharable connection that belongs to a specific user
-type SharedConnection = Arc<Mutex<dyn BasableConnection<Error = AppError>>>;
+type SharedConnection = Arc<Mutex<dyn DB>>;
 
-/// Basable base trait that must be implemented by every instance of connection in Basable.
-///
-/// Check `imp` module for different implementations of this trait.
-pub(crate) trait BasableConnection: Send + Sync {
-    type Error;
-    /// A new instance of BasableConnection
-    fn new(conn: Config, user_id: &str) -> Result<Self, Self::Error>
+/// Facilitates connection and run queries between `Basable` instance and a databse server
+pub(crate) trait Connector: Send + Sync {
+    /// Create a new connector
+    fn new(conn: Config) -> Result<Self, AppError>
     where
         Self: Sized;
 
+    /// Execute a database query and return results
+    fn exec_query(&self, query: &str) -> mysql::Result<Vec<Row>>;
+}
+
+/// An abstraction of database connection.
+pub(crate) trait DB: Send + Sync {
+    /// Get the `DB`'s connector instance.
+    fn connector(&self) -> &dyn Connector;
+    
     /// Get connection id
     fn get_id(&self) -> Uuid;
 
-    /// Get connection user id
-    fn get_user_id(&self) -> &str;
+    /// Load available tables into `DB` instance
+    fn load_tables(&mut self) -> Result<(), AppError>;
 
-    /// Details about the connection
-    fn details(&mut self) -> Result<DbConnectionDetails, Self::Error>;
+    /// Query DB server for available tables
+    fn query_tables(&self) -> mysql::Result<Vec<Row>>;
 
-    /// Load connection tables from DB source and return table summaries
-    fn load_tables(&mut self) -> Result<TableSummaries, Self::Error>;
+    /// Query connection tables from DB source and return table summaries
+    fn query_table_summaries(&mut self) -> Result<TableSummaries, AppError>;
 
     /// Check if a table with the given name exists in the database connection.
-    fn table_exists(&self, name: &str) -> Result<bool, Self::Error>;
+    fn table_exists(&self, name: &str) -> Result<bool, AppError>;
 
     /// Get an instance of a table with a given name. The return table is mutable across threads.
-    fn get_table(&self, name: &str) -> Option<SharedTable>;
+    fn get_table(&self, name: &str) -> Option<&SharedTable>;
 
-    fn exec_query(&self, query: &str) -> mysql::Result<Vec<Row>>;
+    /// Details about the connection
+    fn details(&mut self) -> Result<DbConnectionDetails, AppError>;
+
+    fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;
 }
 
 #[derive(Debug)]
@@ -88,13 +98,16 @@ impl IntoResponse for AppError {
 mod test {
     use crate::base::{foundation::Basable, AppError};
 
-    use super::Config;
+    use super::{auth::User, Config};
 
     static TEST_USER_ID: &str = "test_user";
 
     fn create_instance() -> Result<Basable, AppError> {
         let db_name = "basable";
         let mut config = Config::default();
+
+        let mut user = User::default();
+        user.id = TEST_USER_ID.to_owned();
 
         config.db_name = Some(String::from(db_name));
         config.username = Some(String::from(db_name));
@@ -103,8 +116,8 @@ mod test {
         config.port = Some(3306);
 
         let mut bslb = Basable::default();
-        let conn = Basable::create_connection(&config, TEST_USER_ID)?;
-        bslb.add_connection(TEST_USER_ID, conn.unwrap());
+        let conn = Basable::create_connection(&config)?;
+        bslb.attach_db(TEST_USER_ID, conn.unwrap());
 
         Ok(bslb)
     }
@@ -113,15 +126,24 @@ mod test {
     fn test_instance() -> Result<(), AppError> {
         let bsbl = create_instance()?;
 
-        let conn = bsbl.get_user_connection(TEST_USER_ID).clone().unwrap();
-        let mut conn = conn.lock().unwrap();
+        let user = bsbl.find_user(TEST_USER_ID);
+        assert!(user.is_some());
 
-        conn.load_tables()?;
-        conn.table_exists("swp")?;
+        let user = user.unwrap();
+        let user = user.lock().unwrap();
 
-        if let Some(table) = conn.get_table("swp") {
+        assert!(user.db().is_some());
+
+        let db = user.db();
+        let db = db.unwrap();
+        let mut db = db.lock().unwrap();
+
+        db.load_tables()?;
+        db.table_exists("swp")?;
+
+        if let Some(table) = db.get_table("swp") {
             let table = table.lock().unwrap();
-            table.get_columns(&bsbl)?;
+            table.get_columns(db.connector())?;
         }
 
         Ok(())

@@ -1,39 +1,70 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use mysql::{Result, Row};
 use mysql::{prelude::Queryable, Opts, Params, Pool};
+use mysql::{Result, Row};
 use time::Date;
 use uuid::Uuid;
 
 use crate::base::config::Config;
-use crate::base::BasableConnection;
 use crate::base::table::{SharedTable, Table, TableList, TableSummary};
 use crate::base::AppError;
+use crate::base::{Connector, DB};
 
 use super::{DBVersion, DbConnectionDetails, TableSummaries};
 
 /// MySQL implementation of `BasableConnection`
 #[derive(Clone, Default)]
-pub struct MysqlConn {
-    id: Uuid,
-    user_id: String,
-
-    /// An abstraction of database connection table list
-    tables: TableList,
-
+pub struct MysqlConnector {
     /// Database connection pool
     pool: Option<Pool>,
 
     /// Connection options
     config: Config,
-
     // table_configs: Option<HashMap<String, TableConfig>>,
 }
 
-impl MysqlConn {
+impl MysqlConnector {
     fn pool(&self) -> Pool {
         self.pool.clone().unwrap()
+    }
+}
+
+impl Connector for MysqlConnector {
+    fn new(config: Config) -> Result<Self, AppError> {
+        let url = config.build_url();
+        let opts = Opts::from_url(&url).unwrap();
+        let pool = Pool::new(opts)?;
+
+        Ok(MysqlConnector {
+            pool: Some(pool),
+            config,
+        })
+    }
+
+    fn exec_query(&self, query: &str) -> mysql::Result<Vec<Row>> {
+        let conn = &mut self.pool().get_conn()?;
+
+        let stmt = conn.prep(query)?;
+        conn.exec(stmt, Params::Empty)
+    }
+}
+
+pub(crate) struct MySqlDB {
+    id: Uuid,
+    // user: User,
+    connector: MysqlConnector,
+    tables: TableList,
+}
+
+impl MySqlDB {
+    pub fn new(connector: MysqlConnector) -> Self {
+        MySqlDB {
+            connector,
+            // user,
+            tables: Vec::new(),
+            id: Uuid::new_v4()
+        }
     }
 
     /// Get MySQL server version and host OS version
@@ -61,26 +92,8 @@ impl MysqlConn {
         Ok(data)
     }
 
-    fn get_column_count(&self, tb_name: &str) -> Result<u32, AppError> {
-        let query = format!(
-            "
-                SELECT count(*) 
-                FROM information_schema.columns 
-                WHERE table_schema = '{}' and table_name = '{}'
-                ORDER BY table_name;
-            ",
-            self.config.db_name.clone().unwrap(),
-            tb_name
-        );
-
-        let qr = self.exec_query(&query)?;
-        let c: u32 = qr.first().map_or(0, |r| r.get("count(*)").unwrap());
-
-        Ok(c)
-    }
-
-    fn db_size(&self) -> Result<f64, AppError> {
-        let db = self.config.db_name.as_ref().unwrap();
+    fn size(&self) -> Result<f64, AppError> {
+        let db = self.config().db_name.as_ref().unwrap();
 
         let query = format!(
             "
@@ -104,46 +117,42 @@ impl MysqlConn {
 
         Ok(size)
     }
+
+    fn config(&self) -> &Config {
+        &self.connector.config
+    }
+
+    fn exec_query(&self, query: &str) -> mysql::Result<Vec<Row>> {
+        self.connector.exec_query(query)
+    }
 }
 
-impl BasableConnection for MysqlConn {
-    type Error = AppError;
+impl DB for MySqlDB {
+    // type Error = AppError;
+    // type Connector = MysqlConnector;
 
-    fn new(config: Config, user_id: &str) -> Result<Self, AppError> {
-        let url = config.build_url();
-        let opts = Opts::from_url(&url).unwrap();
-        let pool = Pool::new(opts)?;
-
-        Ok(MysqlConn {
-            id: Uuid::new_v4(),
-            user_id: String::from(user_id),
-            pool: Some(pool),
-            config,
-            tables: Vec::new()
-        })
+    fn connector(&self) -> &dyn Connector {
+        &self.connector
     }
 
     fn get_id(&self) -> Uuid {
         self.id
     }
 
-    fn get_user_id(&self) -> &str {
-        &self.user_id
+    fn load_tables(&mut self) -> Result<(), AppError> {
+        let tables = self.query_tables()?;
+        if !tables.is_empty() {
+            tables.iter().for_each(|t| {
+                let name: String = t.get("TABLE_NAME").unwrap();
+                let table = Table { name, config: None };
+
+                self.tables.push(Arc::new(Mutex::new(table)));
+            })
+        }
+        Ok(())
     }
 
-    fn details(&mut self) -> Result<DbConnectionDetails, AppError> {
-        let version = self.show_version()?;
-        let tables = self.load_tables()?;
-        let size = self.db_size()?;
-
-        Ok(DbConnectionDetails {
-            tables,
-            version,
-            db_size: size,
-        })
-    }
-
-    fn load_tables(&mut self) -> Result<TableSummaries, AppError> {
+    fn query_tables(&self) -> mysql::Result<Vec<Row>> {
         let query = format!(
             "
                 SELECT table_name, table_rows, create_time, update_time
@@ -151,10 +160,14 @@ impl BasableConnection for MysqlConn {
                 WHERE table_schema = '{}'
                 ORDER BY table_name;
             ",
-            self.config.db_name.clone().unwrap()
+            self.config().db_name.clone().unwrap()
         );
 
-        let results = self.exec_query(&query)?;
+        self.connector.exec_query(&query)
+    }
+
+    fn query_table_summaries(&mut self) -> Result<TableSummaries, AppError> {
+        let results = self.query_tables()?;
         let tables: Vec<TableSummary> = results
             .iter()
             .map(|res| {
@@ -162,15 +175,7 @@ impl BasableConnection for MysqlConn {
                 let updated = res.get("CREATE_TIME") as Option<Date>;
                 let name: String = res.get("TABLE_NAME").unwrap();
 
-                let col_count = self.get_column_count(&name).unwrap();
-
-                let table = Table {
-                    name: name.clone(),
-                    conn_id: self.id.clone(),
-                    config: None
-                };
-
-                self.tables.push(Arc::new(Mutex::new(table)));
+                let col_count = self.query_column_count(&name).unwrap();
 
                 TableSummary {
                     name,
@@ -185,14 +190,14 @@ impl BasableConnection for MysqlConn {
         Ok(tables)
     }
 
-    fn table_exists(&self, name: &str) -> Result<bool, Self::Error> {
+    fn table_exists(&self, name: &str) -> Result<bool, AppError> {
         let q = format!(
             "
                 SELECT count(*) 
                 FROM information_schema.tables
                 WHERE table_schema = '{}' AND table_name = '{}'
             ",
-            self.config.db_name.clone().unwrap(),
+            self.config().db_name.clone().unwrap(),
             name
         );
 
@@ -202,23 +207,37 @@ impl BasableConnection for MysqlConn {
         Ok(exists)
     }
 
-    fn get_table(&self, name: &str) -> Option<SharedTable> {
-        for table in &self.tables {
-            let t = table.lock().unwrap();
+    fn query_column_count(&self, tb_name: &str) -> Result<u32, AppError> {
+        let query = format!(
+            "
+                SELECT count(*) 
+                FROM information_schema.columns 
+                WHERE table_schema = '{}' and table_name = '{}'
+                ORDER BY table_name;
+            ",
+            self.config().db_name.clone().unwrap(),
+            tb_name
+        );
 
-            if t.name == name {
-                return Some(table.clone())
-            }
-        }
+        let qr = self.exec_query(&query)?;
+        let c: u32 = qr.first().map_or(0, |r| r.get("count(*)").unwrap());
 
-        None
-    } 
+        Ok(c)
+    }
 
-    fn exec_query(&self, query: &str) -> mysql::Result<Vec<Row>> {
-        let conn = &mut self.pool().get_conn()?;
+    fn get_table(&self, name: &str) -> Option<&SharedTable> {
+        self.tables.iter().find(|t| t.lock().unwrap().name == name)
+    }
 
-        let stmt = conn.prep(query)?;
-        conn.exec(stmt, Params::Empty)
+    fn details(&mut self) -> Result<DbConnectionDetails, AppError> {
+        let version = self.show_version()?;
+        let tables = self.query_table_summaries()?;
+        let size = self.size()?;
+
+        Ok(DbConnectionDetails {
+            tables,
+            version,
+            db_size: size,
+        })
     }
 }
-

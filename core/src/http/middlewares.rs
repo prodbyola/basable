@@ -6,7 +6,7 @@ use axum::{
 };
 
 use crate::base::{
-    auth::{decode_jwt, User},
+    auth::decode_jwt,
     AppError,
 };
 use crate::http::app::AppState;
@@ -14,7 +14,7 @@ use crate::http::app::AppState;
 /// Extracts information about the current `User` by inspecting the Authorization
 /// header. If Authorization is not provided, it checks for `B-Session-Id`, which should
 /// be provided for guest users. If none of this is found, the `User` is `None`.
-pub(crate) struct AuthExtractor(pub Option<User>);
+pub(crate) struct AuthExtractor(pub Option<String>);
 
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthExtractor
@@ -62,27 +62,7 @@ where
                 let err = AppError::new(StatusCode::NOT_IMPLEMENTED, "Authorization for registered users not implemented. Please use 'B-Session-Id' header.");
                 return Err(err);
             }
-
-            let err = AppError::new(
-                StatusCode::NOT_FOUND,
-                "User not found! Please try to login again.",
-            );
-
-            match user_id {
-                Some(user_id) => {
-                    match bsbl.find_user(&user_id) {
-                        Some(user) => {
-                            return Ok(AuthExtractor(Some(user.clone())))
-                        },
-                        None => {
-                            return Err(err)
-                        }
-                    }
-                }
-                None => {
-                    return Err(err);
-                }
-            }
+            return Ok(AuthExtractor(user_id))
         } else {
             let err = AppError::new(StatusCode::UNAUTHORIZED, "User authentication not provided.");
             return Err(err);

@@ -1,30 +1,51 @@
-use std::str::from_utf8;
+use std::{str::from_utf8, sync::{Arc, Mutex}};
 
 use axum::http::{HeaderValue, StatusCode};
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use super::{config::Config, AppError};
+use super::{config::Config, AppError, SharedConnection};
 
 // JWT_SECRET should be defined by the installer and saved in platform env variables.
 // You can generate one at https://djecrety.ir
 const BEARER: &str = "Bearer ";
 const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 
-#[derive(Clone, Debug)]
+// #[derive(Clone, Debug)]
 pub(crate) struct User {
     pub id: String,
     pub is_logged: bool,
+    db: Option<SharedConnection>
 }
 
+pub(crate) type SharedUser = Arc<Mutex<User>>;
+
 impl User {
+    pub fn db(&self) -> Option<&SharedConnection> {
+        if let Some(db) = &self.db {
+            return Some(db)
+        }
+
+        None
+    }
+
+    pub fn attach_db(&mut self, db: SharedConnection) {
+        self.db = Some(db);
+    }
+
     pub(crate) fn logout(&self) {
         // TODO: Close connection
     }
 
     /// Saves connection `Config` for user and create new connection using the `Config`.
     pub(crate) fn save_config(&self, config: &Config) {}
+}
+
+impl Default for User {
+    fn default() -> Self {
+        Self { id: String::new(), is_logged: false, db: None }
+    }
 }
 
 #[derive(Deserialize, Serialize)]
