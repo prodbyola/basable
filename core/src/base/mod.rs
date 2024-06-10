@@ -21,6 +21,7 @@ pub(crate) mod auth;
 pub(crate) mod config;
 pub(crate) mod foundation;
 pub(crate) mod table;
+pub(crate) mod column;
 
 /// A sharable connection that belongs to a specific user
 type SharedConnection = Arc<Mutex<dyn DB>>;
@@ -117,7 +118,7 @@ mod test {
 
         let mut bslb = Basable::default();
         bslb.add_user(user);
-        
+
         let conn = Basable::create_connection(&config)?;
         bslb.attach_db(TEST_USER_ID, conn.unwrap())?;
 
@@ -145,7 +146,7 @@ mod test {
 
         if let Some(table) = db.get_table("swp") {
             let table = table.lock().unwrap();
-            table.get_columns(db.connector())?;
+            table.query_columns(db.connector())?;
         }
 
         Ok(())

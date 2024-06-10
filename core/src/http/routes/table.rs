@@ -7,7 +7,7 @@ use axum::{
 use axum_macros::debug_handler;
 
 use crate::{
-    base::{table::TableConfig, AppError},
+    base::{column::ColumnList, table::TableConfig, AppError},
     http::{app::AppState, middlewares::AuthExtractor},
 };
 
@@ -21,7 +21,6 @@ async fn save_configuration(
     let bsbl = state.instance.lock().unwrap();
 
     if let Some(user) = bsbl.find_user(&user_id.unwrap_or_default()) {
-        // let conn = bsbl.get_connection(&user.id).unwrap();
         let user = user.lock().unwrap();
 
         if let Some(db) = user.db() {
@@ -97,7 +96,9 @@ async fn get_columns(
     Path(table_name): Path<String>,
     AuthExtractor(user_id): AuthExtractor,
     State(state): State<AppState>,
-) -> Result<(), AppError> {
+) -> Result<Json<ColumnList>, AppError> {
+    let mut cols = Vec::with_capacity(0);
+
     if let Some(user_id) = user_id {
         let bsbl = state.instance.lock().unwrap();
 
@@ -109,14 +110,14 @@ async fn get_columns(
                 
                 if let Some(table) = db.get_table(&table_name)  {
                     let table = table.lock().unwrap();
-                    table.get_columns(db.connector())?;
+                    cols = table.query_columns(db.connector())?;
                 }
                 
             }
         }
     }
 
-    Ok(())
+    Ok(Json(cols))
 }
 
 /// Routes for database table management

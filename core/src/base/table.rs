@@ -3,6 +3,8 @@ use std::sync::{Arc, Mutex};
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 
+use crate::base::column::{Column, ColumnList};
+
 use super::{AppError, Connector};
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -118,8 +120,8 @@ impl Table {
         }
     }
 
-    pub(crate) fn get_columns(&self, conn: &dyn Connector) -> Result<(), AppError> {
-        println!("About to get connection...");
+    /// Query all columns for the table
+    pub(crate) fn query_columns(&self, conn: &dyn Connector) -> Result<ColumnList, AppError> {
         let query = format!(
             "
                 SELECT column_name, column_type, is_nullable, column_default 
@@ -130,15 +132,22 @@ impl Table {
         );
 
 
-        println!("Running query...");
         let result = conn.exec_query(&query)?;
-        println!("Result received...");
+        let cols: ColumnList = result.iter().map(|r| {
+            let name: String = r.get("COLUMN_NAME").unwrap();
+            let col_type: String = r.get("COLUMN_TYPE").unwrap();
+            let default: Option<String> = r.get("COLUMN_DEFAULT").unwrap();
+    
+            let nullable: Option<String> = r.get("IS_NULLABLE");
+            let nullable = nullable.map(|s| s == "YES".to_owned()).unwrap();
+    
+            Column { name, col_type, default, nullable }
 
-        for r in result {
-            println!("{:?}", r);
-        }
+        })
+        .collect();
+       
 
-        Ok(())
+        Ok(cols)
     }
 }
 
@@ -146,7 +155,7 @@ pub(crate) type TableSummaries = Vec<TableSummary>;
 pub(crate) type SharedTable = Arc<Mutex<Table>>;
 pub(crate) type TableList = Vec<SharedTable>;
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize)]
 pub(crate) struct TableSummary {
     pub name: String,
     pub row_count: u32,
