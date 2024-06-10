@@ -166,7 +166,7 @@ impl DB for MySqlDB {
         self.connector.exec_query(&query)
     }
 
-    fn query_table_summaries(&mut self) -> Result<TableSummaries, AppError> {
+    fn query_table_summaries(&self) -> Result<TableSummaries, AppError> {
         let results = self.query_tables()?;
         let tables: Vec<TableSummary> = results
             .iter()
@@ -229,7 +229,7 @@ impl DB for MySqlDB {
         self.tables.iter().find(|t| t.lock().unwrap().name == name)
     }
 
-    fn details(&mut self) -> Result<DbConnectionDetails, AppError> {
+    fn details(&self) -> Result<DbConnectionDetails, AppError> {
         let version = self.show_version()?;
         let tables = self.query_table_summaries()?;
         let size = self.size()?;

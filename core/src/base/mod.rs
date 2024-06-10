@@ -1,8 +1,5 @@
 use core::str;
-use std::{
-    fmt::Display,
-    sync::{Arc, Mutex},
-};
+use std::fmt::Display;
 
 use axum::{
     body::Body,
@@ -23,7 +20,7 @@ pub(crate) mod foundation;
 pub(crate) mod table;
 
 /// A sharable connection that belongs to a specific user
-type SharedConnection = Arc<Mutex<dyn DB>>;
+type SharedConnection = Box<dyn DB>;
 
 /// Facilitates connection and run queries between `Basable` instance and a databse server
 pub(crate) trait Connector: Send + Sync {
@@ -51,7 +48,7 @@ pub(crate) trait DB: Send + Sync {
     fn query_tables(&self) -> mysql::Result<Vec<Row>>;
 
     /// Query connection tables from DB source and return table summaries
-    fn query_table_summaries(&mut self) -> Result<TableSummaries, AppError>;
+    fn query_table_summaries(&self) -> Result<TableSummaries, AppError>;
 
     /// Check if a table with the given name exists in the database connection.
     fn table_exists(&self, name: &str) -> Result<bool, AppError>;
@@ -60,7 +57,7 @@ pub(crate) trait DB: Send + Sync {
     fn get_table(&self, name: &str) -> Option<&SharedTable>;
 
     /// Details about the connection
-    fn details(&mut self) -> Result<DbConnectionDetails, AppError>;
+    fn details(&self) -> Result<DbConnectionDetails, AppError>;
 
     fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;
 }
@@ -117,7 +114,7 @@ mod test {
 
         let mut bslb = Basable::default();
         let conn = Basable::create_connection(&config)?;
-        bslb.attach_db(TEST_USER_ID, conn.unwrap());
+        bslb.attach_db(TEST_USER_ID, conn);
 
         Ok(bslb)
     }
@@ -135,8 +132,8 @@ mod test {
         assert!(user.db().is_some());
 
         let db = user.db();
-        let db = db.unwrap();
-        let mut db = db.lock().unwrap();
+        let mut db = db.unwrap();
+        // let mut db = db.lock().unwrap();
 
         db.load_tables()?;
         db.table_exists("swp")?;

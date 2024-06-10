@@ -18,7 +18,7 @@ impl Basable {
     /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
     pub(crate) fn create_connection(
         config: &Config,
-    ) -> Result<Option<SharedConnection>, AppError> {
+    ) -> Result<SharedConnection, AppError> {
         let db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
@@ -30,7 +30,7 @@ impl Basable {
             _ => todo!(),
         };
 
-        Ok(Some(Arc::new(Mutex::new(db))))
+        Ok(Box::new(db))
     }
 
     /// Gets a user's `BasableConnection`.

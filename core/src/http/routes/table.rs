@@ -25,15 +25,15 @@ async fn save_configuration(
         let user = user.lock().unwrap();
 
         if let Some(db) = user.db() {
-            let conn = db.lock().unwrap();
-            let exists = conn.table_exists(&table_name)?;
+            // let conn = db.lock().unwrap();
+            let exists = db.table_exists(&table_name)?;
     
             if !exists {
                 let msg = format!("The '{}' table does not exist.", table_name);
                 return Err(AppError::new(StatusCode::NOT_FOUND, &msg));
             }
     
-            let table = conn.get_table(&table_name);
+            let table = db.get_table(&table_name);
     
             if let Some(table) = table {
                 let mut table = table.lock().unwrap();
@@ -64,7 +64,7 @@ async fn get_configuration(
 
             let user = user.lock().unwrap();
             if let Some(db) = user.db() {
-                let db = db.lock().unwrap();
+                // let db = db.lock().unwrap();
                 let exists = db.table_exists(&table_name)?;
         
                 if !exists {
@@ -105,7 +105,7 @@ async fn get_columns(
             let user = user.lock().unwrap();
 
             if let Some(db) = user.db() {
-                let db = db.lock().unwrap();
+                // let db = db.lock().unwrap();
                 
                 if let Some(table) = db.get_table(&table_name)  {
                     let table = table.lock().unwrap();

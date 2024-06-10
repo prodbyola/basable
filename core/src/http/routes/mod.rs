@@ -37,14 +37,14 @@ async fn connect(
             bsbl.save_config(&config, &user_id);
         }
 
-        if let Some(conn) = Basable::create_connection(&config)? {
-            bsbl.attach_db(&user_id, conn);
+        let db = Basable::create_connection(&config)?;
+        bsbl.attach_db(&user_id, db);
 
-            let conn = user.db().unwrap();
-            let mut conn =  conn.lock().unwrap();
+        let conn = user.db().unwrap();
+        // let mut conn =  conn.lock().unwrap();
 
-            resp = conn.details()?;
-        }
+        resp = conn.details()?;
+
     } else {
         return Err(AppError::new(
             StatusCode::NOT_FOUND,
