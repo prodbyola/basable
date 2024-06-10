@@ -116,8 +116,10 @@ mod test {
         config.port = Some(3306);
 
         let mut bslb = Basable::default();
+        bslb.add_user(user);
+        
         let conn = Basable::create_connection(&config)?;
-        bslb.attach_db(TEST_USER_ID, conn.unwrap());
+        bslb.attach_db(TEST_USER_ID, conn.unwrap())?;
 
         Ok(bslb)
     }

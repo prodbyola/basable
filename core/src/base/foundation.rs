@@ -1,11 +1,15 @@
 use std::sync::{Arc, Mutex};
 
+use axum::http::StatusCode;
+
 use crate::imp::database::mysql::{MySqlDB, MysqlConnector};
 use crate::User;
 
 use super::auth::SharedUser;
 use super::{
-    auth::{create_jwt, JwtSession}, config::{Config, Database, SourceType}, AppError, Connector, SharedConnection
+    auth::{create_jwt, JwtSession},
+    config::{Config, Database, SourceType},
+    AppError, Connector, SharedConnection,
 };
 
 #[derive(Default)]
@@ -16,15 +20,13 @@ pub(crate) struct Basable {
 
 impl Basable {
     /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
-    pub(crate) fn create_connection(
-        config: &Config,
-    ) -> Result<Option<SharedConnection>, AppError> {
+    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharedConnection>, AppError> {
         let db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
                     let conn = MysqlConnector::new(config.clone())?;
                     MySqlDB::new(conn)
-                },
+                }
                 _ => todo!(),
             },
             _ => todo!(),
@@ -38,7 +40,7 @@ impl Basable {
     //     let user = &self.users.iter().find(|u| u.clone().lock().unwrap().id == user_id);
     //     if let Some(user) = user  {
     //         // let user = user.clone();
-    //        return user.lock().unwrap().db() 
+    //        return user.lock().unwrap().db()
     //     }
 
     //     &None
@@ -75,29 +77,32 @@ impl Basable {
         Ok(session_id)
     }
 
-    fn add_user(&mut self, user: User) {
+    pub fn add_user(&mut self, user: User) {
         self.users.push(Arc::new(Mutex::new(user)));
     }
 
     /// Saves the `Config` to Basable's remote server in association with the user_id
     pub(crate) fn save_config(&mut self, config: &Config, user_id: &str) {
-        let user = self
-            .find_user(user_id);
+        let user = self.find_user(user_id);
 
         if let Some(user) = user {
             user.lock().unwrap().save_config(config);
         }
-        
     }
 
     /// Get an active `User` with the `user_id` from Basable's active users.
     pub(crate) fn find_user(&self, user_id: &str) -> Option<SharedUser> {
-        self.users.iter().find(|u| u.lock().unwrap().id == user_id).map(|u| u.clone())
+        self.users
+            .iter()
+            .find(|u| u.lock().unwrap().id == user_id)
+            .map(|u| u.clone())
     }
 
     // / Get a user's position index
     pub(crate) fn user_index(&self, user_id: &str) -> Option<usize> {
-        self.users.iter().position(|u| u.lock().unwrap().id == user_id)
+        self.users
+            .iter()
+            .position(|u| u.lock().unwrap().id == user_id)
     }
 
     /// Remove the user from Basable's active users.
@@ -109,16 +114,20 @@ impl Basable {
         }
     }
 
-    /// Adds a user to Basable's active user.
-    // fn add_user(&mut self, user: User) {
-    //     // let id = user.id.clone();
-    //     self.users.push(user);
-    // }
-
     /// Attaches a DB to user.
-    pub(crate) fn attach_db(&mut self, user_id: &str, db: SharedConnection) {
+    pub(crate) fn attach_db(
+        &mut self,
+        user_id: &str,
+        db: SharedConnection,
+    ) -> Result<(), AppError> {
         if let Some(user) = self.find_user(user_id) {
-            user.lock().unwrap().attach_db(db)
+            user.lock().unwrap().attach_db(db);
+            return Ok(());
         }
+
+        Err(AppError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Unable to attach db to user. Looks like user does not exist.",
+        ))
     }
 }

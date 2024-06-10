@@ -38,7 +38,7 @@ async fn connect(
         }
 
         if let Some(conn) = Basable::create_connection(&config)? {
-            bsbl.attach_db(&user_id, conn);
+            bsbl.attach_db(&user_id, conn)?;
 
             let conn = user.db().unwrap();
             let mut conn =  conn.lock().unwrap();
