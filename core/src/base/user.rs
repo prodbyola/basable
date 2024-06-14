@@ -1,13 +1,13 @@
-use std::{str::from_utf8, sync::{Arc, Mutex}};
+use std::str::from_utf8;
 
 use axum::http::{HeaderValue, StatusCode};
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use super::{config::Config, AppError, SharedConnection};
+use super::{config::Config, AppError, SharableDB};
 
-// JWT_SECRET should be defined by the installer and saved in platform env variables.
+// JWT_SECRET should be defined by the installer and saved as BASABLE_SECRET env variables.
 // You can generate one at https://djecrety.ir
 const BEARER: &str = "Bearer ";
 const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
@@ -16,13 +16,13 @@ const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 pub(crate) struct User {
     pub id: String,
     pub is_logged: bool,
-    db: Option<SharedConnection>
+    pub db: Option<SharableDB>
 }
 
-pub(crate) type SharedUser = Arc<Mutex<User>>;
+// pub(crate) type SharedUser = Arc<Mutex<User>>;
 
 impl User {
-    pub fn db(&self) -> Option<&SharedConnection> {
+    pub fn db(&self) -> Option<&SharableDB> {
         if let Some(db) = &self.db {
             return Some(db)
         }
@@ -30,7 +30,7 @@ impl User {
         None
     }
 
-    pub fn attach_db(&mut self, db: SharedConnection) {
+    pub fn attach_db(&mut self, db: SharableDB) {
         self.db = Some(db);
     }
 

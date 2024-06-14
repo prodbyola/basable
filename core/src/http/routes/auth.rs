@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use axum::{extract::{ConnectInfo, State}, routing::post, Json, Router};
 use axum_macros::debug_handler;
 
-use crate::{base::{auth::JwtSession, AppError}, http::app::AppState};
+use crate::{base::{user::JwtSession, AppError}, http::app::AppState};
 
 #[debug_handler]
 /// POST: /core/auth/guest 

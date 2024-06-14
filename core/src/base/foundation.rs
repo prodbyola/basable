@@ -2,26 +2,31 @@ use std::sync::{Arc, Mutex};
 
 use axum::http::StatusCode;
 
-use crate::imp::database::mysql::{MySqlDB, MysqlConnector};
+use crate::imp::database::mysql::connector::MysqlConnector;
+use crate::imp::database::mysql::db::MySqlDB;
 use crate::User;
 
-use super::auth::SharedUser;
+use super::connector::Connector;
+use super::db::DB;
+use super::SharableDB;
 use super::{
-    auth::{create_jwt, JwtSession},
+    user::{create_jwt, JwtSession},
     config::{Config, Database, SourceType},
-    AppError, Connector, SharedConnection,
+    AppError,
 };
+
+pub(crate) type SharableUser = Arc<Mutex<User>>;
 
 #[derive(Default)]
 pub(crate) struct Basable {
-    pub users: Vec<SharedUser>,
+    pub users: Vec<Arc<Mutex<User>>>,
     // pub connections: Vec<SharedConnection>,
 }
 
 impl Basable {
     /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
-    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharedConnection>, AppError> {
-        let db = match config.source_type() {
+    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharableDB>, AppError> {
+        let mut db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
                     let conn = MysqlConnector::new(config.clone())?;
@@ -32,6 +37,7 @@ impl Basable {
             _ => todo!(),
         };
 
+        db.load_tables()?;
         Ok(Some(Arc::new(Mutex::new(db))))
     }
 
@@ -69,29 +75,33 @@ impl Basable {
     pub(crate) fn create_guest_user(&mut self, req_ip: &str) -> Result<JwtSession, AppError> {
         let session_id = create_jwt(req_ip)?; // jwt encode the ip
 
-        let mut user = User::default();
-        user.id = req_ip.to_owned();
+        let user = User{
+            id: req_ip.to_owned(),
+            is_logged: false,
+            db: None
+        };
+        // user.id = req_ip.to_owned();
 
-        self.add_user(user);
+        self.add_user(Arc::new(Mutex::new(user)));
 
         Ok(session_id)
     }
 
-    pub fn add_user(&mut self, user: User) {
-        self.users.push(Arc::new(Mutex::new(user)));
+    pub fn add_user(&mut self, user: SharableUser) {
+        self.users.push(user);
     }
 
     /// Saves the `Config` to Basable's remote server in association with the user_id
     pub(crate) fn save_config(&mut self, config: &Config, user_id: &str) {
-        let user = self.find_user(user_id);
+        // let user = self.find_user(user_id);
 
-        if let Some(user) = user {
-            user.lock().unwrap().save_config(config);
-        }
+        // if let Some(user) = user {
+        //     user.lock().unwrap().save_config(config);
+        // }
     }
 
     /// Get an active `User` with the `user_id` from Basable's active users.
-    pub(crate) fn find_user(&self, user_id: &str) -> Option<SharedUser> {
+    pub(crate) fn find_user(&self, user_id: &str) -> Option<SharableUser> {
         self.users
             .iter()
             .find(|u| u.lock().unwrap().id == user_id)
@@ -118,7 +128,7 @@ impl Basable {
     pub(crate) fn attach_db(
         &mut self,
         user_id: &str,
-        db: SharedConnection,
+        db: SharableDB,
     ) -> Result<(), AppError> {
         if let Some(user) = self.find_user(user_id) {
             user.lock().unwrap().attach_db(db);

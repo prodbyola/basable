@@ -35,7 +35,7 @@ async fn save_configuration(
             let table = conn.get_table(&table_name);
     
             if let Some(table) = table {
-                let mut table = table.lock().unwrap();
+                let table = table.lock().unwrap();
                 table.save_config(config, !user.is_logged)?;
             }
     

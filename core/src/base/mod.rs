@@ -1,70 +1,26 @@
 use core::str;
-use std::{
-    fmt::Display,
-    sync::{Arc, Mutex},
-};
+use std::{fmt::Display, sync::{Arc, Mutex}};
 
 use axum::{
     body::Body,
     http::{Response, StatusCode},
     response::IntoResponse,
 };
-use mysql::Row;
-use table::SharedTable;
-use uuid::Uuid;
+use db::DB;
 
-use crate::imp::database::DbConnectionDetails;
+use crate::imp::database::mysql::db::MySqlDB;
 
-use self::{config::Config, table::TableSummaries};
-
-pub(crate) mod auth;
+pub(crate) mod user;
+pub(crate) mod column;
 pub(crate) mod config;
 pub(crate) mod foundation;
 pub(crate) mod table;
-pub(crate) mod column;
+pub(crate) mod connector;
+pub(crate) mod db;
 
+pub(crate) type SharableDB = Arc<Mutex<dyn DB<Row = <MySqlDB as DB>::Row, Error = <MySqlDB as DB>::Error>>>;
 /// A sharable connection that belongs to a specific user
-type SharedConnection = Arc<Mutex<dyn DB>>;
-
-/// Facilitates connection and run queries between `Basable` instance and a databse server
-pub(crate) trait Connector: Send + Sync {
-    /// Create a new connector
-    fn new(conn: Config) -> Result<Self, AppError>
-    where
-        Self: Sized;
-
-    /// Execute a database query and return results
-    fn exec_query(&self, query: &str) -> mysql::Result<Vec<Row>>;
-}
-
-/// An abstraction of database connection.
-pub(crate) trait DB: Send + Sync {
-    /// Get the `DB`'s connector instance.
-    fn connector(&self) -> &dyn Connector;
-    
-    /// Get connection id
-    fn get_id(&self) -> Uuid;
-
-    /// Load available tables into `DB` instance
-    fn load_tables(&mut self) -> Result<(), AppError>;
-
-    /// Query DB server for available tables
-    fn query_tables(&self) -> mysql::Result<Vec<Row>>;
-
-    /// Query connection tables from DB source and return table summaries
-    fn query_table_summaries(&mut self) -> Result<TableSummaries, AppError>;
-
-    /// Check if a table with the given name exists in the database connection.
-    fn table_exists(&self, name: &str) -> Result<bool, AppError>;
-
-    /// Get an instance of a table with a given name. The return table is mutable across threads.
-    fn get_table(&self, name: &str) -> Option<&SharedTable>;
-
-    /// Details about the connection
-    fn details(&mut self) -> Result<DbConnectionDetails, AppError>;
-
-    fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;
-}
+// type SharedConnection = Arc<Mutex<impl DB>>;
 
 #[derive(Debug)]
 pub(crate) struct AppError(pub StatusCode, pub String);
@@ -97,9 +53,11 @@ impl IntoResponse for AppError {
 
 #[cfg(test)]
 mod test {
+    use std::sync::{Arc, Mutex};
+
     use crate::base::{foundation::Basable, AppError};
 
-    use super::{auth::User, Config};
+    use super::{config::Config, user::User};
 
     static TEST_USER_ID: &str = "test_user";
 
@@ -107,8 +65,11 @@ mod test {
         let db_name = "basable";
         let mut config = Config::default();
 
-        let mut user = User::default();
-        user.id = TEST_USER_ID.to_owned();
+        let user = User {
+            id: TEST_USER_ID.to_owned(),
+            is_logged: false,
+            db: None
+        };
 
         config.db_name = Some(String::from(db_name));
         config.username = Some(String::from(db_name));
@@ -117,7 +78,7 @@ mod test {
         config.port = Some(3306);
 
         let mut bslb = Basable::default();
-        bslb.add_user(user);
+        bslb.add_user(Arc::new(Mutex::new(user)));
 
         let conn = Basable::create_connection(&config)?;
         bslb.attach_db(TEST_USER_ID, conn.unwrap())?;
@@ -126,7 +87,7 @@ mod test {
     }
 
     #[test]
-    fn test_instance() -> Result<(), AppError> {
+    fn test_create_db() -> Result<(), AppError> {
         let bsbl = create_instance()?;
 
         let user = bsbl.find_user(TEST_USER_ID);
@@ -137,16 +98,62 @@ mod test {
 
         assert!(user.db().is_some());
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_create_instance() {
+        let bsbl = create_instance();
+        assert!(bsbl.is_ok());
+    }
+
+    #[test]
+    fn test_has_user() -> Result<(), AppError> {
+        let bsbl = create_instance()?;
+
+        let user = bsbl.find_user(TEST_USER_ID);
+        assert!(user.is_some());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_table_exist() -> Result<(), AppError> {
+        let bsbl = create_instance()?;
+
+        let user = bsbl.find_user(TEST_USER_ID);
+        let user = user.unwrap();
+        let user = user.lock().unwrap();
+
         let db = user.db();
         let db = db.unwrap();
         let mut db = db.lock().unwrap();
 
         db.load_tables()?;
-        db.table_exists("swp")?;
+        assert!(db.table_exists("swp")?);
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_query_column() -> Result<(), AppError> {
+        let bsbl = create_instance()?;
+
+        let user = bsbl.find_user(TEST_USER_ID);
+        let user = user.unwrap();
+        let user = user.lock().unwrap();
+
+        let db = user.db();
+        let db = db.unwrap();
+        let db = db.lock().unwrap();
+
+        assert!(db.get_table("swp").is_some());
+        
         if let Some(table) = db.get_table("swp") {
             let table = table.lock().unwrap();
-            table.query_columns(db.connector())?;
+            let cols = table.query_columns(db.connector());
+        
+            assert!(cols.is_ok());
         }
 
         Ok(())

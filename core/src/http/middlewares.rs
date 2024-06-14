@@ -6,7 +6,7 @@ use axum::{
 };
 
 use crate::base::{
-    auth::decode_jwt,
+    user::decode_jwt,
     AppError,
 };
 use crate::http::app::AppState;

@@ -1,11 +1,11 @@
-use std::sync::{Arc, Mutex};
+use std::{fmt::Display, sync::{Arc, Mutex}};
 
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::base::column::{Column, ColumnList};
 
-use super::{AppError, Connector};
+use super::{connector::Connector, AppError};
 
 #[derive(Deserialize, Serialize, Clone)]
 /// Table column used for querying table history such as when a row was added or when a row was updated.
@@ -91,16 +91,26 @@ pub(crate) struct TableConfig {
     events: Option<Vec<NotifyEvent>>,
 }
 
-#[derive(Clone)]
-pub(crate) struct Table {
+pub(crate) type TableSummaries = Vec<TableSummary>;
+// pub(crate) type SharedTable = Arc<Mutex<impl Table>>;
+// pub(crate) type TableList = Vec<SharedTable>;
+
+#[derive(Serialize)]
+pub(crate) struct TableSummary {
     pub name: String,
-    pub config: Option<TableConfig>,
+    pub row_count: u32,
+    pub col_count: u32,
+    pub created: Option<String>,
+    pub updated: Option<String>,
 }
 
-impl Table {
-    pub fn save_config(&mut self, config: TableConfig, save_local: bool) -> Result<(), AppError> {
+pub(crate) trait Table: Send + Sync {
+    type Error;
+    type Row;
+
+    fn save_config(&self, config: TableConfig, save_local: bool) -> Result<(), AppError> {
         if save_local {
-            self.config = Some(config);
+            // TODO: Save locally
         } else {
             // TODO: Save to remote server
         }
@@ -108,9 +118,10 @@ impl Table {
         Ok(())
     }
 
-    pub fn get_config(&self, get_local: bool) -> Result<Option<TableConfig>, AppError> {
+    fn get_config(&self, get_local: bool) -> Result<Option<TableConfig>, AppError> {
         if get_local {
-            return Ok(self.config.clone());
+            // TODO: Get locally
+            Ok(None)
         } else {
             // TODO: Get from remote server
             return Err(AppError::new(
@@ -120,46 +131,6 @@ impl Table {
         }
     }
 
-    /// Query all columns for the table
-    pub(crate) fn query_columns(&self, conn: &dyn Connector) -> Result<ColumnList, AppError> {
-        let query = format!(
-            "
-                SELECT column_name, column_type, is_nullable, column_default 
-                FROM information_schema.columns 
-                WHERE table_name = '{}'
-            ",
-            self.name
-        );
-
-
-        let result = conn.exec_query(&query)?;
-        let cols: ColumnList = result.iter().map(|r| {
-            let name: String = r.get("COLUMN_NAME").unwrap();
-            let col_type: String = r.get("COLUMN_TYPE").unwrap();
-            let default: Option<String> = r.get("COLUMN_DEFAULT").unwrap();
-    
-            let nullable: Option<String> = r.get("IS_NULLABLE");
-            let nullable = nullable.map(|s| s == "YES".to_owned()).unwrap();
-    
-            Column { name, col_type, default, nullable }
-
-        })
-        .collect();
-       
-
-        Ok(cols)
-    }
-}
-
-pub(crate) type TableSummaries = Vec<TableSummary>;
-pub(crate) type SharedTable = Arc<Mutex<Table>>;
-pub(crate) type TableList = Vec<SharedTable>;
-
-#[derive(Serialize)]
-pub(crate) struct TableSummary {
-    pub name: String,
-    pub row_count: u32,
-    pub col_count: u32,
-    pub created: Option<String>,
-    pub updated: Option<String>,
+    fn name(&self) -> &str;
+    fn query_columns(&self, conn: &dyn Connector<Error = Self::Error, Row = Self::Row>) -> Result<ColumnList, AppError>;
 }
