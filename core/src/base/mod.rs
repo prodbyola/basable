@@ -63,7 +63,7 @@ mod test {
         sync::{Arc, Mutex},
     };
 
-    use crate::base::{foundation::Basable, AppError};
+    use crate::{base::{foundation::Basable, AppError}, tests::create_test_config};
 
     use super::{config::Config, user::User};
 
@@ -72,24 +72,7 @@ mod test {
     fn create_instance() -> Result<Basable, AppError> {
         dotenv().ok();
 
-        let db_name = env::var("TEST_DB_NAME").unwrap();
-        let db_username = env::var("TEST_DB_USERNAME").unwrap();
-        let db_password = env::var("TEST_DB_PASSWORD").unwrap();
-        let db_host = env::var("TEST_DB_HOST").unwrap();
-        let db_port = env::var("TEST_DB_PORT").unwrap();
-        let source = env::var("TEST_DB_SOURCE").unwrap();
-        let source_type = env::var("TEST_DB_SOURCE_TYPE").unwrap();
-
-        let config = Config {
-            db_name: Some(db_name),
-            username: Some(db_username),
-            password: Some(db_password),
-            host: Some(db_host),
-            port: Some(db_port.parse().unwrap()),
-            source,
-            source_type,
-        };
-
+        let config = create_test_config();
         let user = User {
             id: TEST_USER_ID.to_owned(),
             ..User::default()

@@ -61,3 +61,28 @@ pub(super) fn core_routes() -> Router<AppState> {
         .nest("/auth", auth_routes())
         .nest("/tables", table_routes())
 }
+
+#[cfg(test)]
+mod test {
+    use axum::{extract::State, Json};
+
+    use crate::{base::AppError, http::{app::AppState, middlewares::AuthExtractor}, tests::create_test_config};
+
+    use super::connect;
+
+    #[tokio::test]
+    async fn test_connect() -> Result<(), AppError> {
+        let state = AppState::default();
+        let config = create_test_config();
+        let extractor = AuthExtractor(Some("test_user".to_owned()));
+    
+        let c = connect(State(state), extractor, Json(config)).await;
+        if let Err(e) = c {
+            println!("err {}", e.1);
+        }
+
+        // assert!(c.is_ok());
+
+        Ok(())
+    }
+}

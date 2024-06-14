@@ -7,6 +7,7 @@ use crate::http::app::app;
 mod base;
 mod http;
 mod imp;
+mod tests;
 
 #[tokio::main]
 async fn main() {
