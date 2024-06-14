@@ -1,97 +1,143 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use crate::imp::database::{mysql::MysqlConn, DbConnectionDetails};
+use axum::http::StatusCode;
+
+use crate::imp::database::mysql::connector::MysqlConnector;
+use crate::imp::database::mysql::db::MySqlDB;
 use crate::User;
 
+use super::connector::Connector;
+use super::db::DB;
+use super::SharableDB;
 use super::{
-    auth::{create_jwt, JwtSession},
+    user::{create_jwt, JwtSession},
     config::{Config, Database, SourceType},
-    AppError, SharedConnection,
+    AppError,
 };
 
-/// Basable base trait that must be implemented by every instance of connection in Basable.
-/// 
-/// Check `imp` module for different implementations of this trait.
-pub(crate) trait BasableConnection: Send + Sync {
-    type Error;
-    fn new(conn: Config) -> Result<Self, Self::Error>
-    where
-        Self: Sized;
-    fn get_details(&self) -> Result<DbConnectionDetails, Self::Error>;
-}
+pub(crate) type SharableUser = Arc<Mutex<User>>;
 
 #[derive(Default)]
 pub(crate) struct Basable {
-    pub users: HashMap<String, User>,
-    pub connections: HashMap<String, SharedConnection>,
+    pub users: Vec<Arc<Mutex<User>>>,
+    // pub connections: Vec<SharedConnection>,
 }
 
 impl Basable {
     /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
-    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharedConnection>, AppError> {
-        let conn = match config.source_type() {
+    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharableDB>, AppError> {
+        let mut db = match config.source_type() {
             SourceType::Database(db) => match db {
-                Database::Mysql => MysqlConn::new(config.clone())?,
+                Database::Mysql => {
+                    let conn = MysqlConnector::new(config.clone())?;
+                    MySqlDB::new(conn)
+                }
                 _ => todo!(),
             },
             _ => todo!(),
         };
 
-        Ok(Some(Arc::new(Mutex::new(conn))))
+        db.load_tables()?;
+        Ok(Some(Arc::new(Mutex::new(db))))
     }
 
-    /// Gets a user's active `BasableConnection`.
-    pub(crate) fn get_connection(&self, user_id: &str) -> Option<&SharedConnection> {
-        self.connections.get(user_id)
-    }
+    /// Gets a user's `BasableConnection`.
+    // pub(crate) fn get_connection(&self, user_id: &str) -> &Option<SharedConnection> {
+    //     let user = &self.users.iter().find(|u| u.clone().lock().unwrap().id == user_id);
+    //     if let Some(user) = user  {
+    //         // let user = user.clone();
+    //        return user.lock().unwrap().db()
+    //     }
+
+    //     &None
+    // }
+
+    // pub(crate) fn get_connection(&self, id: &Uuid) -> Option<&SharedConnection> {
+    //     for conn in &self.connections {
+    //         println!("Before lock {}", self.connections.len());
+    //         let c = conn.lock().unwrap();
+    //         println!("After lock {}", self.connections.len());
+    //         if c.get_id() == *id {
+    //             return Some(conn);
+    //         }
+    //     }
+
+    //     None
+    // }
+
+    // pub(crate) fn conn_index(&self, user_id: &str) -> Option<usize> {
+    //     self.connections
+    //         .iter()
+    //         .position(|c| c.lock().unwrap().get_user_id() == user_id)
+    // }
 
     /// Creates a new guest user using the request `SocketAddr`
     pub(crate) fn create_guest_user(&mut self, req_ip: &str) -> Result<JwtSession, AppError> {
         let session_id = create_jwt(req_ip)?; // jwt encode the ip
 
-        let user = User {
+        let user = User{
             id: req_ip.to_owned(),
             is_logged: false,
+            db: None
         };
+        // user.id = req_ip.to_owned();
 
-        self.add_user(user.clone());
+        self.add_user(Arc::new(Mutex::new(user)));
 
         Ok(session_id)
     }
 
+    pub fn add_user(&mut self, user: SharableUser) {
+        self.users.push(user);
+    }
+
     /// Saves the `Config` to Basable's remote server in association with the user_id
     pub(crate) fn save_config(&mut self, config: &Config, user_id: &str) {
-        let user = self
-            .find_user(user_id)
-            .expect("Unable to find user with id");
-        user.save_config(config);
+        // let user = self.find_user(user_id);
+
+        // if let Some(user) = user {
+        //     user.lock().unwrap().save_config(config);
+        // }
     }
 
     /// Get an active `User` with the `user_id` from Basable's active users.
-    pub(crate) fn find_user(&self, user_id: &str) -> Option<&User> {
-        self.users.get(user_id)
+    pub(crate) fn find_user(&self, user_id: &str) -> Option<SharableUser> {
+        self.users
+            .iter()
+            .find(|u| u.lock().unwrap().id == user_id)
+            .map(|u| u.clone())
+    }
+
+    // / Get a user's position index
+    pub(crate) fn user_index(&self, user_id: &str) -> Option<usize> {
+        self.users
+            .iter()
+            .position(|u| u.lock().unwrap().id == user_id)
     }
 
     /// Remove the user from Basable's active users.
     pub(crate) fn log_user_out(&mut self, user_id: &str) {
         if let Some(user) = self.find_user(user_id) {
-            user.logout();
-            self.users.remove(user_id);
+            let i = self.user_index(user_id).unwrap();
+            user.lock().unwrap().logout();
+            self.users.remove(i);
         }
     }
 
-    /// Adds a user to Basable's active user.
-    fn add_user(&mut self, user: User) {
-        let id = user.id.clone();
-        self.users.insert(id, user);
-    }
+    /// Attaches a DB to user.
+    pub(crate) fn attach_db(
+        &mut self,
+        user_id: &str,
+        db: SharableDB,
+    ) -> Result<(), AppError> {
+        if let Some(user) = self.find_user(user_id) {
+            user.lock().unwrap().attach_db(db);
+            return Ok(());
+        }
 
-    /// Adds a `BasableConnection` to active connections.
-    pub(crate) fn add_connection(&mut self, user_id: String, conn: SharedConnection) {
-        // TODO: Find and close existing connection before insert a new one.
-        self.connections.insert(user_id, conn);
+        Err(AppError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Unable to attach db to user. Looks like user does not exist.",
+        ))
     }
 }

@@ -1,12 +1,20 @@
-use axum::{async_trait, extract::{FromRef, FromRequestParts}, http::{header::AUTHORIZATION, request::Parts, StatusCode}, RequestPartsExt};
+use axum::{
+    async_trait,
+    extract::{FromRef, FromRequestParts},
+    http::{header::AUTHORIZATION, request::Parts, StatusCode},
+    RequestPartsExt,
+};
 
-use crate::base::{auth::{decode_jwt, User}, AppError};
+use crate::base::{
+    user::decode_jwt,
+    AppError,
+};
 use crate::http::app::AppState;
 
 /// Extracts information about the current `User` by inspecting the Authorization
 /// header. If Authorization is not provided, it checks for `B-Session-Id`, which should
 /// be provided for guest users. If none of this is found, the `User` is `None`.
-pub(crate) struct AuthExtractor(pub Option<User>);
+pub(crate) struct AuthExtractor(pub Option<String>);
 
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthExtractor
@@ -17,7 +25,6 @@ where
     type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let mut extractor = AuthExtractor(None);
         let mut is_guest = false;
 
         // Extract app state and get basable instance
@@ -47,25 +54,19 @@ where
                             bsbl.log_user_out(&id);
                         }
 
-                        return Err(e)
+                        return Err(e);
                     }
                 };
             } else {
                 // validate user from remote server
-                let err = AppError(StatusCode::NOT_IMPLEMENTED, String::from("Authorization for registered users not implemented. Please use 'B-Session-Id' header."));
-                return Err(err)
+                let err = AppError::new(StatusCode::NOT_IMPLEMENTED, "Authorization for registered users not implemented. Please use 'B-Session-Id' header.");
+                return Err(err);
             }
-
-            if let Some(user_id) = user_id {
-                if let Some(user) = bsbl.users.get(&user_id)  {
-                    extractor = AuthExtractor(Some(user.clone()));
-                }
-            }
+            return Ok(AuthExtractor(user_id))
         } else {
-            let err = AppError(StatusCode::UNAUTHORIZED, String::from("User not authenticated"));
-            return Err(err)
+            let err = AppError::new(StatusCode::UNAUTHORIZED, "User authentication not provided.");
+            return Err(err);
         }
 
-        Ok(extractor)
     }
 }

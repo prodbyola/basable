@@ -18,7 +18,7 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::base::foundation::Basable;
 
-use super::routes::router;
+use super::routes::core_routes;
 
 #[derive(Clone)]
 pub(crate) struct AppState {
@@ -46,10 +46,10 @@ pub fn app() -> IntoMakeServiceWithConnectInfo<Router<()>, std::net::SocketAddr>
 
     let instance = Arc::new(Mutex::new(Basable::default()));
     let state = AppState { instance };
-    let router = router();
+    let routes = core_routes();
 
     Router::new()
-        .nest("/core", router)
+        .nest("/core", routes)
         .layer(
             ServiceBuilder::new()
                 .layer(
