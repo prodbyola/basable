@@ -1,5 +1,8 @@
 use core::str;
-use std::{fmt::Display, sync::{Arc, Mutex}};
+use std::{
+    fmt::Display,
+    sync::{Arc, Mutex},
+};
 
 use axum::{
     body::Body,
@@ -10,15 +13,16 @@ use db::DB;
 
 use crate::imp::database::mysql::db::MySqlDB;
 
-pub(crate) mod user;
 pub(crate) mod column;
 pub(crate) mod config;
-pub(crate) mod foundation;
-pub(crate) mod table;
 pub(crate) mod connector;
 pub(crate) mod db;
+pub(crate) mod foundation;
+pub(crate) mod table;
+pub(crate) mod user;
 
-pub(crate) type SharableDB = Arc<Mutex<dyn DB<Row = <MySqlDB as DB>::Row, Error = <MySqlDB as DB>::Error>>>;
+pub(crate) type SharableDB =
+    Arc<Mutex<dyn DB<Row = <MySqlDB as DB>::Row, Error = <MySqlDB as DB>::Error>>>;
 /// A sharable connection that belongs to a specific user
 // type SharedConnection = Arc<Mutex<impl DB>>;
 
@@ -53,7 +57,11 @@ impl IntoResponse for AppError {
 
 #[cfg(test)]
 mod test {
-    use std::sync::{Arc, Mutex};
+    use dotenv::dotenv;
+    use std::{
+        env,
+        sync::{Arc, Mutex},
+    };
 
     use crate::base::{foundation::Basable, AppError};
 
@@ -62,20 +70,30 @@ mod test {
     static TEST_USER_ID: &str = "test_user";
 
     fn create_instance() -> Result<Basable, AppError> {
-        let db_name = "basable";
-        let mut config = Config::default();
+        dotenv().ok();
+
+        let db_name = env::var("TEST_DB_NAME").unwrap();
+        let db_username = env::var("TEST_DB_USERNAME").unwrap();
+        let db_password = env::var("TEST_DB_PASSWORD").unwrap();
+        let db_host = env::var("TEST_DB_HOST").unwrap();
+        let db_port = env::var("TEST_DB_PORT").unwrap();
+        let source = env::var("TEST_DB_SOURCE").unwrap();
+        let source_type = env::var("TEST_DB_SOURCE_TYPE").unwrap();
+
+        let config = Config {
+            db_name: Some(db_name),
+            username: Some(db_username),
+            password: Some(db_password),
+            host: Some(db_host),
+            port: Some(db_port.parse().unwrap()),
+            source,
+            source_type,
+        };
 
         let user = User {
             id: TEST_USER_ID.to_owned(),
-            is_logged: false,
-            db: None
+            ..User::default()
         };
-
-        config.db_name = Some(String::from(db_name));
-        config.username = Some(String::from(db_name));
-        config.password = Some(String::from("Basable@2024"));
-        config.host = Some(String::from("localhost"));
-        config.port = Some(3306);
 
         let mut bslb = Basable::default();
         bslb.add_user(Arc::new(Mutex::new(user)));
@@ -148,11 +166,11 @@ mod test {
         let db = db.lock().unwrap();
 
         assert!(db.get_table("swp").is_some());
-        
+
         if let Some(table) = db.get_table("swp") {
             let table = table.lock().unwrap();
             let cols = table.query_columns(db.connector());
-        
+
             assert!(cols.is_ok());
         }
 

@@ -19,8 +19,6 @@ pub(crate) struct User {
     pub db: Option<SharableDB>
 }
 
-// pub(crate) type SharedUser = Arc<Mutex<User>>;
-
 impl User {
     pub fn db(&self) -> Option<&SharableDB> {
         if let Some(db) = &self.db {
