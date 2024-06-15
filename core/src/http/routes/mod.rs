@@ -29,16 +29,24 @@ async fn connect(
     let mut resp = DbConnectionDetails::default();
     let mut bsbl = state.instance.lock().unwrap();
 
-    if let Some(user) = bsbl.find_user(&user_id.unwrap_or_default()) {
+    let user_id = user_id.unwrap();
+
+    if let Some(user) = bsbl.find_user(&user_id) {
         let user = user.lock().unwrap();
-        let user_id = user.id.clone();
 
         if user.is_logged {
             bsbl.save_config(&config, &user_id);
         }
 
+        // drop User MutexGuard from memory to prevent dreadlock when we try to
+        // access the user instance later (for example, when we call `attach_db`).
+        std::mem::drop(user);
+
         if let Some(conn) = Basable::create_connection(&config)? {
             bsbl.attach_db(&user_id, conn)?;
+
+            let user = bsbl.find_user(&user_id).unwrap();
+            let user = user.lock().unwrap();
 
             let conn = user.db().unwrap();
             let mut conn = conn.lock().unwrap();
@@ -64,35 +72,34 @@ pub(super) fn core_routes() -> Router<AppState> {
 
 #[cfg(test)]
 mod test {
-    use std::{env, sync::{Arc, Mutex}};
+    use std::{
+        env,
+        sync::{Arc, Mutex},
+    };
 
     use axum::{extract::State, Json};
 
     use crate::{
         base::AppError,
         http::{app::AppState, middlewares::AuthExtractor},
-        tests::{create_instance, test_create_config},
+        tests::common::{create_test_config, create_test_instance},
     };
 
     use super::connect;
 
     #[tokio::test]
-    async fn test_connect() -> Result<(), AppError> {
-        let instance = create_instance()?;
+    async fn test_connect_route() -> Result<(), AppError> {
+        let instance = create_test_instance(false)?;
         let state = AppState {
             instance: Arc::new(Mutex::new(instance)),
         };
-        let config = test_create_config();
+        let config = create_test_config();
 
         let user_id = env::var("TEST_USER_ID").unwrap();
         let extractor = AuthExtractor(Some(user_id));
 
         let c = connect(State(state), extractor, Json(config)).await;
-        if let Err(e) = c {
-            println!("err {}", e.1);
-        }
-
-        // assert!(c.is_ok());
+        assert!(c.is_ok());
 
         Ok(())
     }

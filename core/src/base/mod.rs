@@ -57,15 +57,17 @@ impl IntoResponse for AppError {
 
 #[cfg(test)]
 mod test {
-    use crate::{base::AppError, tests::create_instance};
-
-    static TEST_USER_ID: &str = "test_user";
+    use crate::{
+        base::AppError,
+        tests::common::{create_test_instance, get_test_user_id},
+    };
 
     #[test]
-    fn test_create_db() -> Result<(), AppError> {
-        let bsbl = create_instance()?;
+    fn test_instance_has_db() -> Result<(), AppError> {
+        let bsbl = create_test_instance(true)?;
+        let user_id = get_test_user_id();
 
-        let user = bsbl.find_user(TEST_USER_ID);
+        let user = bsbl.find_user(&user_id);
         assert!(user.is_some());
 
         let user = user.unwrap();
@@ -78,58 +80,17 @@ mod test {
 
     #[test]
     fn test_create_instance() {
-        let bsbl = create_instance();
+        let bsbl = create_test_instance(true);
         assert!(bsbl.is_ok());
     }
 
     #[test]
-    fn test_has_user() -> Result<(), AppError> {
-        let bsbl = create_instance()?;
+    fn test_instance_has_user() -> Result<(), AppError> {
+        let bsbl = create_test_instance(true)?;
+        let user_id = get_test_user_id();
 
-        let user = bsbl.find_user(TEST_USER_ID);
+        let user = bsbl.find_user(&user_id);
         assert!(user.is_some());
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_table_exist() -> Result<(), AppError> {
-        let bsbl = create_instance()?;
-
-        let user = bsbl.find_user(TEST_USER_ID);
-        let user = user.unwrap();
-        let user = user.lock().unwrap();
-
-        let db = user.db();
-        let db = db.unwrap();
-        let mut db = db.lock().unwrap();
-
-        db.load_tables()?;
-        assert!(db.table_exists("swp")?);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_query_column() -> Result<(), AppError> {
-        let bsbl = create_instance()?;
-
-        let user = bsbl.find_user(TEST_USER_ID);
-        let user = user.unwrap();
-        let user = user.lock().unwrap();
-
-        let db = user.db();
-        let db = db.unwrap();
-        let db = db.lock().unwrap();
-
-        assert!(db.get_table("swp").is_some());
-
-        if let Some(table) = db.get_table("swp") {
-            let table = table.lock().unwrap();
-            let cols = table.query_columns(db.connector());
-
-            assert!(cols.is_ok());
-        }
 
         Ok(())
     }

@@ -1,9 +1,7 @@
-use std::{fmt::Display, sync::{Arc, Mutex}};
-
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 
-use crate::base::column::{Column, ColumnList};
+use crate::base::column::ColumnList;
 
 use super::{connector::Connector, AppError};
 
@@ -132,5 +130,60 @@ pub(crate) trait Table: Send + Sync {
     }
 
     fn name(&self) -> &str;
-    fn query_columns(&self, conn: &dyn Connector<Error = Self::Error, Row = Self::Row>) -> Result<ColumnList, AppError>;
+    fn query_columns(
+        &self,
+        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
+    ) -> Result<ColumnList, AppError>;
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        base::AppError,
+        tests::common::{create_test_instance, get_test_user_id},
+    };
+
+    #[test]
+    fn test_table_exist() -> Result<(), AppError> {
+        let user_id = get_test_user_id();
+        let bsbl = create_test_instance(true)?;
+
+        let user = bsbl.find_user(&user_id);
+        let user = user.unwrap();
+        let user = user.lock().unwrap();
+
+        let db = user.db();
+        let db = db.unwrap();
+        let mut db = db.lock().unwrap();
+
+        db.load_tables()?;
+        assert!(db.table_exists("swp")?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_table_query_column() -> Result<(), AppError> {
+        let user_id = get_test_user_id();
+        let bsbl = create_test_instance(true)?;
+
+        let user = bsbl.find_user(&user_id);
+        let user = user.unwrap();
+        let user = user.lock().unwrap();
+
+        let db = user.db();
+        let db = db.unwrap();
+        let db = db.lock().unwrap();
+
+        assert!(db.get_table("swp").is_some());
+
+        if let Some(table) = db.get_table("swp") {
+            let table = table.lock().unwrap();
+            let cols = table.query_columns(db.connector());
+
+            assert!(cols.is_ok());
+        }
+
+        Ok(())
+    }
 }
