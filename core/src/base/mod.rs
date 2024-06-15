@@ -57,35 +57,9 @@ impl IntoResponse for AppError {
 
 #[cfg(test)]
 mod test {
-    use dotenv::dotenv;
-    use std::{
-        env,
-        sync::{Arc, Mutex},
-    };
-
-    use crate::{base::{foundation::Basable, AppError}, tests::create_test_config};
-
-    use super::{config::Config, user::User};
+    use crate::{base::AppError, tests::create_instance};
 
     static TEST_USER_ID: &str = "test_user";
-
-    fn create_instance() -> Result<Basable, AppError> {
-        dotenv().ok();
-
-        let config = create_test_config();
-        let user = User {
-            id: TEST_USER_ID.to_owned(),
-            ..User::default()
-        };
-
-        let mut bslb = Basable::default();
-        bslb.add_user(Arc::new(Mutex::new(user)));
-
-        let conn = Basable::create_connection(&config)?;
-        bslb.attach_db(TEST_USER_ID, conn.unwrap())?;
-
-        Ok(bslb)
-    }
 
     #[test]
     fn test_create_db() -> Result<(), AppError> {

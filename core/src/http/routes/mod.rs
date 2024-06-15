@@ -41,7 +41,7 @@ async fn connect(
             bsbl.attach_db(&user_id, conn)?;
 
             let conn = user.db().unwrap();
-            let mut conn =  conn.lock().unwrap();
+            let mut conn = conn.lock().unwrap();
 
             resp = conn.details()?;
         }
@@ -64,18 +64,29 @@ pub(super) fn core_routes() -> Router<AppState> {
 
 #[cfg(test)]
 mod test {
+    use std::{env, sync::{Arc, Mutex}};
+
     use axum::{extract::State, Json};
 
-    use crate::{base::AppError, http::{app::AppState, middlewares::AuthExtractor}, tests::create_test_config};
+    use crate::{
+        base::AppError,
+        http::{app::AppState, middlewares::AuthExtractor},
+        tests::{create_instance, test_create_config},
+    };
 
     use super::connect;
 
     #[tokio::test]
     async fn test_connect() -> Result<(), AppError> {
-        let state = AppState::default();
-        let config = create_test_config();
-        let extractor = AuthExtractor(Some("test_user".to_owned()));
-    
+        let instance = create_instance()?;
+        let state = AppState {
+            instance: Arc::new(Mutex::new(instance)),
+        };
+        let config = test_create_config();
+
+        let user_id = env::var("TEST_USER_ID").unwrap();
+        let extractor = AuthExtractor(Some(user_id));
+
         let c = connect(State(state), extractor, Json(config)).await;
         if let Err(e) = c {
             println!("err {}", e.1);
