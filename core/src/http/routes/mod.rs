@@ -71,28 +71,22 @@ pub(super) fn core_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
-mod test {
-    use std::{
-        env,
-        sync::{Arc, Mutex},
-    };
+mod tests {
+    use std::env;
 
     use axum::{extract::State, Json};
 
     use crate::{
         base::AppError,
-        http::{app::AppState, middlewares::AuthExtractor},
-        tests::common::{create_test_config, create_test_instance},
+        http::middlewares::AuthExtractor,
+        tests::common::{create_test_config, create_test_state},
     };
 
     use super::connect;
 
     #[tokio::test]
     async fn test_connect_route() -> Result<(), AppError> {
-        let instance = create_test_instance(false)?;
-        let state = AppState {
-            instance: Arc::new(Mutex::new(instance)),
-        };
+        let state = create_test_state(false)?;
         let config = create_test_config();
 
         let user_id = env::var("TEST_USER_ID").unwrap();

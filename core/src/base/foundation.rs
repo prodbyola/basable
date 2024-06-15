@@ -20,7 +20,6 @@ pub(crate) type SharableUser = Arc<Mutex<User>>;
 #[derive(Default)]
 pub(crate) struct Basable {
     pub users: Vec<Arc<Mutex<User>>>,
-    // pub connections: Vec<SharedConnection>,
 }
 
 impl Basable {
@@ -41,36 +40,6 @@ impl Basable {
         Ok(Some(Arc::new(Mutex::new(db))))
     }
 
-    /// Gets a user's `BasableConnection`.
-    // pub(crate) fn get_connection(&self, user_id: &str) -> &Option<SharedConnection> {
-    //     let user = &self.users.iter().find(|u| u.clone().lock().unwrap().id == user_id);
-    //     if let Some(user) = user  {
-    //         // let user = user.clone();
-    //        return user.lock().unwrap().db()
-    //     }
-
-    //     &None
-    // }
-
-    // pub(crate) fn get_connection(&self, id: &Uuid) -> Option<&SharedConnection> {
-    //     for conn in &self.connections {
-    //         println!("Before lock {}", self.connections.len());
-    //         let c = conn.lock().unwrap();
-    //         println!("After lock {}", self.connections.len());
-    //         if c.get_id() == *id {
-    //             return Some(conn);
-    //         }
-    //     }
-
-    //     None
-    // }
-
-    // pub(crate) fn conn_index(&self, user_id: &str) -> Option<usize> {
-    //     self.connections
-    //         .iter()
-    //         .position(|c| c.lock().unwrap().get_user_id() == user_id)
-    // }
-
     /// Creates a new guest user using the request `SocketAddr`
     pub(crate) fn create_guest_user(&mut self, req_ip: &str) -> Result<JwtSession, AppError> {
         let session_id = create_jwt(req_ip)?; // jwt encode the ip
@@ -80,7 +49,6 @@ impl Basable {
             is_logged: false,
             db: None
         };
-        // user.id = req_ip.to_owned();
 
         self.add_user(Arc::new(Mutex::new(user)));
 
@@ -93,11 +61,11 @@ impl Basable {
 
     /// Saves the `Config` to Basable's remote server in association with the user_id
     pub(crate) fn save_config(&mut self, config: &Config, user_id: &str) {
-        // let user = self.find_user(user_id);
+        let user = self.find_user(user_id);
 
-        // if let Some(user) = user {
-        //     user.lock().unwrap().save_config(config);
-        // }
+        if let Some(user) = user {
+            user.lock().unwrap().save_config(config);
+        }
     }
 
     /// Get an active `User` with the `user_id` from Basable's active users.

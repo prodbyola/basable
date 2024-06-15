@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 pub(crate) mod common {
     use dotenv::dotenv;
@@ -6,17 +5,21 @@ pub(crate) mod common {
         env,
         sync::{Arc, Mutex},
     };
-    
-    use crate::base::{config::Config, foundation::Basable, user::User, AppError};
+
+    use crate::{
+        base::{config::Config, foundation::Basable, user::User, AppError},
+        http::app::AppState,
+    };
 
     pub fn get_test_user_id() -> String {
         dotenv().ok();
         env::var("TEST_USER_ID").unwrap()
     }
 
+    /// Creates a test `Config`.
     pub fn create_test_config() -> Config {
         dotenv().ok();
-    
+
         let db_name = env::var("TEST_DB_NAME").unwrap();
         let db_username = env::var("TEST_DB_USERNAME").unwrap();
         let db_password = env::var("TEST_DB_PASSWORD").unwrap();
@@ -24,7 +27,7 @@ pub(crate) mod common {
         let db_port = env::var("TEST_DB_PORT").unwrap();
         let source = env::var("TEST_DB_SOURCE").unwrap();
         let source_type = env::var("TEST_DB_SOURCE_TYPE").unwrap();
-    
+
         Config {
             db_name: Some(db_name),
             username: Some(db_username),
@@ -35,10 +38,13 @@ pub(crate) mod common {
             source_type,
         }
     }
-    
+
+    /// Creates a `Basable` instance for testing. 
+    /// 
+    /// Attaches a test `DB` instance if `attach_db` is `true`.
     pub fn create_test_instance(attach_db: bool) -> Result<Basable, AppError> {
         dotenv().ok();
-        
+
         let user_id = get_test_user_id();
 
         let config = create_test_config();
@@ -46,16 +52,27 @@ pub(crate) mod common {
             id: user_id.clone(),
             ..User::default()
         };
-    
+
         let mut bslb = Basable::default();
         bslb.add_user(Arc::new(Mutex::new(user)));
-    
+
         if attach_db {
             let conn = Basable::create_connection(&config)?;
             bslb.attach_db(&user_id, conn.unwrap())?;
         }
-    
+
         Ok(bslb)
     }
-}
 
+    /// Creates an `AppState` for testing. 
+    /// 
+    /// Attaches a test `DB` instance if `attach_db` is `true`.
+    pub fn create_test_state(attach_db: bool) -> Result<AppState, AppError> {
+        let instance = create_test_instance(attach_db)?;
+        let state = AppState {
+            instance: Arc::new(Mutex::new(instance)),
+        };
+
+        Ok(state)
+    }
+}

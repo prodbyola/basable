@@ -23,8 +23,6 @@ pub(crate) mod user;
 
 pub(crate) type SharableDB =
     Arc<Mutex<dyn DB<Row = <MySqlDB as DB>::Row, Error = <MySqlDB as DB>::Error>>>;
-/// A sharable connection that belongs to a specific user
-// type SharedConnection = Arc<Mutex<impl DB>>;
 
 #[derive(Debug)]
 pub(crate) struct AppError(pub StatusCode, pub String);
