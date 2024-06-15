@@ -76,7 +76,7 @@ mod tests {
 
     use crate::{
         base::AppError,
-        tests::common::{create_test_config, create_test_state, get_test_auth_extractor},
+        tests::common::{create_test_config, create_test_state, create_test_auth_extractor},
     };
 
     use super::connect;
@@ -86,7 +86,7 @@ mod tests {
         let state = create_test_state(false)?;
         let config = create_test_config();
 
-        let extractor = get_test_auth_extractor();
+        let extractor = create_test_auth_extractor();
 
         let c = connect(State(state), extractor, Json(config)).await;
         assert!(c.is_ok());

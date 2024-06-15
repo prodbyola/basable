@@ -11,12 +11,19 @@ pub(crate) mod common {
         http::{app::AppState, middlewares::AuthExtractor},
     };
 
+    /// Get `TEST_USER_ID` from env
     pub fn get_test_user_id() -> String {
         dotenv().ok();
         env::var("TEST_USER_ID").unwrap()
     }
 
-    pub fn get_test_auth_extractor() -> AuthExtractor {
+    /// Get `TEST_DB_TABLE_NAME` from env
+    pub fn get_test_db_table() -> String {
+        dotenv().ok();
+        env::var("TEST_DB_TABLE_NAME").unwrap()
+    }
+
+    pub fn create_test_auth_extractor() -> AuthExtractor {
         let user_id = get_test_user_id();
         AuthExtractor(Some(user_id))
     }
