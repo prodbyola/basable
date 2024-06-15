@@ -72,14 +72,11 @@ pub(super) fn core_routes() -> Router<AppState> {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use axum::{extract::State, Json};
 
     use crate::{
         base::AppError,
-        http::middlewares::AuthExtractor,
-        tests::common::{create_test_config, create_test_state},
+        tests::common::{create_test_config, create_test_state, get_test_auth_extractor},
     };
 
     use super::connect;
@@ -89,8 +86,7 @@ mod tests {
         let state = create_test_state(false)?;
         let config = create_test_config();
 
-        let user_id = env::var("TEST_USER_ID").unwrap();
-        let extractor = AuthExtractor(Some(user_id));
+        let extractor = get_test_auth_extractor();
 
         let c = connect(State(state), extractor, Json(config)).await;
         assert!(c.is_ok());

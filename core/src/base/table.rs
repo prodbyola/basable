@@ -89,9 +89,13 @@ pub(crate) struct TableConfig {
     events: Option<Vec<NotifyEvent>>,
 }
 
+impl Default for TableConfig {
+    fn default() -> Self {
+        TableConfig { created_column: None, updated_column: None, special_columns: None, events: None }
+    }
+}
+
 pub(crate) type TableSummaries = Vec<TableSummary>;
-// pub(crate) type SharedTable = Arc<Mutex<impl Table>>;
-// pub(crate) type TableList = Vec<SharedTable>;
 
 #[derive(Serialize)]
 pub(crate) struct TableSummary {

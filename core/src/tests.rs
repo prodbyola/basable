@@ -8,12 +8,17 @@ pub(crate) mod common {
 
     use crate::{
         base::{config::Config, foundation::Basable, user::User, AppError},
-        http::app::AppState,
+        http::{app::AppState, middlewares::AuthExtractor},
     };
 
     pub fn get_test_user_id() -> String {
         dotenv().ok();
         env::var("TEST_USER_ID").unwrap()
+    }
+
+    pub fn get_test_auth_extractor() -> AuthExtractor {
+        let user_id = get_test_user_id();
+        AuthExtractor(Some(user_id))
     }
 
     /// Creates a test `Config`.

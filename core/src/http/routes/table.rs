@@ -26,22 +26,21 @@ async fn save_configuration(
         if let Some(db) = user.db() {
             let conn = db.lock().unwrap();
             let exists = conn.table_exists(&table_name)?;
-    
+
             if !exists {
                 let msg = format!("The '{}' table does not exist.", table_name);
                 return Err(AppError::new(StatusCode::NOT_FOUND, &msg));
             }
-    
+
             let table = conn.get_table(&table_name);
-    
+
             if let Some(table) = table {
                 let table = table.lock().unwrap();
                 table.save_config(config, !user.is_logged)?;
             }
-    
+
             return Ok(String::from("Operation successful."));
         }
-
     }
 
     Err(AppError::new(
@@ -60,28 +59,26 @@ async fn get_configuration(
         let bsbl = state.instance.lock().unwrap();
 
         if let Some(user) = bsbl.find_user(&user_id) {
-
             let user = user.lock().unwrap();
             if let Some(db) = user.db() {
                 let db = db.lock().unwrap();
                 let exists = db.table_exists(&table_name)?;
-        
+
                 if !exists {
                     let msg = format!("The '{}' table does not exist.", table_name);
-        
+
                     return Err(AppError::new(StatusCode::NOT_FOUND, &msg));
                 }
-        
+
                 let mut config = None;
-    
+
                 if let Some(table) = db.get_table(&table_name) {
                     let table = table.lock().unwrap();
                     config = table.get_config(!user.is_logged)?;
                 }
-        
+
                 return Ok(Json(config));
             }
-    
         }
     }
 
@@ -102,17 +99,16 @@ async fn get_columns(
     if let Some(user_id) = user_id {
         let bsbl = state.instance.lock().unwrap();
 
-        if let Some(user) = bsbl.find_user(&user_id)  {
+        if let Some(user) = bsbl.find_user(&user_id) {
             let user = user.lock().unwrap();
 
             if let Some(db) = user.db() {
                 let db = db.lock().unwrap();
-                
-                if let Some(table) = db.get_table(&table_name)  {
+
+                if let Some(table) = db.get_table(&table_name) {
                     let table = table.lock().unwrap();
                     cols = table.query_columns(db.connector())?;
                 }
-                
             }
         }
     }
@@ -126,4 +122,68 @@ pub(super) fn table_routes() -> Router<AppState> {
         .route("/configurations/:table_name", put(save_configuration))
         .route("/configurations/:table_name", get(get_configuration))
         .route("/columns/:table_name", get(get_columns))
+}
+
+#[cfg(test)]
+mod tests {
+    use axum::{
+        extract::{Path, State},
+        Json,
+    };
+
+    use crate::{
+        base::{table::TableConfig, AppError},
+        http::routes::table::{get_columns, get_configuration, save_configuration},
+        tests::common::{create_test_state, get_test_auth_extractor},
+    };
+
+    #[tokio::test]
+    async fn test_save_table_config() -> Result<(), AppError> {
+        let state = create_test_state(true)?;
+        let auth_extractor = get_test_auth_extractor();
+        let config = TableConfig::default();
+
+        let save_config = save_configuration(
+            Path(String::from("swp")),
+            auth_extractor,
+            State(state),
+            Json(config),
+        )
+        .await;
+
+        assert!(save_config.is_ok());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_table_config() -> Result<(), AppError> {
+        let state = create_test_state(true)?;
+        let auth_extractor = get_test_auth_extractor();
+
+        let get_config = get_configuration(
+            Path(String::from("swp")),
+            auth_extractor,
+            State(state),
+        )
+        .await;
+
+        assert!(get_config.is_ok());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_table_columns() -> Result<(), AppError> {
+        let state = create_test_state(true)?;
+        let auth_extractor = get_test_auth_extractor();
+
+        let get_cols = get_columns(
+            Path(String::from("swp")),
+            auth_extractor,
+            State(state),
+        )
+        .await;
+
+        assert!(get_cols.is_ok());
+        Ok(())
+    }
 }
