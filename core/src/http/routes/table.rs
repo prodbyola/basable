@@ -119,8 +119,8 @@ async fn get_columns(
 /// Routes for database table management
 pub(super) fn table_routes() -> Router<AppState> {
     Router::new()
-        .route("/configurations/:table_name", put(save_configuration))
         .route("/configurations/:table_name", get(get_configuration))
+        .route("/configurations/:table_name", put(save_configuration))
         .route("/columns/:table_name", get(get_columns))
 }
 
@@ -144,13 +144,8 @@ mod tests {
         let config = TableConfig::default();
         let table_name = get_test_db_table();
 
-        let save_config = save_configuration(
-            Path(table_name),
-            auth_extractor,
-            State(state),
-            Json(config),
-        )
-        .await;
+        let save_config =
+            save_configuration(Path(table_name), auth_extractor, State(state), Json(config)).await;
 
         assert!(save_config.is_ok());
         Ok(())
@@ -162,12 +157,7 @@ mod tests {
         let auth_extractor = create_test_auth_extractor();
         let table_name = get_test_db_table();
 
-        let get_config = get_configuration(
-            Path(table_name),
-            auth_extractor,
-            State(state),
-        )
-        .await;
+        let get_config = get_configuration(Path(table_name), auth_extractor, State(state)).await;
 
         assert!(get_config.is_ok());
         Ok(())
@@ -179,12 +169,7 @@ mod tests {
         let auth_extractor = create_test_auth_extractor();
         let table_name = get_test_db_table();
 
-        let get_cols = get_columns(
-            Path(table_name),
-            auth_extractor,
-            State(state),
-        )
-        .await;
+        let get_cols = get_columns(Path(table_name), auth_extractor, State(state)).await;
 
         assert!(get_cols.is_ok());
         Ok(())

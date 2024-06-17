@@ -22,7 +22,7 @@ pub(crate) mod table;
 pub(crate) mod user;
 
 pub(crate) type SharableDB =
-    Arc<Mutex<dyn DB<Row = <MySqlDB as DB>::Row, Error = <MySqlDB as DB>::Error>>>;
+    Arc<Mutex<dyn DB<Row = <MySqlDB as DB>::Row, Error = <MySqlDB as DB>::Error, ColumnValue = <MySqlDB as DB>::ColumnValue>>>;
 
 #[derive(Debug)]
 pub(crate) struct AppError(pub StatusCode, pub String);

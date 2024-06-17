@@ -23,7 +23,7 @@ use super::{connector::MysqlConnector, table::MySqlTable};
 pub(crate) struct MySqlDB {
     pub id: Uuid,
     pub connector: MysqlConnector,
-    pub tables: Vec<Arc<Mutex<dyn Table<Error = mysql::Error, Row = mysql::Row>>>>,
+    pub tables: Vec<Arc<Mutex<dyn Table<Error = mysql::Error, Row = mysql::Row, ColumnValue = mysql::Value>>>>,
 }
 
 impl MySqlDB {
@@ -97,7 +97,8 @@ impl MySqlDB {
 
 impl DB for MySqlDB {
     type Error = mysql::Error;
-    type Row = Row;
+    type Row = mysql::Row;
+    type ColumnValue = mysql::Value;
 
     fn connector(&self) -> &dyn Connector<Error = Self::Error, Row = Self::Row> {
         &self.connector
@@ -196,7 +197,7 @@ impl DB for MySqlDB {
     fn get_table(
         &self,
         name: &str,
-    ) -> Option<&Arc<Mutex<dyn Table<Error = Self::Error, Row = Self::Row>>>> {
+    ) -> Option<&Arc<Mutex<dyn Table<Error = Self::Error, Row = Self::Row, ColumnValue = Self::ColumnValue>>>> {
         self.tables
             .iter()
             .find(|t| t.lock().unwrap().name() == name)

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 
@@ -91,11 +93,34 @@ pub(crate) struct TableConfig {
 
 impl Default for TableConfig {
     fn default() -> Self {
-        TableConfig { created_column: None, updated_column: None, special_columns: None, events: None }
+        TableConfig {
+            created_column: None,
+            updated_column: None,
+            special_columns: None,
+            events: None,
+        }
     }
 }
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
+pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, Option<V>>>, E>;
+
+pub struct DataQueryFilter {
+    /// Query agination
+    pub limit: usize,
+
+    /// Columns to exclude from query
+    pub exclude: Option<Vec<String>>
+}
+
+impl Default for DataQueryFilter {
+    fn default() -> Self {
+        DataQueryFilter { 
+            limit: 100, 
+            exclude: None
+        }
+    }
+}
 
 #[derive(Serialize)]
 pub(crate) struct TableSummary {
@@ -109,6 +134,7 @@ pub(crate) struct TableSummary {
 pub(crate) trait Table: Send + Sync {
     type Error;
     type Row;
+    type ColumnValue;
 
     fn save_config(&self, config: TableConfig, save_local: bool) -> Result<(), AppError> {
         if save_local {
@@ -133,18 +159,28 @@ pub(crate) trait Table: Send + Sync {
         }
     }
 
+    /// Table's name
     fn name(&self) -> &str;
+
+    /// Retrieve all columns for the table
     fn query_columns(
         &self,
         conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
-    ) -> Result<ColumnList, AppError>;
+    ) -> Result<ColumnList, Self::Error>;
+
+    /// Retrieve data from table based on query `filter`.
+    fn query_data(
+        &self,
+        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
+        filter: DataQueryFilter
+    ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        base::AppError,
-        tests::common::{create_test_instance, get_test_user_id},
+        base::{table::DataQueryFilter, AppError},
+        tests::common::{create_test_instance, get_test_db_table, get_test_user_id},
     };
 
     #[test]
@@ -160,8 +196,10 @@ mod tests {
         let db = db.unwrap();
         let mut db = db.lock().unwrap();
 
+        let table_name = get_test_db_table();
+
         db.load_tables()?;
-        assert!(db.table_exists("swp")?);
+        assert!(db.table_exists(&table_name)?);
 
         Ok(())
     }
@@ -179,13 +217,40 @@ mod tests {
         let db = db.unwrap();
         let db = db.lock().unwrap();
 
-        assert!(db.get_table("swp").is_some());
+        let table_name = get_test_db_table();
+
+        assert!(db.get_table(&table_name).is_some());
 
         if let Some(table) = db.get_table("swp") {
             let table = table.lock().unwrap();
             let cols = table.query_columns(db.connector());
 
             assert!(cols.is_ok());
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_table_query_data() -> Result<(), AppError> {
+        let user_id = get_test_user_id();
+        let bsbl = create_test_instance(true)?;
+
+        let user = bsbl.find_user(&user_id);
+        let user = user.unwrap();
+        let user = user.lock().unwrap();
+
+        let db = user.db();
+        let db = db.unwrap();
+        let db = db.lock().unwrap();
+
+        let table_name = get_test_db_table();
+
+        if let Some(table) = db.get_table(&table_name) {
+            let table = table.lock().unwrap();
+            let filter = DataQueryFilter::default();
+            let data = table.query_data(db.connector(), filter);
+            assert!(data.is_ok());
         }
 
         Ok(())

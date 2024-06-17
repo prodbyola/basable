@@ -1,10 +1,12 @@
-use axum::http::StatusCode;
+
+use std::collections::HashMap;
+
+use mysql::Value;
 
 use crate::base::{
     column::{Column, ColumnList},
     connector::Connector,
-    table::{Table, TableConfig},
-    AppError,
+    table::{DataQueryFilter, DataQueryResult, Table, TableConfig},
 };
 
 pub(crate) struct MySqlTable {
@@ -15,6 +17,7 @@ pub(crate) struct MySqlTable {
 impl Table for MySqlTable {
     type Error = mysql::Error;
     type Row = mysql::Row;
+    type ColumnValue = mysql::Value;
 
     fn name(&self) -> &str {
         &self.name
@@ -24,7 +27,7 @@ impl Table for MySqlTable {
     fn query_columns(
         &self,
         conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
-    ) -> Result<ColumnList, AppError> {
+    ) -> Result<ColumnList, Self::Error> {
         let query = format!(
             "
                 SELECT column_name, column_type, is_nullable, column_default 
@@ -34,33 +37,63 @@ impl Table for MySqlTable {
             self.name
         );
 
-        match conn.exec_query(&query) {
-            Ok(result) => {
-                let cols: ColumnList = result
-                    .iter()
-                    .map(|r| {
-                        let name: String = r.get("COLUMN_NAME").unwrap();
-                        let col_type: String = r.get("COLUMN_TYPE").unwrap();
-                        let default: Option<String> = r.get("COLUMN_DEFAULT").unwrap();
+        let result = conn.exec_query(&query)?;
 
-                        let nullable: Option<String> = r.get("IS_NULLABLE");
-                        let nullable = nullable.map(|s| s == "YES".to_owned()).unwrap();
+        let cols: ColumnList = result
+            .iter()
+            .map(|r| {
+                let name: String = r.get("COLUMN_NAME").unwrap();
+                let col_type: String = r.get("COLUMN_TYPE").unwrap();
+                let default: Option<String> = r.get("COLUMN_DEFAULT").unwrap();
 
-                        Column {
-                            name,
-                            col_type,
-                            default,
-                            nullable,
-                        }
-                    })
-                    .collect();
+                let nullable: Option<String> = r.get("IS_NULLABLE");
+                let nullable = nullable.map(|s| s == "YES".to_owned()).unwrap();
 
-                Ok(cols)
+                Column {
+                    name,
+                    col_type,
+                    default,
+                    nullable,
+                }
+            })
+            .collect();
+
+        Ok(cols)
+    }
+    fn query_data(
+        &self,
+        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
+        filter: DataQueryFilter,
+    ) -> DataQueryResult<Self::ColumnValue, Self::Error> {
+        let cols = self.query_columns(conn)?;
+        let mut excluded_cols: Vec<&Column> = vec![]; // columns to exclude from query
+
+        if let Some(exclude) = filter.exclude {
+            if !exclude.is_empty() {
+                excluded_cols = cols.iter().filter(|col| {
+                    let m = exclude.iter().find(|ex| col.name == **ex);
+                    m.is_some()
+                }).collect();
             }
-            Err(e) => Err(AppError::new(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                &e.to_string(),
-            )),
         }
+
+        // TODO: filter excluded columns from the query 
+        let query = format!("SELECT * FROM {} LIMIT {}", self.name(), filter.limit);
+        let result = conn.exec_query(&query)?;
+
+        let data: Vec<HashMap<String, Option<Value>>> = result.iter().map(|r| {
+            let mut map = HashMap::new();
+
+            for col in &cols {
+                if let None = excluded_cols.iter().find(|c| c.name == col.name) {
+                    let v: Option<Value> = r.get(col.name.as_str());
+                    map.insert(col.name.clone(), v);
+                }
+            }
+
+            map
+        }).collect();
+
+        Ok(data)
     }
 }

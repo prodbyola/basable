@@ -4,7 +4,11 @@ use uuid::Uuid;
 
 use crate::imp::database::DbConnectionDetails;
 
-use super::{connector::Connector, table::{Table, TableSummaries}, AppError};
+use super::{
+    connector::Connector,
+    table::{Table, TableSummaries},
+    AppError,
+};
 
 pub(crate) type DBQueryResult<R, E> = Result<Vec<R>, E>;
 
@@ -12,6 +16,7 @@ pub(crate) type DBQueryResult<R, E> = Result<Vec<R>, E>;
 pub(crate) trait DB: Send + Sync {
     type Row;
     type Error;
+    type ColumnValue;
 
     /// Get the `DB`'s connector instance.
     fn connector(&self) -> &dyn Connector<Row = Self::Row, Error = Self::Error>;
@@ -32,7 +37,14 @@ pub(crate) trait DB: Send + Sync {
     fn table_exists(&self, name: &str) -> Result<bool, AppError>;
 
     /// Get an instance of a table with a given name. The return table is mutable across threads.
-    fn get_table(&self, name: &str) -> Option<&Arc<Mutex<dyn Table<Error = Self::Error, Row = Self::Row>>>>;
+    fn get_table(
+        &self,
+        name: &str,
+    ) -> Option<
+        &Arc<
+            Mutex<dyn Table<Error = Self::Error, Row = Self::Row, ColumnValue = Self::ColumnValue>>,
+        >,
+    >;
 
     /// Details about the connection
     fn details(&mut self) -> Result<DbConnectionDetails, AppError>;
