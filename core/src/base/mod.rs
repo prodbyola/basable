@@ -10,6 +10,7 @@ use axum::{
     response::IntoResponse,
 };
 use db::DB;
+use serde::Serialize;
 
 use crate::imp::database::mysql::db::MySqlDB;
 
@@ -39,17 +40,17 @@ impl Display for AppError {
     }
 }
 
-/// Implements conversion of `mysql::Error` to AppError. At the moment, all variations
-/// of `mysql::Error` resolves to `StatusCode::INTERNAL_SERVER_ERROR`.
-impl From<mysql::Error> for AppError {
-    fn from(value: mysql::Error) -> Self {
-        Self(StatusCode::INTERNAL_SERVER_ERROR, value.to_string())
-    }
-}
-
 impl IntoResponse for AppError {
     fn into_response(self) -> Response<Body> {
         (self.0, self.1).into_response()
+    }
+}
+
+impl Serialize for AppError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer {
+            Ok(serializer.collect_str(&self.1)?)
     }
 }
 

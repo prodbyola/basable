@@ -18,12 +18,12 @@ use crate::{
     imp::database::{DBVersion, DbConnectionDetails},
 };
 
-use super::{connector::MysqlConnector, table::MySqlTable};
+use super::{connector::MysqlConnector, table::MySqlTable, MySqlValue};
 
 pub(crate) struct MySqlDB {
     pub id: Uuid,
     pub connector: MysqlConnector,
-    pub tables: Vec<Arc<Mutex<dyn Table<Error = mysql::Error, Row = mysql::Row, ColumnValue = mysql::Value>>>>,
+    pub tables: Vec<Arc<Mutex<dyn Table<Error = mysql::Error, Row = mysql::Row, ColumnValue = MySqlValue>>>>,
 }
 
 impl MySqlDB {
@@ -98,7 +98,7 @@ impl MySqlDB {
 impl DB for MySqlDB {
     type Error = mysql::Error;
     type Row = mysql::Row;
-    type ColumnValue = mysql::Value;
+    type ColumnValue = MySqlValue;
 
     fn connector(&self) -> &dyn Connector<Error = Self::Error, Row = Self::Row> {
         &self.connector

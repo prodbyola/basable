@@ -1,13 +1,13 @@
 
 use std::collections::HashMap;
 
-use mysql::Value;
-
 use crate::base::{
     column::{Column, ColumnList},
     connector::Connector,
     table::{DataQueryFilter, DataQueryResult, Table, TableConfig},
 };
+
+use super::MySqlValue;
 
 pub(crate) struct MySqlTable {
     pub name: String,
@@ -17,7 +17,7 @@ pub(crate) struct MySqlTable {
 impl Table for MySqlTable {
     type Error = mysql::Error;
     type Row = mysql::Row;
-    type ColumnValue = mysql::Value;
+    type ColumnValue = MySqlValue;
 
     fn name(&self) -> &str {
         &self.name
@@ -81,13 +81,14 @@ impl Table for MySqlTable {
         let query = format!("SELECT * FROM {} LIMIT {}", self.name(), filter.limit);
         let result = conn.exec_query(&query)?;
 
-        let data: Vec<HashMap<String, Option<Value>>> = result.iter().map(|r| {
-            let mut map = HashMap::new();
+        let data: Vec<HashMap<String, Self::ColumnValue>> = result.iter().map(|r| {
+            let mut map: HashMap<String, Self::ColumnValue> = HashMap::new();
 
             for col in &cols {
                 if let None = excluded_cols.iter().find(|c| c.name == col.name) {
-                    let v: Option<Value> = r.get(col.name.as_str());
-                    map.insert(col.name.clone(), v);
+                    let v: mysql::Value = r.get(col.name.as_str()).unwrap();
+
+                    map.insert(col.name.clone(), v.into());
                 }
             }
 

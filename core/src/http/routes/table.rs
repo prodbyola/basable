@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -7,8 +9,8 @@ use axum::{
 use axum_macros::debug_handler;
 
 use crate::{
-    base::{column::ColumnList, table::TableConfig, AppError},
-    http::{app::AppState, middlewares::AuthExtractor},
+    base::{column::ColumnList, table::{DataQueryFilter, Table, TableConfig}, AppError},
+    http::{app::AppState, middlewares::AuthExtractor}, imp::database::mysql::table::MySqlTable,
 };
 
 #[debug_handler]
@@ -116,12 +118,43 @@ async fn get_columns(
     Ok(Json(cols))
 }
 
+#[debug_handler]
+async fn query_data(
+    Path(table_name): Path<String>,
+    AuthExtractor(user_id): AuthExtractor,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<HashMap<String, <MySqlTable as Table>::ColumnValue>>>, AppError> {
+    if let Some(user_id) = user_id {
+        let bsbl = state.instance.lock().unwrap();
+
+        if let Some(user) = bsbl.find_user(&user_id) {
+            let user = user.lock().unwrap();
+
+            if let Some(db) = user.db() {
+                let db = db.lock().unwrap();
+
+                if let Some(table) = db.get_table(&table_name) {
+                    let table = table.lock().unwrap();
+
+                    // TODO: Build query filter from url query params
+                    let filter = DataQueryFilter::default();
+                    let data = table.query_data(db.connector(), filter)?;
+                    return Ok(Json(data))
+                }
+            }
+        }
+    }
+
+    Err(AppError::new(StatusCode::INTERNAL_SERVER_ERROR, "Not implemented"))
+}
+
 /// Routes for database table management
 pub(super) fn table_routes() -> Router<AppState> {
     Router::new()
         .route("/configurations/:table_name", get(get_configuration))
         .route("/configurations/:table_name", put(save_configuration))
         .route("/columns/:table_name", get(get_columns))
+        .route("/data/:table_name", get(query_data))
 }
 
 #[cfg(test)]

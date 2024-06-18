@@ -103,10 +103,11 @@ impl Default for TableConfig {
 }
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
-pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, Option<V>>>, E>;
+pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
+
 
 pub struct DataQueryFilter {
-    /// Query agination
+    /// Query pagination
     pub limit: usize,
 
     /// Columns to exclude from query
