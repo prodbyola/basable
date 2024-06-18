@@ -190,8 +190,7 @@ mod tests {
         let bsbl = create_test_instance(true)?;
 
         let user = bsbl.find_user(&user_id);
-        let user = user.unwrap();
-        let user = user.lock().unwrap();
+        let user = user.unwrap().borrow();
 
         let db = user.db();
         let db = db.unwrap();
@@ -211,8 +210,7 @@ mod tests {
         let bsbl = create_test_instance(true)?;
 
         let user = bsbl.find_user(&user_id);
-        let user = user.unwrap();
-        let user = user.lock().unwrap();
+        let user = user.unwrap().borrow();
 
         let db = user.db();
         let db = db.unwrap();
@@ -238,8 +236,7 @@ mod tests {
         let bsbl = create_test_instance(true)?;
 
         let user = bsbl.find_user(&user_id);
-        let user = user.unwrap();
-        let user = user.lock().unwrap();
+        let user = user.unwrap().borrow();
 
         let db = user.db();
         let db = db.unwrap();

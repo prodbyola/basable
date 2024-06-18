@@ -1,11 +1,4 @@
-use chrono::NaiveDateTime;
 use serde::Serialize;
-
-pub(crate) enum ColumnType {
-    Text(String),
-    Int(u32),
-    DateTime(NaiveDateTime),
-}
 
 #[derive(Serialize)]
 pub(crate) struct Column {

@@ -23,7 +23,7 @@ async fn save_configuration(
     let bsbl = state.instance.lock().unwrap();
 
     if let Some(user) = bsbl.find_user(&user_id.unwrap_or_default()) {
-        let user = user.lock().unwrap();
+        let user = user.borrow();
 
         if let Some(db) = user.db() {
             let conn = db.lock().unwrap();
@@ -61,7 +61,7 @@ async fn get_configuration(
         let bsbl = state.instance.lock().unwrap();
 
         if let Some(user) = bsbl.find_user(&user_id) {
-            let user = user.lock().unwrap();
+            let user = user.borrow();
             if let Some(db) = user.db() {
                 let db = db.lock().unwrap();
                 let exists = db.table_exists(&table_name)?;
@@ -102,7 +102,7 @@ async fn get_columns(
         let bsbl = state.instance.lock().unwrap();
 
         if let Some(user) = bsbl.find_user(&user_id) {
-            let user = user.lock().unwrap();
+            let user = user.borrow();
 
             if let Some(db) = user.db() {
                 let db = db.lock().unwrap();
@@ -128,7 +128,7 @@ async fn query_data(
         let bsbl = state.instance.lock().unwrap();
 
         if let Some(user) = bsbl.find_user(&user_id) {
-            let user = user.lock().unwrap();
+            let user = user.borrow();
 
             if let Some(db) = user.db() {
                 let db = db.lock().unwrap();

@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 
 use axum::http::StatusCode;
@@ -10,16 +11,16 @@ use super::connector::Connector;
 use super::db::DB;
 use super::SharableDB;
 use super::{
-    user::{create_jwt, JwtSession},
     config::{Config, Database, SourceType},
+    user::{create_jwt, JwtSession},
     AppError,
 };
 
-pub(crate) type SharableUser = Arc<Mutex<User>>;
+pub(crate) type SharableUser = RefCell<User>;
 
 #[derive(Default)]
 pub(crate) struct Basable {
-    pub users: Vec<Arc<Mutex<User>>>,
+    pub users: Vec<SharableUser>,
 }
 
 impl Basable {
@@ -44,13 +45,13 @@ impl Basable {
     pub(crate) fn create_guest_user(&mut self, req_ip: &str) -> Result<JwtSession, AppError> {
         let session_id = create_jwt(req_ip)?; // jwt encode the ip
 
-        let user = User{
+        let user = User {
             id: req_ip.to_owned(),
             is_logged: false,
-            db: None
+            db: None,
         };
 
-        self.add_user(Arc::new(Mutex::new(user)));
+        self.add_user(RefCell::new(user));
 
         Ok(session_id)
     }
@@ -64,42 +65,39 @@ impl Basable {
         let user = self.find_user(user_id);
 
         if let Some(user) = user {
-            user.lock().unwrap().save_config(config);
+            let user = user.borrow_mut();
+            user.save_config(config);
         }
     }
 
     /// Get an active `User` with the `user_id` from Basable's active users.
-    pub(crate) fn find_user(&self, user_id: &str) -> Option<SharableUser> {
+    pub(crate) fn find_user(&self, user_id: &str) -> Option<&SharableUser> {
         self.users
             .iter()
-            .find(|u| u.lock().unwrap().id == user_id)
-            .map(|u| u.clone())
+            .find(|u| u.borrow().id == user_id)
+            // .map(|u| u.clone());
     }
 
     // / Get a user's position index
     pub(crate) fn user_index(&self, user_id: &str) -> Option<usize> {
         self.users
             .iter()
-            .position(|u| u.lock().unwrap().id == user_id)
+            .position(|u| u.borrow().id == user_id)
     }
 
     /// Remove the user from Basable's active users.
     pub(crate) fn log_user_out(&mut self, user_id: &str) {
         if let Some(user) = self.find_user(user_id) {
             let i = self.user_index(user_id).unwrap();
-            user.lock().unwrap().logout();
+            user.take().logout();
             self.users.remove(i);
         }
     }
 
     /// Attaches a DB to user.
-    pub(crate) fn attach_db(
-        &mut self,
-        user_id: &str,
-        db: SharableDB,
-    ) -> Result<(), AppError> {
+    pub(crate) fn attach_db(&mut self, user_id: &str, db: SharableDB) -> Result<(), AppError> {
         if let Some(user) = self.find_user(user_id) {
-            user.lock().unwrap().attach_db(db);
+            user.borrow_mut().attach_db(db);
             return Ok(());
         }
 

@@ -69,9 +69,7 @@ mod test {
         let user = bsbl.find_user(&user_id);
         assert!(user.is_some());
 
-        let user = user.unwrap();
-        let user = user.lock().unwrap();
-
+        let user = user.unwrap().borrow();
         assert!(user.db().is_some());
 
         Ok(())

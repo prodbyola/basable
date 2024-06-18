@@ -2,8 +2,7 @@
 pub(crate) mod common {
     use dotenv::dotenv;
     use std::{
-        env,
-        sync::{Arc, Mutex},
+        cell::RefCell, env, sync::{Arc, Mutex}
     };
 
     use crate::{
@@ -66,7 +65,7 @@ pub(crate) mod common {
         };
 
         let mut bslb = Basable::default();
-        bslb.add_user(Arc::new(Mutex::new(user)));
+        bslb.add_user(RefCell::new(user));
 
         if attach_db {
             let conn = Basable::create_connection(&config)?;
