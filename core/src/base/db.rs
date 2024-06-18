@@ -1,12 +1,10 @@
-use std::sync::{Arc, Mutex};
-
 use uuid::Uuid;
 
 use crate::imp::database::DbConnectionDetails;
 
 use super::{
     connector::Connector,
-    table::{Table, TableSummaries},
+    table::{SharedTable, TableSummaries},
     AppError,
 };
 
@@ -40,14 +38,11 @@ pub(crate) trait DB: Send + Sync {
     fn get_table(
         &self,
         name: &str,
-    ) -> Option<
-        &Arc<
-            Mutex<dyn Table<Error = Self::Error, Row = Self::Row, ColumnValue = Self::ColumnValue>>,
-        >,
-    >;
+    ) -> Option<&SharedTable<Self::Error, Self::Row, Self::ColumnValue>>;
 
     /// Details about the connection
     fn details(&mut self) -> Result<DbConnectionDetails, AppError>;
 
+    /// Get total number of columns
     fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;
 }

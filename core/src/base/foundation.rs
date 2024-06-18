@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::sync::{Arc, Mutex};
 
 use axum::http::StatusCode;
 
@@ -38,7 +37,7 @@ impl Basable {
         };
 
         db.load_tables()?;
-        Ok(Some(Arc::new(Mutex::new(db))))
+        Ok(Some(Box::new(RefCell::new(db))))
     }
 
     /// Creates a new guest user using the request `SocketAddr`

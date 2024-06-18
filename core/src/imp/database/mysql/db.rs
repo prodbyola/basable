@@ -12,7 +12,7 @@ use crate::{
         config::Config,
         connector::Connector,
         db::DB,
-        table::{Table, TableSummaries, TableSummary},
+        table::{SharedTable, TableSummaries, TableSummary},
         AppError,
     },
     imp::database::{DBVersion, DbConnectionDetails},
@@ -23,7 +23,7 @@ use super::{connector::MysqlConnector, table::MySqlTable, MySqlValue};
 pub(crate) struct MySqlDB {
     pub id: Uuid,
     pub connector: MysqlConnector,
-    pub tables: Vec<Arc<Mutex<dyn Table<Error = mysql::Error, Row = mysql::Row, ColumnValue = MySqlValue>>>>,
+    pub tables: Vec<SharedTable<mysql::Error, mysql::Row, MySqlValue>>,
 }
 
 impl MySqlDB {
@@ -197,7 +197,7 @@ impl DB for MySqlDB {
     fn get_table(
         &self,
         name: &str,
-    ) -> Option<&Arc<Mutex<dyn Table<Error = Self::Error, Row = Self::Row, ColumnValue = Self::ColumnValue>>>> {
+    ) -> Option<&SharedTable<Self::Error, Self::Row, Self::ColumnValue>> {
         self.tables
             .iter()
             .find(|t| t.lock().unwrap().name() == name)

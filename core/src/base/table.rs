@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::{Arc, Mutex}};
 
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use crate::base::column::ColumnList;
 
 use super::{connector::Connector, AppError};
+
+pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
 
 #[derive(Deserialize, Serialize, Clone)]
 /// Table column used for querying table history such as when a row was added or when a row was updated.
@@ -132,7 +134,7 @@ pub(crate) struct TableSummary {
     pub updated: Option<String>,
 }
 
-pub(crate) trait Table: Send + Sync {
+pub(crate) trait Table: Sync + Send {
     type Error;
     type Row;
     type ColumnValue;
@@ -194,7 +196,7 @@ mod tests {
 
         let db = user.db();
         let db = db.unwrap();
-        let mut db = db.lock().unwrap();
+        let mut db = db.borrow_mut();
 
         let table_name = get_test_db_table();
 
@@ -214,7 +216,7 @@ mod tests {
 
         let db = user.db();
         let db = db.unwrap();
-        let db = db.lock().unwrap();
+        let db = db.borrow();
 
         let table_name = get_test_db_table();
 
@@ -240,7 +242,7 @@ mod tests {
 
         let db = user.db();
         let db = db.unwrap();
-        let db = db.lock().unwrap();
+        let db = db.borrow();
 
         let table_name = get_test_db_table();
 

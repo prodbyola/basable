@@ -16,13 +16,13 @@ const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 pub(crate) struct User {
     pub id: String,
     pub is_logged: bool,
-    pub db: Option<SharableDB>
+    pub db: Option<SharableDB>,
 }
 
 impl User {
     pub fn db(&self) -> Option<&SharableDB> {
         if let Some(db) = &self.db {
-            return Some(db)
+            return Some(db);
         }
 
         None
@@ -42,7 +42,11 @@ impl User {
 
 impl Default for User {
     fn default() -> Self {
-        Self { id: String::new(), is_logged: false, db: None }
+        Self {
+            id: String::new(),
+            is_logged: false,
+            db: None,
+        }
     }
 }
 
@@ -76,7 +80,10 @@ pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
     let token = encode(&header, &claims, &EncodingKey::from_secret(JWT_SECRET))
         .map_err(|e| AppError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    Ok(JwtSession { token, exp: exp_time as usize })
+    Ok(JwtSession {
+        token,
+        exp: exp_time as usize,
+    })
 }
 
 pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<String, AppError> {

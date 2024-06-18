@@ -1,8 +1,5 @@
 use core::str;
-use std::{
-    fmt::Display,
-    sync::{Arc, Mutex},
-};
+use std::{cell::RefCell, fmt::Display};
 
 use axum::{
     body::Body,
@@ -22,8 +19,15 @@ pub(crate) mod foundation;
 pub(crate) mod table;
 pub(crate) mod user;
 
-pub(crate) type SharableDB =
-    Arc<Mutex<dyn DB<Row = <MySqlDB as DB>::Row, Error = <MySqlDB as DB>::Error, ColumnValue = <MySqlDB as DB>::ColumnValue>>>;
+pub(crate) type SharableDB = Box<
+    RefCell<
+        dyn DB<
+            Row = <MySqlDB as DB>::Row,
+            Error = <MySqlDB as DB>::Error,
+            ColumnValue = <MySqlDB as DB>::ColumnValue,
+        >,
+    >,
+>;
 
 #[derive(Debug)]
 pub(crate) struct AppError(pub StatusCode, pub String);
@@ -49,8 +53,9 @@ impl IntoResponse for AppError {
 impl Serialize for AppError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
-            Ok(serializer.collect_str(&self.1)?)
+        S: serde::Serializer,
+    {
+        Ok(serializer.collect_str(&self.1)?)
     }
 }
 

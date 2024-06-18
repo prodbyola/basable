@@ -26,7 +26,7 @@ async fn save_configuration(
         let user = user.borrow();
 
         if let Some(db) = user.db() {
-            let conn = db.lock().unwrap();
+            let conn = db.borrow();
             let exists = conn.table_exists(&table_name)?;
 
             if !exists {
@@ -63,7 +63,7 @@ async fn get_configuration(
         if let Some(user) = bsbl.find_user(&user_id) {
             let user = user.borrow();
             if let Some(db) = user.db() {
-                let db = db.lock().unwrap();
+                let db = db.borrow();
                 let exists = db.table_exists(&table_name)?;
 
                 if !exists {
@@ -105,7 +105,7 @@ async fn get_columns(
             let user = user.borrow();
 
             if let Some(db) = user.db() {
-                let db = db.lock().unwrap();
+                let db = db.borrow();
 
                 if let Some(table) = db.get_table(&table_name) {
                     let table = table.lock().unwrap();
@@ -131,7 +131,7 @@ async fn query_data(
             let user = user.borrow();
 
             if let Some(db) = user.db() {
-                let db = db.lock().unwrap();
+                let db = db.borrow();
 
                 if let Some(table) = db.get_table(&table_name) {
                     let table = table.lock().unwrap();
