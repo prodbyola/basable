@@ -38,10 +38,10 @@ impl Basable {
         };
 
         let pointer = Arc::new(Mutex::new(db));
-        // let db = pointer.clone();
-        // let mut db = db.lock().unwrap();
+        let db = pointer.clone();
+        let mut db = db.lock().unwrap();
 
-        // db.load_tables(pointer.clone())?;
+        db.load_tables(pointer.clone())?;
 
         Ok(Some(pointer))
     }
