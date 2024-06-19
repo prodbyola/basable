@@ -12,8 +12,8 @@ use crate::{
         config::Config,
         connector::Connector,
         db::DB,
-        table::{SharedTable, TableSummaries, TableSummary},
-        AppError,
+        table::{SharedTable, Table, TableSummaries, TableSummary},
+        AppError, SharedDB,
     },
     imp::database::{DBVersion, DbConnectionDetails},
 };
@@ -108,12 +108,13 @@ impl DB for MySqlDB {
         self.id
     }
 
-    fn load_tables(&mut self) -> Result<(), AppError> {
+    fn load_tables(&mut self, db: SharedDB) -> Result<(), AppError> {
         let tables = self.query_tables()?;
+
         if !tables.is_empty() {
             tables.iter().for_each(|t| {
                 let name: String = t.get("TABLE_NAME").unwrap();
-                let table = MySqlTable { name, config: None };
+                let table = MySqlTable::new(db.clone(), name);
 
                 self.tables.push(Arc::new(Mutex::new(table)));
             })

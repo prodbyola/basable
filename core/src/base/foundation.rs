@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::sync::{Arc, Mutex};
 
 use axum::http::StatusCode;
 
@@ -8,7 +9,7 @@ use crate::User;
 
 use super::connector::Connector;
 use super::db::DB;
-use super::SharableDB;
+use super::SharedDB;
 use super::{
     config::{Config, Database, SourceType},
     user::{create_jwt, JwtSession},
@@ -24,8 +25,8 @@ pub(crate) struct Basable {
 
 impl Basable {
     /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
-    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharableDB>, AppError> {
-        let mut db = match config.source_type() {
+    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharedDB>, AppError> {
+        let db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
                     let conn = MysqlConnector::new(config.clone())?;
@@ -36,8 +37,13 @@ impl Basable {
             _ => todo!(),
         };
 
-        db.load_tables()?;
-        Ok(Some(Box::new(RefCell::new(db))))
+        let pointer = Arc::new(Mutex::new(db));
+        // let db = pointer.clone();
+        // let mut db = db.lock().unwrap();
+
+        // db.load_tables(pointer.clone())?;
+
+        Ok(Some(pointer))
     }
 
     /// Creates a new guest user using the request `SocketAddr`
@@ -94,7 +100,7 @@ impl Basable {
     }
 
     /// Attaches a DB to user.
-    pub(crate) fn attach_db(&mut self, user_id: &str, db: SharableDB) -> Result<(), AppError> {
+    pub(crate) fn attach_db(&mut self, user_id: &str, db: SharedDB) -> Result<(), AppError> {
         if let Some(user) = self.find_user(user_id) {
             user.borrow_mut().attach_db(db);
             return Ok(());

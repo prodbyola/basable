@@ -1,13 +1,20 @@
-use std::{collections::HashMap, sync::{Arc, Mutex}};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::base::column::ColumnList;
 
-use super::{connector::Connector, AppError};
+use super::{connector::Connector, AppError, SharedDB};
 
 pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
+// pub(crate) type TableDB = Arc<Box<DBContructor>>;
+
+pub(crate) type TableSummaries = Vec<TableSummary>;
+pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
 
 #[derive(Deserialize, Serialize, Clone)]
 /// Table column used for querying table history such as when a row was added or when a row was updated.
@@ -80,22 +87,26 @@ pub(crate) struct NotifyEvent {
 
 #[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct TableConfig {
+    /// Name of column to use as primary key.
+    pub pk: Option<String>,
+
     /// Column for querying when a row was created.
-    created_column: Option<HistoryColumn>,
+    pub created_column: Option<HistoryColumn>,
 
     /// Column for querying when a row was updated.
-    updated_column: Option<HistoryColumn>,
+    pub updated_column: Option<HistoryColumn>,
 
     /// Special columns that return `SpecialValueType`
-    special_columns: Option<Vec<SpecialColumn>>,
+    pub special_columns: Option<Vec<SpecialColumn>>,
 
     /// Notification events for this table.
-    events: Option<Vec<NotifyEvent>>,
+    pub events: Option<Vec<NotifyEvent>>,
 }
 
 impl Default for TableConfig {
     fn default() -> Self {
         TableConfig {
+            pk: None,
             created_column: None,
             updated_column: None,
             special_columns: None,
@@ -104,23 +115,19 @@ impl Default for TableConfig {
     }
 }
 
-pub(crate) type TableSummaries = Vec<TableSummary>;
-pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
-
-
 pub struct DataQueryFilter {
     /// Query pagination
     pub limit: usize,
 
     /// Columns to exclude from query
-    pub exclude: Option<Vec<String>>
+    pub exclude: Option<Vec<String>>,
 }
 
 impl Default for DataQueryFilter {
     fn default() -> Self {
-        DataQueryFilter { 
-            limit: 100, 
-            exclude: None
+        DataQueryFilter {
+            limit: 100,
+            exclude: None,
         }
     }
 }
@@ -138,6 +145,12 @@ pub(crate) trait Table: Sync + Send {
     type Error;
     type Row;
     type ColumnValue;
+
+    fn new(db: SharedDB, name: String) -> Self
+    where
+        Self: Sized;
+
+    fn db(&self) -> &SharedDB;
 
     fn save_config(&self, config: TableConfig, save_local: bool) -> Result<(), AppError> {
         if save_local {
@@ -168,19 +181,18 @@ pub(crate) trait Table: Sync + Send {
     /// Retrieve all columns for the table
     fn query_columns(
         &self,
-        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
     ) -> Result<ColumnList, Self::Error>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
-        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
-        filter: DataQueryFilter
+        filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
 }
 
 #[cfg(test)]
 mod tests {
+
     use crate::{
         base::{table::DataQueryFilter, AppError},
         tests::common::{create_test_instance, get_test_db_table, get_test_user_id},
@@ -194,13 +206,14 @@ mod tests {
         let user = bsbl.find_user(&user_id);
         let user = user.unwrap().borrow();
 
-        let db = user.db();
-        let db = db.unwrap();
-        let mut db = db.borrow_mut();
+        let db = user.db().unwrap();
+        let db_ref = db.clone();
+        let mut db = db.lock().unwrap();
 
         let table_name = get_test_db_table();
 
-        db.load_tables()?;
+        // let tt = Arc::new(Box::new(db_ref));
+        db.load_tables(db_ref)?;
         assert!(db.table_exists(&table_name)?);
 
         Ok(())
@@ -216,7 +229,7 @@ mod tests {
 
         let db = user.db();
         let db = db.unwrap();
-        let db = db.borrow();
+        let db = db.lock().unwrap();
 
         let table_name = get_test_db_table();
 
@@ -224,7 +237,7 @@ mod tests {
 
         if let Some(table) = db.get_table("swp") {
             let table = table.lock().unwrap();
-            let cols = table.query_columns(db.connector());
+            let cols = table.query_columns();
 
             assert!(cols.is_ok());
         }
@@ -242,14 +255,14 @@ mod tests {
 
         let db = user.db();
         let db = db.unwrap();
-        let db = db.borrow();
+        let db = db.lock().unwrap();
 
         let table_name = get_test_db_table();
 
         if let Some(table) = db.get_table(&table_name) {
             let table = table.lock().unwrap();
             let filter = DataQueryFilter::default();
-            let data = table.query_data(db.connector(), filter);
+            let data = table.query_data(filter);
             assert!(data.is_ok());
         }
 

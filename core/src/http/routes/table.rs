@@ -26,7 +26,7 @@ async fn save_configuration(
         let user = user.borrow();
 
         if let Some(db) = user.db() {
-            let conn = db.borrow();
+            let conn = db.lock().unwrap();
             let exists = conn.table_exists(&table_name)?;
 
             if !exists {
@@ -63,7 +63,7 @@ async fn get_configuration(
         if let Some(user) = bsbl.find_user(&user_id) {
             let user = user.borrow();
             if let Some(db) = user.db() {
-                let db = db.borrow();
+                let db = db.lock().unwrap();
                 let exists = db.table_exists(&table_name)?;
 
                 if !exists {
@@ -105,11 +105,11 @@ async fn get_columns(
             let user = user.borrow();
 
             if let Some(db) = user.db() {
-                let db = db.borrow();
+                let db = db.lock().unwrap();
 
                 if let Some(table) = db.get_table(&table_name) {
                     let table = table.lock().unwrap();
-                    cols = table.query_columns(db.connector())?;
+                    cols = table.query_columns()?;
                 }
             }
         }
@@ -131,14 +131,14 @@ async fn query_data(
             let user = user.borrow();
 
             if let Some(db) = user.db() {
-                let db = db.borrow();
+                let db = db.lock().unwrap();
 
                 if let Some(table) = db.get_table(&table_name) {
                     let table = table.lock().unwrap();
 
                     // TODO: Build query filter from url query params
                     let filter = DataQueryFilter::default();
-                    let data = table.query_data(db.connector(), filter)?;
+                    let data = table.query_data(filter)?;
                     return Ok(Json(data))
                 }
             }

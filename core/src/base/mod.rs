@@ -1,5 +1,5 @@
 use core::str;
-use std::{cell::RefCell, fmt::Display};
+use std::{cell::RefCell, fmt::Display, sync::{Arc, Mutex}};
 
 use axum::{
     body::Body,
@@ -19,15 +19,13 @@ pub(crate) mod foundation;
 pub(crate) mod table;
 pub(crate) mod user;
 
-pub(crate) type SharableDB = Box<
-    RefCell<
-        dyn DB<
-            Row = <MySqlDB as DB>::Row,
-            Error = <MySqlDB as DB>::Error,
-            ColumnValue = <MySqlDB as DB>::ColumnValue,
-        >,
-    >,
+pub(crate) type DBContructor = dyn DB<
+    Row = <MySqlDB as DB>::Row,
+    Error = <MySqlDB as DB>::Error,
+    ColumnValue = <MySqlDB as DB>::ColumnValue,
 >;
+
+pub(crate) type SharedDB = Arc<Mutex<DBContructor>>;
 
 #[derive(Debug)]
 pub(crate) struct AppError(pub StatusCode, pub String);

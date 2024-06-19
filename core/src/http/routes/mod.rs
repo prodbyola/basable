@@ -50,7 +50,7 @@ async fn connect(
         let user = user.borrow();
 
         let conn = user.db().unwrap();
-        let mut conn = conn.borrow_mut();
+        let mut conn = conn.lock().unwrap();
 
         resp = conn.details()?;
     }
