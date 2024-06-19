@@ -25,7 +25,6 @@ async fn connect(
     AuthExtractor(user_id): AuthExtractor,
     Json(config): Json<Config>,
 ) -> Result<Json<DbConnectionDetails>, AppError> {
-    let mut resp = DbConnectionDetails::default();
     let mut bsbl = state.instance.lock().unwrap();
 
     let user_id = user_id.unwrap();
@@ -43,18 +42,16 @@ async fn connect(
         }
     }
     
-    if let Some(conn) = Basable::create_connection(&config)? {
-        bsbl.attach_db(&user_id, conn)?;
+    let db = Basable::create_connection(&config)?;
+    bsbl.attach_db(&user_id, db)?;
 
-        let user = bsbl.find_user(&user_id).unwrap();
-        let user = user.borrow();
+    let user = bsbl.find_user(&user_id).unwrap();
+    let user = user.borrow();
 
-        let conn = user.db().unwrap();
-        let mut conn = conn.lock().unwrap();
+    let conn = user.db().unwrap();
+    let mut conn = conn.lock().unwrap();
 
-        resp = conn.details()?;
-    }
-
+    let resp = conn.details()?;
     Ok(Json(resp))
 }
 
@@ -84,10 +81,7 @@ mod tests {
         let extractor = create_test_auth_extractor();
 
         let c = connect(State(state), extractor, Json(config)).await;
-        if let Err(e) = c  {
-            println!("err {:?}", e);
-        }
-        // assert!(c.is_ok());
+        assert!(c.is_ok());
 
         Ok(())
     }

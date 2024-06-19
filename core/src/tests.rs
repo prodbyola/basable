@@ -69,7 +69,7 @@ pub(crate) mod common {
 
         if attach_db {
             let conn = Basable::create_connection(&config)?;
-            bslb.attach_db(&user_id, conn.unwrap())?;
+            bslb.attach_db(&user_id, conn)?;
         }
 
         Ok(bslb)

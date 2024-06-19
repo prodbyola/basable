@@ -4,7 +4,7 @@ use crate::imp::database::DbConnectionDetails;
 
 use super::{
     connector::Connector,
-    table::{SharedTable, TableSummaries},
+    table::{SharedTable, TableDB, TableSummaries},
     AppError, SharedDB,
 };
 
@@ -24,7 +24,9 @@ pub(crate) trait DB: Send + Sync {
 
     /// Load available tables into `DB` instance. Caller should provide a `TableDB`,
     /// an atomic `DB` pointer for referencing the `Table` parent.
-    fn load_tables(&mut self, db: SharedDB) -> Result<(), AppError>;
+    fn load_tables(
+        &mut self,
+    ) -> Result<(), AppError>;
 
     /// Query `DB` server for information about available tables
     fn query_tables(&self) -> DBQueryResult<Self::Row, Self::Error>;

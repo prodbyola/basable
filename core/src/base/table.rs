@@ -8,10 +8,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::base::column::ColumnList;
 
-use super::{AppError, SharedDB};
+use super::{connector::Connector, AppError, DBContructor, SharedDB};
 
 pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
-// pub(crate) type TableDB = Arc<Box<DBContructor>>;
+pub(crate) type TableDB = Arc<Box<DBContructor>>;
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
@@ -146,11 +146,9 @@ pub(crate) trait Table: Sync + Send {
     type Row;
     type ColumnValue;
 
-    fn new(db: SharedDB, name: String) -> Self
+    fn new(name: String, conn: &dyn Connector<Error = Self::Error, Row = Self::Row>) -> Self
     where
         Self: Sized;
-
-    fn db(&self) -> &SharedDB;
 
     fn save_config(&self, config: TableConfig, save_local: bool) -> Result<(), AppError> {
         if save_local {
@@ -181,11 +179,13 @@ pub(crate) trait Table: Sync + Send {
     /// Retrieve all columns for the table
     fn query_columns(
         &self,
+        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
     ) -> Result<ColumnList, Self::Error>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
+        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
         filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
 }
@@ -207,13 +207,13 @@ mod tests {
         let user = user.unwrap().borrow();
 
         let db = user.db().unwrap();
-        let db_ref = db.clone();
-        let mut db = db.lock().unwrap();
+        // let db_ref = db.clone();
+        let db = db.lock().unwrap();
 
         let table_name = get_test_db_table();
 
         // let tt = Arc::new(Box::new(db_ref));
-        db.load_tables(db_ref)?;
+        // db.load_tables(db_ref)?;
         assert!(db.table_exists(&table_name)?);
 
         Ok(())
@@ -237,7 +237,7 @@ mod tests {
 
         if let Some(table) = db.get_table("swp") {
             let table = table.lock().unwrap();
-            let cols = table.query_columns();
+            let cols = table.query_columns(db.connector());
 
             assert!(cols.is_ok());
         }
@@ -262,7 +262,7 @@ mod tests {
         if let Some(table) = db.get_table(&table_name) {
             let table = table.lock().unwrap();
             let filter = DataQueryFilter::default();
-            let data = table.query_data(filter);
+            let data = table.query_data(db.connector(), filter);
             assert!(data.is_ok());
         }
 

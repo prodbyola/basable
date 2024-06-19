@@ -25,8 +25,8 @@ pub(crate) struct Basable {
 
 impl Basable {
     /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
-    pub(crate) fn create_connection(config: &Config) -> Result<Option<SharedDB>, AppError> {
-        let db = match config.source_type() {
+    pub(crate) fn create_connection(config: &Config) -> Result<SharedDB, AppError> {
+        let mut db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
                     let conn = MysqlConnector::new(config.clone())?;
@@ -37,13 +37,9 @@ impl Basable {
             _ => todo!(),
         };
 
-        let pointer = Arc::new(Mutex::new(db));
-        let db = pointer.clone();
-        let mut db = db.lock().unwrap();
-
-        db.load_tables(pointer.clone())?;
-
-        Ok(Some(pointer))
+        db.load_tables()?;
+        
+        Ok(Arc::new(Mutex::new(db)))
     }
 
     /// Creates a new guest user using the request `SocketAddr`
