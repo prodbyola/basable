@@ -5,26 +5,49 @@ use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use super::{config::Config, AppError};
+use super::{config::Config, AppError, SharedDB};
 
-// JWT_SECRET should be defined by the installer and saved in platform env variables.
+// JWT_SECRET should be defined by the installer and saved as BASABLE_SECRET env variables.
 // You can generate one at https://djecrety.ir
 const BEARER: &str = "Bearer ";
 const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 
-#[derive(Clone, Debug)]
+// #[derive(Clone)]
 pub(crate) struct User {
     pub id: String,
     pub is_logged: bool,
+    pub db: Option<SharedDB>,
 }
 
 impl User {
+    pub fn db(&self) -> Option<&SharedDB> {
+        if let Some(db) = &self.db {
+            return Some(db);
+        }
+
+        None
+    }
+
+    pub fn attach_db(&mut self, db: SharedDB) {
+        self.db = Some(db);
+    }
+
     pub(crate) fn logout(&self) {
         // TODO: Close connection
     }
 
-    /// Saves this `Config` for user and create new connection using the `Config`.
+    /// Saves connection `Config` for user and create new connection using the `Config`.
     pub(crate) fn save_config(&self, config: &Config) {}
+}
+
+impl Default for User {
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            is_logged: false,
+            db: None,
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -57,7 +80,10 @@ pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
     let token = encode(&header, &claims, &EncodingKey::from_secret(JWT_SECRET))
         .map_err(|e| AppError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    Ok(JwtSession { token, exp: exp_time as usize })
+    Ok(JwtSession {
+        token,
+        exp: exp_time as usize,
+    })
 }
 
 pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<String, AppError> {

@@ -1,4 +1,4 @@
-use base::auth::User;
+use base::user::User;
 use dotenv::dotenv;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -7,6 +7,7 @@ use crate::http::app::app;
 mod base;
 mod http;
 mod imp;
+mod tests;
 
 #[tokio::main]
 async fn main() {
