@@ -1,15 +1,20 @@
 use core::str;
-use std::{cell::RefCell, fmt::Display, sync::{Arc, Mutex}};
+use std::{
+    cell::RefCell,
+    fmt::Display,
+    sync::{Arc, Mutex},
+};
 
 use axum::{
     body::Body,
     http::{Response, StatusCode},
     response::IntoResponse,
 };
+use connector::Connector;
 use db::DB;
 use serde::Serialize;
 
-use crate::imp::database::mysql::db::MySqlDB;
+use crate::imp::database::mysql::{connector::MysqlConnector, db::MySqlDB};
 
 pub(crate) mod column;
 pub(crate) mod config;
@@ -19,13 +24,20 @@ pub(crate) mod foundation;
 pub(crate) mod table;
 pub(crate) mod user;
 
-pub(crate) type DBContructor = dyn DB<
+/// Dynamic [`DB`] type implemented across the app.
+pub(crate) type DbType = dyn DB<
     Row = <MySqlDB as DB>::Row,
     Error = <MySqlDB as DB>::Error,
     ColumnValue = <MySqlDB as DB>::ColumnValue,
 >;
 
-pub(crate) type SharedDB = Arc<Mutex<DBContructor>>;
+/// Dynamic [`Connector`] type implemented across the app.
+pub(crate) type ConnectorType = Arc<dyn Connector<
+    Row = <MysqlConnector as Connector>::Row,
+    Error = <MysqlConnector as Connector>::Error,
+>>;
+
+pub(crate) type SharedDB = Arc<Mutex<DbType>>;
 
 #[derive(Debug)]
 pub(crate) struct AppError(pub StatusCode, pub String);

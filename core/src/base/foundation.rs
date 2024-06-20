@@ -8,7 +8,6 @@ use crate::imp::database::mysql::db::MySqlDB;
 use crate::User;
 
 use super::connector::Connector;
-use super::db::DB;
 use super::SharedDB;
 use super::{
     config::{Config, Database, SourceType},
@@ -26,20 +25,25 @@ pub(crate) struct Basable {
 impl Basable {
     /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
     pub(crate) fn create_connection(config: &Config) -> Result<SharedDB, AppError> {
-        let mut db = match config.source_type() {
+        let db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
                     let conn = MysqlConnector::new(config.clone())?;
-                    MySqlDB::new(conn)
+                    MySqlDB::new(Arc::new(conn))
                 }
                 _ => todo!(),
             },
             _ => todo!(),
         };
 
-        db.load_tables()?;
+        let pointer: SharedDB = Arc::new(Mutex::new(db));
+        let db = pointer.clone();
+        let mut db = db.lock().unwrap();
         
-        Ok(Arc::new(Mutex::new(db)))
+        let conn = db.connector().clone();
+        db.load_tables(conn)?;
+
+        Ok(pointer)
     }
 
     /// Creates a new guest user using the request `SocketAddr`
@@ -73,17 +77,13 @@ impl Basable {
 
     /// Get an active `User` with the `user_id` from Basable's active users.
     pub(crate) fn find_user(&self, user_id: &str) -> Option<&SharableUser> {
-        self.users
-            .iter()
-            .find(|u| u.borrow().id == user_id)
-            // .map(|u| u.clone());
+        self.users.iter().find(|u| u.borrow().id == user_id)
+        // .map(|u| u.clone());
     }
 
     // / Get a user's position index
     pub(crate) fn user_index(&self, user_id: &str) -> Option<usize> {
-        self.users
-            .iter()
-            .position(|u| u.borrow().id == user_id)
+        self.users.iter().position(|u| u.borrow().id == user_id)
     }
 
     /// Remove the user from Basable's active users.

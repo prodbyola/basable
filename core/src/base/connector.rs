@@ -11,4 +11,6 @@ pub(crate) trait Connector: Send + Sync {
 
     /// Execute a database query and return results
     fn exec_query(&self, query: &str) -> Result<Vec<Self::Row>, Self::Error>;
+
+    fn config(&self) -> &Config;
 }

@@ -3,9 +3,8 @@ use uuid::Uuid;
 use crate::imp::database::DbConnectionDetails;
 
 use super::{
-    connector::Connector,
     table::{SharedTable, TableSummaries},
-    AppError,
+    AppError, ConnectorType,
 };
 
 pub(crate) type DBQueryResult<R, E> = Result<Vec<R>, E>;
@@ -17,18 +16,18 @@ pub(crate) trait DB: Send + Sync {
     type ColumnValue;
 
     /// Get the `DB`'s connector instance.
-    fn connector(&self) -> &dyn Connector<Row = Self::Row, Error = Self::Error>;
+    fn connector(&self) -> &ConnectorType;
 
     /// Get connection id
     fn get_id(&self) -> Uuid;
 
-    /// Load available tables into `DB` instance. Caller should provide a `TableDB`,
-    /// an atomic `DB` pointer for referencing the `Table` parent.
-    fn load_tables(
-        &mut self,
-    ) -> Result<(), AppError>;
+    /// Load available tables into `DB` instance. Caller should provide a [`ConnectorType`]
+    /// pointer whose copy is assigned to each [`Table`] that is loaded.
+    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError>;
 
-    /// Query `DB` server for information about available tables
+    /// Query [`DB`] server for information about available tables. It only queries the database server and
+    /// return results as [`DB::Row`]. It is different from [`DB::load_tables`] which actually loads the [`Table`] 
+    /// abstraction into memory.
     fn query_tables(&self) -> DBQueryResult<Self::Row, Self::Error>;
 
     /// Get an instance of a table with a given name. The return table is mutable across threads.

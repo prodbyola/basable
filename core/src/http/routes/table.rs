@@ -109,7 +109,7 @@ async fn get_columns(
 
                 if let Some(table) = db.get_table(&table_name) {
                     let table = table.lock().unwrap();
-                    cols = table.query_columns(db.connector())?;
+                    cols = table.query_columns()?;
                 }
             }
         }
@@ -138,7 +138,7 @@ async fn query_data(
 
                     // TODO: Build query filter from url query params
                     let filter = DataQueryFilter::default();
-                    let data = table.query_data(db.connector(), filter)?;
+                    let data = table.query_data(filter)?;
                     return Ok(Json(data))
                 }
             }

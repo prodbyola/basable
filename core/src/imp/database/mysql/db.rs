@@ -10,24 +10,23 @@ use uuid::Uuid;
 use crate::{
     base::{
         config::Config,
-        connector::Connector,
         db::DB,
-        table::{SharedTable, TableSummaries, TableSummary},
-        AppError,
+        table::{SharedTable, Table, TableSummaries, TableSummary},
+        AppError, ConnectorType,
     },
     imp::database::{DBVersion, DbConnectionDetails},
 };
 
-use super::{connector::MysqlConnector, table::MySqlTable, MySqlValue};
+use super::{table::MySqlTable, MySqlValue};
 
 pub(crate) struct MySqlDB {
     pub id: Uuid,
-    pub connector: MysqlConnector,
+    pub connector: ConnectorType,
     pub tables: Vec<SharedTable<mysql::Error, mysql::Row, MySqlValue>>,
 }
 
 impl MySqlDB {
-    pub fn new(connector: MysqlConnector) -> Self {
+    pub fn new(connector: ConnectorType) -> Self {
         MySqlDB {
             connector,
             tables: Vec::new(),
@@ -87,7 +86,7 @@ impl MySqlDB {
     }
 
     fn config(&self) -> &Config {
-        &self.connector.config
+        &self.connector.config()
     }
 
     fn exec_query(&self, query: &str) -> mysql::Result<Vec<Row>> {
@@ -100,7 +99,7 @@ impl DB for MySqlDB {
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
-    fn connector(&self) -> &dyn Connector<Error = Self::Error, Row = Self::Row> {
+    fn connector(&self) -> &ConnectorType {
         &self.connector
     }
 
@@ -108,16 +107,14 @@ impl DB for MySqlDB {
         self.id
     }
 
-    fn load_tables(&mut self) -> Result<(), AppError> {
+    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError> {
         let tables = self.query_tables()?;
 
         if !tables.is_empty() {
             tables.iter().for_each(|t| {
+                let connector = connector.clone();
                 let name: String = t.get("TABLE_NAME").unwrap();
-                let table = MySqlTable {
-                    name,
-                    config: None
-                };
+                let table = MySqlTable::new(name, connector);
 
                 self.tables.push(Arc::new(Mutex::new(table)));
             })

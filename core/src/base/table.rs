@@ -8,10 +8,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::base::column::ColumnList;
 
-use super::{connector::Connector, AppError, DBContructor, SharedDB};
+use super::{connector::Connector, AppError, ConnectorType, DbType, SharedDB};
 
 pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
-pub(crate) type TableDB = Arc<Box<DBContructor>>;
+pub(crate) type TableDB = Arc<Box<DbType>>;
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
@@ -146,7 +146,7 @@ pub(crate) trait Table: Sync + Send {
     type Row;
     type ColumnValue;
 
-    fn new(name: String, conn: &dyn Connector<Error = Self::Error, Row = Self::Row>) -> Self
+    fn new(name: String, conn: ConnectorType) -> Self
     where
         Self: Sized;
 
@@ -179,15 +179,16 @@ pub(crate) trait Table: Sync + Send {
     /// Retrieve all columns for the table
     fn query_columns(
         &self,
-        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
+        // conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
     ) -> Result<ColumnList, Self::Error>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
-        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
+        // conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
         filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
+    fn connector(&self) -> &ConnectorType;
 }
 
 #[cfg(test)]
@@ -237,7 +238,7 @@ mod tests {
 
         if let Some(table) = db.get_table("swp") {
             let table = table.lock().unwrap();
-            let cols = table.query_columns(db.connector());
+            let cols = table.query_columns();
 
             assert!(cols.is_ok());
         }
@@ -262,7 +263,7 @@ mod tests {
         if let Some(table) = db.get_table(&table_name) {
             let table = table.lock().unwrap();
             let filter = DataQueryFilter::default();
-            let data = table.query_data(db.connector(), filter);
+            let data = table.query_data(filter);
             assert!(data.is_ok());
         }
 

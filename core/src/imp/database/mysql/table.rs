@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use crate::base::{
-    column::{Column, ColumnList}, connector::Connector, table::{DataQueryFilter, DataQueryResult, Table, TableConfig, TableDB}
+    column::{Column, ColumnList},
+    table::{DataQueryFilter, DataQueryResult, Table, TableConfig},
+    ConnectorType,
 };
 
 use super::MySqlValue;
@@ -9,6 +11,7 @@ use super::MySqlValue;
 pub(crate) struct MySqlTable {
     pub name: String,
     pub config: Option<TableConfig>,
+    pub connector: ConnectorType,
 }
 
 impl Table for MySqlTable {
@@ -16,16 +19,19 @@ impl Table for MySqlTable {
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
-    fn new(name: String, conn: &dyn Connector<Error = Self::Error, Row = Self::Row>) -> Self
+    fn new(name: String, conn: ConnectorType) -> Self
     where
         Self: Sized,
     {
-        let table = MySqlTable { name, config: None };
+        let table = MySqlTable {
+            name,
+            connector: conn,
+            config: None,
+        };
         let mut config = None;
 
-        if let Ok(cols) = table.query_columns(conn) {
+        if let Ok(cols) = table.query_columns() {
             let mut iter = cols.iter();
-
             let mut pk = iter.find(|c| c.name == "id");
 
             if let None = pk {
@@ -55,7 +61,7 @@ impl Table for MySqlTable {
     /// Query all columns for the table
     fn query_columns(
         &self,
-        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
+        // conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
     ) -> Result<ColumnList, Self::Error> {
         let query = format!(
             "
@@ -66,6 +72,7 @@ impl Table for MySqlTable {
             self.name
         );
 
+        let conn = self.connector();
         let result = conn.exec_query(&query)?;
 
         let cols: ColumnList = result
@@ -94,10 +101,9 @@ impl Table for MySqlTable {
 
     fn query_data(
         &self,
-        conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
         filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error> {
-        let cols = self.query_columns(conn)?;
+        let cols = self.query_columns()?;
         let mut excluded_cols: Vec<&Column> = vec![]; // columns to exclude from query
 
         if let Some(exclude) = filter.exclude {
@@ -114,8 +120,9 @@ impl Table for MySqlTable {
 
         // TODO: filter excluded columns from the query
         let query = format!("SELECT * FROM {} LIMIT {}", self.name(), filter.limit);
+        let conn = self.connector();
         let result = conn.exec_query(&query)?;
-        
+
         // std::mem::drop(db);
         let data: Vec<HashMap<String, Self::ColumnValue>> = result
             .iter()
@@ -135,5 +142,8 @@ impl Table for MySqlTable {
             .collect();
 
         Ok(data)
+    }
+    fn connector(&self) -> &ConnectorType {
+        &self.connector
     }
 }

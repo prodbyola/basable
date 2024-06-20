@@ -40,4 +40,8 @@ impl Connector for MysqlConnector {
         let stmt = conn.prep(query)?;
         conn.exec(stmt, Params::Empty)
     }
+
+    fn config(&self) -> &Config {
+        &self.config
+    }
 }
