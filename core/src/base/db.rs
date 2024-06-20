@@ -4,8 +4,8 @@ use crate::imp::database::DbConnectionDetails;
 
 use super::{
     connector::Connector,
-    table::{SharedTable, TableDB, TableSummaries},
-    AppError, SharedDB,
+    table::{SharedTable, TableSummaries},
+    AppError,
 };
 
 pub(crate) type DBQueryResult<R, E> = Result<Vec<R>, E>;
