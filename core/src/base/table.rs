@@ -8,10 +8,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::base::column::ColumnList;
 
-use super::{connector::Connector, AppError, ConnectorType, DbType, SharedDB};
+use super::{AppError, ConnectorType};
 
 pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
-pub(crate) type TableDB = Arc<Box<DbType>>;
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;

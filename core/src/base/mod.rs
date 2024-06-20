@@ -1,6 +1,5 @@
 use core::str;
 use std::{
-    cell::RefCell,
     fmt::Display,
     sync::{Arc, Mutex},
 };
