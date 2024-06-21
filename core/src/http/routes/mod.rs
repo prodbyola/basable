@@ -28,11 +28,11 @@ async fn connect(
     let mut bsbl = state.instance.lock().unwrap();
 
     let user_id = user_id.unwrap();
-    let mut auth_session = false;
+    // let mut auth_session = false;
 
     if let Some(user) = bsbl.find_user(&user_id) {
         let user = user.borrow();
-        auth_session = user.is_logged;
+        let auth_session = user.is_logged;
 
         // drop User reference from memory in order to free `Basable` instance
         // and allow access later.
