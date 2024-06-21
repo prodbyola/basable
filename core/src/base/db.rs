@@ -22,11 +22,16 @@ pub(crate) trait DB: Send + Sync {
     fn get_id(&self) -> Uuid;
 
     /// Load available tables into `DB` instance. Caller should provide a [`ConnectorType`]
-    /// pointer whose copy is assigned to each [`Table`] that is loaded.
-    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError>;
+    /// pointer whose copy is assigned to each [Table](`crate::base::table::Table`) that is loaded. The [`ConnectorType`] will be
+    /// used by the table for it's own queries.
+    ///
+    /// We also provide `load_table_configs` param, which which tells `load_tables` to attempt creating default configurations for [Table](`crate::base::table::Table`). Please
+    /// see [Table::new](`crate::base::table::Table::new`) to learn more.
+    fn load_tables(&mut self, connector: ConnectorType)
+        -> Result<(), AppError>;
 
     /// Query [`DB`] server for information about available tables. It only queries the database server and
-    /// return results as [`DB::Row`]. It is different from [`DB::load_tables`] which actually loads the [`Table`] 
+    /// return results as [`DB::Row`]. It is different from [`DB::load_tables`] which actually loads the [`Table`]
     /// abstraction into memory.
     fn query_tables(&self) -> DBQueryResult<Self::Row, Self::Error>;
 

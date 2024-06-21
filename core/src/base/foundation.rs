@@ -23,7 +23,9 @@ pub(crate) struct Basable {
 }
 
 impl Basable {
-    /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
+    /// Creates a new thread-safe instance of [`SharedDB`] as required by the [`Config`] parameter.
+    /// 
+    /// The `auth_session` param should be set to `true` if current app [`User`] is logged.
     pub(crate) fn create_connection(config: &Config) -> Result<SharedDB, AppError> {
         let db = match config.source_type() {
             SourceType::Database(db) => match db {

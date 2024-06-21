@@ -28,6 +28,7 @@ impl Table for MySqlTable {
             connector: conn,
             config: None,
         };
+
         let mut config = None;
 
         if let Ok(cols) = table.query_columns() {
@@ -50,7 +51,7 @@ impl Table for MySqlTable {
         if let Some(c) = config {
             table.save_config(c, true).unwrap();
         }
-
+        
         table
     }
 

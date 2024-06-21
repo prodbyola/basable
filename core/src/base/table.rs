@@ -145,6 +145,10 @@ pub(crate) trait Table: Sync + Send {
     type Row;
     type ColumnValue;
 
+    /// Create a new [`Table`] and assign the given [`ConnectorType`]. 
+    /// 
+    /// If `load_table_configs` is true, the we try to build [`TableConfig`] for the [`Table`] 
+    /// using available properties from the DB server.
     fn new(name: String, conn: ConnectorType) -> Self
     where
         Self: Sized;
