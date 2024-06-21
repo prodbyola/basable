@@ -1,7 +1,7 @@
 use axum::routing::post;
 use axum::Router;
 
-use crate::base::config::Config;
+use crate::base::config::ConnectionConfig;
 use crate::base::foundation::Basable;
 use crate::base::AppError;
 use crate::http::app::AppState;
@@ -23,30 +23,33 @@ pub(super) mod table;
 async fn connect(
     State(state): State<AppState>,
     AuthExtractor(user_id): AuthExtractor,
-    Json(config): Json<Config>,
+    Json(config): Json<ConnectionConfig>,
 ) -> Result<Json<DbConnectionDetails>, AppError> {
     let mut bsbl = state.instance.lock().unwrap();
 
     let user_id = user_id.unwrap();
+    // let mut auth_session = false;
 
     if let Some(user) = bsbl.find_user(&user_id) {
         let user = user.borrow();
-        let is_logged = user.is_logged;
+        let auth_session = user.is_logged;
 
         // drop User reference from memory in order to free `Basable` instance
         // and allow access later.
         std::mem::drop(user);
 
-        if is_logged {
+        if auth_session {
             bsbl.save_config(&config, &user_id);
         }
     }
     
-    let db = Basable::create_connection(&config)?;
+    let (db, table_configs) = Basable::create_shared_db(&config)?;
     bsbl.attach_db(&user_id, db)?;
 
     let user = bsbl.find_user(&user_id).unwrap();
-    let user = user.borrow();
+    let mut user = user.borrow_mut();
+    user.init_table_configs(table_configs)?;
+
 
     let conn = user.db().unwrap();
     let mut conn = conn.lock().unwrap();

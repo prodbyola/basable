@@ -10,7 +10,6 @@ use super::MySqlValue;
 
 pub(crate) struct MySqlTable {
     pub name: String,
-    pub config: Option<TableConfig>,
     pub connector: ConnectorType,
 }
 
@@ -19,15 +18,15 @@ impl Table for MySqlTable {
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
-    fn new(name: String, conn: ConnectorType) -> Self
+    fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
     where
         Self: Sized,
     {
         let table = MySqlTable {
             name,
             connector: conn,
-            config: None,
         };
+
         let mut config = None;
 
         if let Ok(cols) = table.query_columns() {
@@ -41,17 +40,14 @@ impl Table for MySqlTable {
             let pk = pk.map(|pk| pk.name.clone());
             let c = TableConfig {
                 pk,
+                table_id: table.name.clone(),
                 ..TableConfig::default()
             };
 
             config = Some(c);
         }
 
-        if let Some(c) = config {
-            table.save_config(c, true).unwrap();
-        }
-
-        table
+        (table, config)
     }
 
     fn name(&self) -> &str {
@@ -59,17 +55,34 @@ impl Table for MySqlTable {
     }
 
     /// Query all columns for the table
-    fn query_columns(
-        &self,
-        // conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
-    ) -> Result<ColumnList, Self::Error> {
+    fn query_columns(&self) -> Result<ColumnList, Self::Error> {
         let query = format!(
             "
-                SELECT column_name, column_type, is_nullable, column_default 
-                FROM information_schema.columns 
-                WHERE table_name = '{}'
+                SELECT 
+                    cols.column_name,
+                    cols.column_type,
+                    cols.is_nullable,
+                    cols.column_default,
+                    IF(stats.index_name IS NOT NULL, 'YES', 'NO') AS IS_UNIQUE
+                FROM 
+                    information_schema.columns AS cols
+                LEFT JOIN 
+                    (SELECT DISTINCT
+                        column_name,
+                        index_name
+                    FROM
+                        information_schema.statistics
+                    WHERE
+                        table_name = '{}'
+                        AND non_unique = 0) AS stats
+                ON 
+                    cols.column_name = stats.column_name
+                    AND cols.table_name = '{}'
+                WHERE
+                    cols.table_name = '{}'
+
             ",
-            self.name
+            self.name, self.name, self.name
         );
 
         let conn = self.connector();
@@ -85,13 +98,15 @@ impl Table for MySqlTable {
                 let nullable: Option<String> = r.get("IS_NULLABLE");
                 let nullable = nullable.map(|s| s == "YES".to_owned()).unwrap();
 
-                // TODO: Get unique property of a column
+                let unique: Option<String> = r.get("IS_UNIQUE");
+                let unique = unique.map(|s| s == "YES".to_owned()).unwrap();
+
                 Column {
                     name,
                     col_type,
                     default_value: default,
                     nullable,
-                    unique: false,
+                    unique,
                 }
             })
             .collect();
@@ -143,7 +158,34 @@ impl Table for MySqlTable {
 
         Ok(data)
     }
+
     fn connector(&self) -> &ConnectorType {
         &self.connector
+    }
+
+    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), Self::Error> {
+        let len = input.len();
+        let mut data = HashMap::new();
+
+        for (k, v) in input {
+            data.insert(k, format!("'{}'", v));
+        }
+
+        let mut keys = Vec::with_capacity(len);
+        let mut values = Vec::with_capacity(len);
+
+        data.iter().for_each(|(k, v)| {
+            keys.push(k.as_str());
+            values.push(v.as_str());
+        });
+
+        let keys = keys.join(", ");
+        let values = values.join(", ");
+
+        let query = format!("INSERT INTO {} ({}) VALUES ({})", self.name, keys, values);
+        let conn = self.connector();
+        conn.exec_query(&query)?;
+
+        Ok(())
     }
 }

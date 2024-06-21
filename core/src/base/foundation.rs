@@ -8,9 +8,10 @@ use crate::imp::database::mysql::db::MySqlDB;
 use crate::User;
 
 use super::connector::Connector;
+use super::table::TableConfigs;
 use super::SharedDB;
 use super::{
-    config::{Config, Database, SourceType},
+    config::{ConnectionConfig, Database, SourceType},
     user::{create_jwt, JwtSession},
     AppError,
 };
@@ -23,8 +24,10 @@ pub(crate) struct Basable {
 }
 
 impl Basable {
-    /// Creates a new thread-safe instance of `BasableConnection` as required by the `Config` parameter.
-    pub(crate) fn create_connection(config: &Config) -> Result<SharedDB, AppError> {
+    /// Creates a new thread-safe instance of [`SharedDB`] as required by the [`Config`] parameter.
+    /// 
+    /// The `auth_session` param should be set to `true` if current app [`User`] is logged.
+    pub(crate) fn create_shared_db(config: &ConnectionConfig) -> Result<(SharedDB, TableConfigs), AppError> {
         let db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
@@ -41,9 +44,9 @@ impl Basable {
         let mut db = db.lock().unwrap();
         
         let conn = db.connector().clone();
-        db.load_tables(conn)?;
+        let table_configs = db.load_tables(conn)?;
 
-        Ok(pointer)
+        Ok((pointer, table_configs))
     }
 
     /// Creates a new guest user using the request `SocketAddr`
@@ -52,8 +55,7 @@ impl Basable {
 
         let user = User {
             id: req_ip.to_owned(),
-            is_logged: false,
-            db: None,
+            ..Default::default()
         };
 
         self.add_user(RefCell::new(user));
@@ -66,12 +68,12 @@ impl Basable {
     }
 
     /// Saves the `Config` to Basable's remote server in association with the user_id
-    pub(crate) fn save_config(&mut self, config: &Config, user_id: &str) {
+    pub(crate) fn save_config(&mut self, config: &ConnectionConfig, user_id: &str) {
         let user = self.find_user(user_id);
 
         if let Some(user) = user {
             let user = user.borrow_mut();
-            user.save_config(config);
+            user.save_connection(config);
         }
     }
 

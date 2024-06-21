@@ -3,16 +3,17 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::base::column::ColumnList;
 
-use super::{AppError, ConnectorType};
+use super::ConnectorType;
 
 pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
+pub(crate) type TableConfigs = Option<Vec<TableConfig>>;
+
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -86,6 +87,8 @@ pub(crate) struct NotifyEvent {
 
 #[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct TableConfig {
+    pub table_id: String,
+
     /// Name of column to use as primary key.
     pub pk: Option<String>,
 
@@ -102,10 +105,17 @@ pub(crate) struct TableConfig {
     pub events: Option<Vec<NotifyEvent>>,
 }
 
+impl PartialEq for TableConfig {
+    fn eq(&self, other: &Self) -> bool {
+        self.table_id == other.table_id
+    }
+}
+
 impl Default for TableConfig {
     fn default() -> Self {
         TableConfig {
             pk: None,
+            table_id: String::new(),
             created_column: None,
             updated_column: None,
             special_columns: None,
@@ -145,53 +155,39 @@ pub(crate) trait Table: Sync + Send {
     type Row;
     type ColumnValue;
 
-    fn new(name: String, conn: ConnectorType) -> Self
+    /// Create a new [`Table`] and assign the given [`ConnectorType`].
+    ///
+    /// If `load_table_configs` is true, the we try to build [`TableConfig`] for the [`Table`]
+    /// using available properties from the DB server.
+    fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
     where
         Self: Sized;
 
-    fn save_config(&self, config: TableConfig, save_local: bool) -> Result<(), AppError> {
-        if save_local {
-            // TODO: Save locally
-        } else {
-            // TODO: Save to remote server
-        }
-
-        Ok(())
-    }
-
-    fn get_config(&self, get_local: bool) -> Result<Option<TableConfig>, AppError> {
-        if get_local {
-            // TODO: Get locally
-            Ok(None)
-        } else {
-            // TODO: Get from remote server
-            return Err(AppError::new(
-                StatusCode::NOT_IMPLEMENTED,
-                "Not implemented",
-            ));
-        }
-    }
-
-    /// Table's name
+    /// [Table]'s name
     fn name(&self) -> &str;
 
     /// Retrieve all columns for the table
-    fn query_columns(
-        &self,
-        // conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
-    ) -> Result<ColumnList, Self::Error>;
+    fn query_columns(&self) -> Result<ColumnList, Self::Error>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
-        // conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
         filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
+
+    /// Get the table's [`ConnectorType`].
     fn connector(&self) -> &ConnectorType;
+
+    fn insert_data(&self, data: HashMap<String, String>) -> Result<(), Self::Error>;
 }
 
 #[cfg(test)]
 mod tests {
+
+    use std::{
+        collections::HashMap,
+        io::stdin,
+    };
 
     use crate::{
         base::{table::DataQueryFilter, AppError},
@@ -264,6 +260,61 @@ mod tests {
             let filter = DataQueryFilter::default();
             let data = table.query_data(filter);
             assert!(data.is_ok());
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_table_insert_data() -> Result<(), AppError> {
+        let user_id = get_test_user_id();
+        let bsbl = create_test_instance(true)?;
+
+        let user = bsbl.find_user(&user_id);
+        let user = user.unwrap().borrow();
+
+        let db = user.db();
+        let db = db.unwrap();
+        let db = db.lock().unwrap();
+
+        let table_name = get_test_db_table();
+
+        if let Some(table) = db.get_table(&table_name) {
+            let mut test_data = HashMap::new();
+            // test_data.insert("username".to_owned(), "toonfortdm".to_owned());
+            // test_data.insert("password".to_owned(), "anewpassword".to_owned());
+
+            let quit_word = "quit";
+
+            println!(
+                "
+                Let's add some data into our TEST_DB_TABLE_NAME. \n
+                Please enter your data inputs in the format: column,value. \n
+                Enter '{}' to quit the program.
+            ",
+                quit_word
+            );
+
+            loop {
+                let mut input = String::new();
+                println!("Please enter an input:");
+                stdin()
+                    .read_line(&mut input)
+                    .expect("Please enter a valid string");
+
+                let input = input.trim().to_string();
+                if input == quit_word {
+                    break;
+                }
+
+                let spl: Vec<&str> = input.split(",").collect();
+                test_data.insert(spl[0].to_string(), spl[1].to_string());
+            }
+
+            let table = table.lock().unwrap();
+            let insert_data = table.insert_data(test_data);
+
+            assert!(insert_data.is_ok());
         }
 
         Ok(())

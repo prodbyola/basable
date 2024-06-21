@@ -5,18 +5,22 @@ use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use super::{config::Config, AppError, SharedDB};
+use crate::base::{
+    config::ConnectionConfig,
+    table::{TableConfig, TableConfigs},
+    AppError, SharedDB,
+};
 
 // JWT_SECRET should be defined by the installer and saved as BASABLE_SECRET env variables.
 // You can generate one at https://djecrety.ir
 const BEARER: &str = "Bearer ";
 const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 
-// #[derive(Clone)]
 pub(crate) struct User {
     pub id: String,
     pub is_logged: bool,
     pub db: Option<SharedDB>,
+    pub table_configs: TableConfigs,
 }
 
 impl User {
@@ -36,8 +40,51 @@ impl User {
         // TODO: Close connection
     }
 
-    /// Saves connection `Config` for user and create new connection using the `Config`.
-    pub(crate) fn save_config(&self, config: &Config) {}
+    /// Remotely saves [`ConnectionConfig`] for user.
+    pub(crate) fn save_connection(&self, config: &ConnectionConfig) {}
+
+    pub fn init_table_configs(&mut self, configs: TableConfigs) -> Result<(), AppError> {
+        if !self.is_logged {
+            self.table_configs = configs;
+        }
+
+        Ok(())
+    }
+
+    pub fn save_table_config(&mut self, config: TableConfig) -> Result<(), AppError> {
+        if self.is_logged {
+            // TODO: Get config remotely
+        } else {
+            // If config vec is already created, insert new config else create new vec with config.
+            match self.table_configs.as_mut() {
+                // Check if a config exists for table and replace it with new config
+                // Else push new config into vec.
+                Some(cfgs) => match cfgs.iter().find(|c| *c == &config).as_mut() {
+                    Some(c) => {
+                        let _ = std::mem::replace(c, &config);
+                    }
+                    None => cfgs.push(config),
+                },
+                None => self.table_configs = Some(vec![config]),
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn get_table_config(&self, table_name: &str) -> Result<Option<&TableConfig>, AppError> {
+        let mut config = None;
+
+        if self.is_logged {
+            // TODO: Get config remotely
+        } else {
+            if let Some(cfg) = &self.table_configs {
+                config = cfg.iter().find(|t| t.table_id == table_name);
+            }
+        }
+
+        Ok(config)
+    }
 }
 
 impl Default for User {
@@ -46,6 +93,7 @@ impl Default for User {
             id: String::new(),
             is_logged: false,
             db: None,
+            table_configs: None,
         }
     }
 }

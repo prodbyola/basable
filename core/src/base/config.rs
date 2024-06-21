@@ -50,7 +50,7 @@ impl SourceType {
 
 /// Configuration options for a new `BasableConnection`.
 #[derive(Deserialize, Clone, Debug)]
-pub(crate) struct Config {
+pub(crate) struct ConnectionConfig {
     pub source_type: String,
     pub source: String,
     pub username: Option<String>,
@@ -60,7 +60,7 @@ pub(crate) struct Config {
     pub db_name: Option<String>,
 }
 
-impl Default for Config {
+impl Default for ConnectionConfig {
     fn default() -> Self {
         Self {
             username: None,
@@ -74,7 +74,7 @@ impl Default for Config {
     }
 }
 
-impl Config {
+impl ConnectionConfig {
     pub fn build_url(&self) -> String {
         let src_type = SourceType::from_str(&self.source_type, &self.source);
 
