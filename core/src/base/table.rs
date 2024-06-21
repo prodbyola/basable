@@ -184,7 +184,10 @@ pub(crate) trait Table: Sync + Send {
 #[cfg(test)]
 mod tests {
 
-    use std::collections::HashMap;
+    use std::{
+        collections::HashMap,
+        io::stdin,
+    };
 
     use crate::{
         base::{table::DataQueryFilter, AppError},
@@ -278,16 +281,42 @@ mod tests {
 
         if let Some(table) = db.get_table(&table_name) {
             let mut test_data = HashMap::new();
-            test_data.insert("username".to_owned(), "toonfortdm".to_owned());
-            test_data.insert("password".to_owned(), "anewpassword".to_owned());
+            // test_data.insert("username".to_owned(), "toonfortdm".to_owned());
+            // test_data.insert("password".to_owned(), "anewpassword".to_owned());
+
+            let quit_word = "quit";
+
+            println!(
+                "
+                Let's add some data into our TEST_DB_TABLE_NAME. \n
+                Please enter your data inputs in the format: column,value. \n
+                Enter '{}' to quit the program.
+            ",
+                quit_word
+            );
+
+            loop {
+                let mut input = String::new();
+                println!("Please enter an input:");
+                stdin()
+                    .read_line(&mut input)
+                    .expect("Please enter a valid string");
+
+                let input = input.trim().to_string();
+                if input == quit_word {
+                    break;
+                }
+
+                let spl: Vec<&str> = input.split(",").collect();
+                test_data.insert(spl[0].to_string(), spl[1].to_string());
+            }
 
             let table = table.lock().unwrap();
             let insert_data = table.insert_data(test_data);
-            
+
             assert!(insert_data.is_ok());
         }
 
         Ok(())
     }
-
 }
