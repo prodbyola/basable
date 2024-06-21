@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    routing::{get, put},
+    routing::{get, post, put},
     Json, Router,
 };
 use axum_macros::debug_handler;
@@ -148,6 +148,38 @@ async fn query_data(
     ))
 }
 
+#[debug_handler]
+async fn insert_data(
+    Path(table_name): Path<String>,
+    AuthExtractor(user_id): AuthExtractor,
+    State(state): State<AppState>,
+    Json(data): Json<HashMap<String, String>>
+) -> Result<String, AppError> {
+    if let Some(user_id) = user_id {
+        let bsbl = state.instance.lock().unwrap();
+
+        if let Some(user) = bsbl.find_user(&user_id) {
+            let user = user.borrow();
+
+            if let Some(db) = user.db() {
+                let db = db.lock().unwrap();
+
+                if let Some(table) = db.get_table(&table_name) {
+                    let table = table.lock().unwrap();
+
+                    table.insert_data(data)?;
+                    return Ok("Operation successful".to_string());
+                }
+            }
+        }
+    }
+
+    Err(AppError::new(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Not implemented",
+    ))
+}
+
 /// Routes for database table management
 pub(super) fn table_routes() -> Router<AppState> {
     Router::new()
@@ -155,6 +187,7 @@ pub(super) fn table_routes() -> Router<AppState> {
         .route("/configurations/:table_name", put(save_configuration))
         .route("/columns/:table_name", get(get_columns))
         .route("/data/:table_name", get(query_data))
+        .route("/data/:table_name", post(insert_data))
 }
 
 #[cfg(test)]

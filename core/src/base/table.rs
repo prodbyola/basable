@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::base::column::ColumnList;
 
-use super::{AppError, ConnectorType};
+use super::ConnectorType;
 
 pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
 
