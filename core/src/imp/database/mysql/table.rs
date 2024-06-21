@@ -65,11 +65,31 @@ impl Table for MySqlTable {
     ) -> Result<ColumnList, Self::Error> {
         let query = format!(
             "
-                SELECT column_name, column_type, is_nullable, column_default 
-                FROM information_schema.columns 
-                WHERE table_name = '{}'
+                SELECT 
+                    cols.column_name,
+                    cols.column_type,
+                    cols.is_nullable,
+                    cols.column_default,
+                    IF(stats.index_name IS NOT NULL, 'YES', 'NO') AS IS_UNIQUE
+                FROM 
+                    information_schema.columns AS cols
+                LEFT JOIN 
+                    (SELECT DISTINCT
+                        column_name,
+                        index_name
+                    FROM
+                        information_schema.statistics
+                    WHERE
+                        table_name = '{}'
+                        AND non_unique = 0) AS stats
+                ON 
+                    cols.column_name = stats.column_name
+                    AND cols.table_name = '{}'
+                WHERE
+                    cols.table_name = '{}'
+
             ",
-            self.name
+            self.name, self.name, self.name
         );
 
         let conn = self.connector();
@@ -78,20 +98,23 @@ impl Table for MySqlTable {
         let cols: ColumnList = result
             .iter()
             .map(|r| {
+                println!("{:?}", r);
                 let name: String = r.get("COLUMN_NAME").unwrap();
                 let col_type: String = r.get("COLUMN_TYPE").unwrap();
                 let default: Option<String> = r.get("COLUMN_DEFAULT").unwrap();
 
                 let nullable: Option<String> = r.get("IS_NULLABLE");
                 let nullable = nullable.map(|s| s == "YES".to_owned()).unwrap();
+                
+                let unique: Option<String> = r.get("IS_UNIQUE");
+                let unique = unique.map(|s| s == "YES".to_owned()).unwrap();
 
-                // TODO: Get unique property of a column
                 Column {
                     name,
                     col_type,
                     default_value: default,
                     nullable,
-                    unique: false,
+                    unique,
                 }
             })
             .collect();
