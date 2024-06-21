@@ -5,18 +5,19 @@ use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use super::{config::Config, AppError, SharedDB};
+use super::{config::ConnectionConfig, table::{TableConfig, TableConfigs}, AppError, SharedDB};
 
 // JWT_SECRET should be defined by the installer and saved as BASABLE_SECRET env variables.
 // You can generate one at https://djecrety.ir
 const BEARER: &str = "Bearer ";
 const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 
-// #[derive(Clone)]
 pub(crate) struct User {
     pub id: String,
     pub is_logged: bool,
     pub db: Option<SharedDB>,
+    pub table_configs: Option<Vec<TableConfig>>
+    
 }
 
 impl User {
@@ -36,8 +37,16 @@ impl User {
         // TODO: Close connection
     }
 
-    /// Saves connection `Config` for user and create new connection using the `Config`.
-    pub(crate) fn save_config(&self, config: &Config) {}
+    /// Remotely saves [`ConnectionConfig`] for user.
+    pub(crate) fn save_connection(&self, config: &ConnectionConfig) {}
+
+    pub fn init_table_configs(&mut self, configs: TableConfigs) -> Result<(), AppError> {
+        if !self.is_logged {
+            self.table_configs = configs;
+        }
+
+        Ok(())
+    }
 }
 
 impl Default for User {
@@ -46,6 +55,7 @@ impl Default for User {
             id: String::new(),
             is_logged: false,
             db: None,
+            table_configs: None
         }
     }
 }

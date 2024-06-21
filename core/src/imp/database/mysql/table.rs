@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+
 use crate::base::{
     column::{Column, ColumnList},
     table::{DataQueryFilter, DataQueryResult, Table, TableConfig},
@@ -10,7 +11,6 @@ use super::MySqlValue;
 
 pub(crate) struct MySqlTable {
     pub name: String,
-    pub config: Option<TableConfig>,
     pub connector: ConnectorType,
 }
 
@@ -19,14 +19,13 @@ impl Table for MySqlTable {
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
-    fn new(name: String, conn: ConnectorType) -> Self
+    fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
     where
         Self: Sized,
     {
         let table = MySqlTable {
             name,
             connector: conn,
-            config: None,
         };
 
         let mut config = None;
@@ -41,18 +40,16 @@ impl Table for MySqlTable {
 
             let pk = pk.map(|pk| pk.name.clone());
             let c = TableConfig {
+                
                 pk,
+                table_id: table.name.clone(),
                 ..TableConfig::default()
             };
 
             config = Some(c);
         }
-
-        if let Some(c) = config {
-            table.save_config(c, true).unwrap();
-        }
         
-        table
+        (table, config)
     }
 
     fn name(&self) -> &str {
@@ -99,7 +96,6 @@ impl Table for MySqlTable {
         let cols: ColumnList = result
             .iter()
             .map(|r| {
-                println!("{:?}", r);
                 let name: String = r.get("COLUMN_NAME").unwrap();
                 let col_type: String = r.get("COLUMN_TYPE").unwrap();
                 let default: Option<String> = r.get("COLUMN_DEFAULT").unwrap();

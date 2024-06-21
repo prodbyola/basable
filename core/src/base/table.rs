@@ -5,6 +5,7 @@ use std::{
 
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::base::column::ColumnList;
 
@@ -13,6 +14,8 @@ use super::{AppError, ConnectorType};
 pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
+pub(crate) type TableConfigs = Option<Vec<TableConfig>>;
+
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -86,6 +89,7 @@ pub(crate) struct NotifyEvent {
 
 #[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct TableConfig {
+    pub table_id: String,
     /// Name of column to use as primary key.
     pub pk: Option<String>,
 
@@ -106,6 +110,7 @@ impl Default for TableConfig {
     fn default() -> Self {
         TableConfig {
             pk: None,
+            table_id: String::new(),
             created_column: None,
             updated_column: None,
             special_columns: None,
@@ -149,7 +154,7 @@ pub(crate) trait Table: Sync + Send {
     /// 
     /// If `load_table_configs` is true, the we try to build [`TableConfig`] for the [`Table`] 
     /// using available properties from the DB server.
-    fn new(name: String, conn: ConnectorType) -> Self
+    fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
     where
         Self: Sized;
 

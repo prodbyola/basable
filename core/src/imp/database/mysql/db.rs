@@ -9,9 +9,9 @@ use uuid::Uuid;
 
 use crate::{
     base::{
-        config::Config,
+        config::ConnectionConfig,
         db::DB,
-        table::{SharedTable, Table, TableSummaries, TableSummary},
+        table::{SharedTable, Table, TableConfig, TableSummaries, TableSummary},
         AppError, ConnectorType,
     },
     imp::database::{DBVersion, DbConnectionDetails},
@@ -85,7 +85,7 @@ impl MySqlDB {
         Ok(size)
     }
 
-    fn config(&self) -> &Config {
+    fn config(&self) -> &ConnectionConfig {
         &self.connector.config()
     }
 
@@ -107,19 +107,33 @@ impl DB for MySqlDB {
         self.id
     }
 
-    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError> {
+    fn load_tables(
+        &mut self,
+        connector: ConnectorType,
+    ) -> Result<Option<Vec<TableConfig>>, AppError> {
         let tables = self.query_tables()?;
+        let mut configs = Vec::with_capacity(tables.len());
 
         if !tables.is_empty() {
             tables.iter().for_each(|t| {
                 let connector = connector.clone();
                 let name: String = t.get("TABLE_NAME").unwrap();
-                let table = MySqlTable::new(name, connector);
+                let (table, config) = MySqlTable::new(name, connector);
+                if let Some(config) = config {
+                    configs.push(config);
+                }
 
                 self.tables.push(Arc::new(Mutex::new(table)));
             })
         }
-        Ok(())
+
+        let configs = if configs.is_empty() {
+            None
+        } else {
+            Some(configs)
+        };
+
+        Ok(configs)
     }
 
     fn query_tables(&self) -> mysql::Result<Vec<Row>> {

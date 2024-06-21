@@ -6,7 +6,7 @@ pub(crate) mod common {
     };
 
     use crate::{
-        base::{config::Config, foundation::Basable, user::User, AppError},
+        base::{config::ConnectionConfig, foundation::Basable, user::User, AppError},
         http::{app::AppState, middlewares::AuthExtractor},
     };
 
@@ -28,7 +28,7 @@ pub(crate) mod common {
     }
 
     /// Creates a test `Config`.
-    pub fn create_test_config() -> Config {
+    pub fn create_test_config() -> ConnectionConfig {
         dotenv().ok();
 
         let db_name = env::var("TEST_DB_NAME").unwrap();
@@ -39,7 +39,7 @@ pub(crate) mod common {
         let source = env::var("TEST_DB_SOURCE").unwrap();
         let source_type = env::var("TEST_DB_SOURCE_TYPE").unwrap();
 
-        Config {
+        ConnectionConfig {
             db_name: Some(db_name),
             username: Some(db_username),
             password: Some(db_password),
@@ -68,7 +68,14 @@ pub(crate) mod common {
         bslb.add_user(RefCell::new(user));
 
         if attach_db {
-            let conn = Basable::create_connection(&config)?;
+            let (conn, configs) = Basable::create_shared_db(&config)?;
+            
+            let user = bslb.find_user(&user_id).unwrap();
+            let mut user = user.borrow_mut();
+            user.init_table_configs(configs)?;
+
+            std::mem::drop(user);
+
             bslb.attach_db(&user_id, conn)?;
         }
 
@@ -77,7 +84,7 @@ pub(crate) mod common {
 
     /// Creates an `AppState` for testing. 
     /// 
-    /// Attaches a test `DB` instance if `attach_db` is `true`.
+    /// Attaches a test [DB](`crate::base::db::DB`) instance if `attach_db` is `true`.
     pub fn create_test_state(attach_db: bool) -> Result<AppState, AppError> {
         let instance = create_test_instance(attach_db)?;
         let state = AppState {

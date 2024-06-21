@@ -1,7 +1,7 @@
 use axum::routing::post;
 use axum::Router;
 
-use crate::base::config::Config;
+use crate::base::config::ConnectionConfig;
 use crate::base::foundation::Basable;
 use crate::base::AppError;
 use crate::http::app::AppState;
@@ -23,7 +23,7 @@ pub(super) mod table;
 async fn connect(
     State(state): State<AppState>,
     AuthExtractor(user_id): AuthExtractor,
-    Json(config): Json<Config>,
+    Json(config): Json<ConnectionConfig>,
 ) -> Result<Json<DbConnectionDetails>, AppError> {
     let mut bsbl = state.instance.lock().unwrap();
 
@@ -43,11 +43,13 @@ async fn connect(
         }
     }
     
-    let db = Basable::create_connection(&config)?;
+    let (db, table_configs) = Basable::create_shared_db(&config)?;
     bsbl.attach_db(&user_id, db)?;
 
     let user = bsbl.find_user(&user_id).unwrap();
-    let user = user.borrow();
+    let mut user = user.borrow_mut();
+    user.init_table_configs(table_configs)?;
+
 
     let conn = user.db().unwrap();
     let mut conn = conn.lock().unwrap();
