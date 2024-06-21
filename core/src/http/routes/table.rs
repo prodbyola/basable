@@ -151,8 +151,8 @@ async fn query_data(
 /// Routes for database table management
 pub(super) fn table_routes() -> Router<AppState> {
     Router::new()
-        .route("/configurations/:table_name", put(save_configuration))
         .route("/configurations/:table_name", get(get_configuration))
+        .route("/configurations/:table_name", put(save_configuration))
         .route("/columns/:table_name", get(get_columns))
         .route("/data/:table_name", get(query_data))
 }
