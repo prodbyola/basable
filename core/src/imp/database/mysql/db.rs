@@ -11,7 +11,7 @@ use crate::{
     base::{
         config::ConnectionConfig,
         db::DB,
-        table::{SharedTable, Table, TableConfig, TableSummaries, TableSummary},
+        table::{SharedTable, Table, TableConfigs, TableSummaries, TableSummary},
         AppError, ConnectorType,
     },
     imp::database::{DBVersion, DbConnectionDetails},
@@ -110,7 +110,7 @@ impl DB for MySqlDB {
     fn load_tables(
         &mut self,
         connector: ConnectorType,
-    ) -> Result<Option<Vec<TableConfig>>, AppError> {
+    ) -> Result<TableConfigs, AppError> {
         let tables = self.query_tables()?;
         let mut configs = Vec::with_capacity(tables.len());
 

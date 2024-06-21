@@ -3,7 +3,7 @@ use uuid::Uuid;
 use crate::imp::database::DbConnectionDetails;
 
 use super::{
-    table::{SharedTable, TableConfig, TableConfigs, TableSummaries},
+    table::{SharedTable, TableConfigs, TableSummaries},
     AppError, ConnectorType,
 };
 

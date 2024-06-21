@@ -3,13 +3,11 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::base::column::ColumnList;
 
-use super::{AppError, ConnectorType};
+use super::ConnectorType;
 
 pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
 
@@ -90,6 +88,7 @@ pub(crate) struct NotifyEvent {
 #[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct TableConfig {
     pub table_id: String,
+
     /// Name of column to use as primary key.
     pub pk: Option<String>,
 
@@ -104,6 +103,12 @@ pub(crate) struct TableConfig {
 
     /// Notification events for this table.
     pub events: Option<Vec<NotifyEvent>>,
+}
+
+impl PartialEq for TableConfig {
+    fn eq(&self, other: &Self) -> bool {
+        self.table_id == other.table_id
+    }
 }
 
 impl Default for TableConfig {
@@ -157,29 +162,6 @@ pub(crate) trait Table: Sync + Send {
     fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
     where
         Self: Sized;
-
-    fn save_config(&self, config: TableConfig, save_local: bool) -> Result<(), AppError> {
-        if save_local {
-            // TODO: Save locally
-        } else {
-            // TODO: Save to remote server
-        }
-
-        Ok(())
-    }
-
-    fn get_config(&self, get_local: bool) -> Result<Option<TableConfig>, AppError> {
-        if get_local {
-            // TODO: Get locally
-            Ok(None)
-        } else {
-            // TODO: Get from remote server
-            return Err(AppError::new(
-                StatusCode::NOT_IMPLEMENTED,
-                "Not implemented",
-            ));
-        }
-    }
 
     /// Table's name
     fn name(&self) -> &str;
