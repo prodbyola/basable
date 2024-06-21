@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::base::column::ColumnList;
 
-use super::ConnectorType;
+use super::{AppError, ConnectorType};
 
 pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
 
@@ -155,34 +155,36 @@ pub(crate) trait Table: Sync + Send {
     type Row;
     type ColumnValue;
 
-    /// Create a new [`Table`] and assign the given [`ConnectorType`]. 
-    /// 
-    /// If `load_table_configs` is true, the we try to build [`TableConfig`] for the [`Table`] 
+    /// Create a new [`Table`] and assign the given [`ConnectorType`].
+    ///
+    /// If `load_table_configs` is true, the we try to build [`TableConfig`] for the [`Table`]
     /// using available properties from the DB server.
     fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
     where
         Self: Sized;
 
-    /// Table's name
+    /// [Table]'s name
     fn name(&self) -> &str;
 
     /// Retrieve all columns for the table
-    fn query_columns(
-        &self,
-        // conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
-    ) -> Result<ColumnList, Self::Error>;
+    fn query_columns(&self) -> Result<ColumnList, Self::Error>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
-        // conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
         filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
+
+    /// Get the table's [`ConnectorType`].
     fn connector(&self) -> &ConnectorType;
+
+    fn insert_data(&self, data: HashMap<String, String>) -> Result<(), Self::Error>;
 }
 
 #[cfg(test)]
 mod tests {
+
+    use std::collections::HashMap;
 
     use crate::{
         base::{table::DataQueryFilter, AppError},
@@ -259,4 +261,33 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_table_insert_data() -> Result<(), AppError> {
+        let user_id = get_test_user_id();
+        let bsbl = create_test_instance(true)?;
+
+        let user = bsbl.find_user(&user_id);
+        let user = user.unwrap().borrow();
+
+        let db = user.db();
+        let db = db.unwrap();
+        let db = db.lock().unwrap();
+
+        let table_name = get_test_db_table();
+
+        if let Some(table) = db.get_table(&table_name) {
+            let mut test_data = HashMap::new();
+            test_data.insert("username".to_owned(), "toonfortdm".to_owned());
+            test_data.insert("password".to_owned(), "anewpassword".to_owned());
+
+            let table = table.lock().unwrap();
+            let insert_data = table.insert_data(test_data);
+            
+            assert!(insert_data.is_ok());
+        }
+
+        Ok(())
+    }
+
 }

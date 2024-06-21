@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-
 use crate::base::{
     column::{Column, ColumnList},
     table::{DataQueryFilter, DataQueryResult, Table, TableConfig},
@@ -40,7 +39,6 @@ impl Table for MySqlTable {
 
             let pk = pk.map(|pk| pk.name.clone());
             let c = TableConfig {
-                
                 pk,
                 table_id: table.name.clone(),
                 ..TableConfig::default()
@@ -48,7 +46,7 @@ impl Table for MySqlTable {
 
             config = Some(c);
         }
-        
+
         (table, config)
     }
 
@@ -57,10 +55,7 @@ impl Table for MySqlTable {
     }
 
     /// Query all columns for the table
-    fn query_columns(
-        &self,
-        // conn: &dyn Connector<Error = Self::Error, Row = Self::Row>,
-    ) -> Result<ColumnList, Self::Error> {
+    fn query_columns(&self) -> Result<ColumnList, Self::Error> {
         let query = format!(
             "
                 SELECT 
@@ -102,7 +97,7 @@ impl Table for MySqlTable {
 
                 let nullable: Option<String> = r.get("IS_NULLABLE");
                 let nullable = nullable.map(|s| s == "YES".to_owned()).unwrap();
-                
+
                 let unique: Option<String> = r.get("IS_UNIQUE");
                 let unique = unique.map(|s| s == "YES".to_owned()).unwrap();
 
@@ -163,7 +158,34 @@ impl Table for MySqlTable {
 
         Ok(data)
     }
+
     fn connector(&self) -> &ConnectorType {
         &self.connector
+    }
+
+    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), Self::Error> {
+        let len = input.len();
+        let mut data = HashMap::new();
+
+        for (k, v) in input {
+            data.insert(k, format!("'{}'", v));
+        }
+
+        let mut keys = Vec::with_capacity(len);
+        let mut values = Vec::with_capacity(len);
+
+        data.iter().for_each(|(k, v)| {
+            keys.push(k.as_str());
+            values.push(v.as_str());
+        });
+
+        let keys = keys.join(", ");
+        let values = values.join(", ");
+
+        let query = format!("INSERT INTO {} ({}) VALUES ({})", self.name, keys, values);
+        let conn = self.connector();
+        conn.exec_query(&query)?;
+
+        Ok(())
     }
 }
