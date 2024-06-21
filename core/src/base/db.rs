@@ -30,7 +30,7 @@ pub(crate) trait DB: Send + Sync {
     /// abstraction into memory.
     fn query_tables(&self) -> DBQueryResult<Self::Row, Self::Error>;
 
-    /// Get an instance of a table with a given name. The return table is mutable across threads.
+    /// Get an instance of a [`SharedTable`], as a mutable thread-safe reference.
     fn get_table(
         &self,
         name: &str,
