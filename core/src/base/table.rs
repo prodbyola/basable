@@ -150,11 +150,11 @@ pub(crate) struct TableSummary {
     pub updated: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 pub(crate) struct UpdateDataOptions {
     pub key: String,
     pub value: String,
-    pub input: HashMap<String, String>
+    pub input: HashMap<String, String>,
 }
 
 pub(crate) trait Table: Sync + Send {
@@ -187,10 +187,7 @@ pub(crate) trait Table: Sync + Send {
         filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
 
-    fn update_data(
-        &self,
-        input: UpdateDataOptions,
-    ) -> Result<(), Self::Error>;
+    fn update_data(&self, input: UpdateDataOptions) -> Result<(), Self::Error>;
 }
 
 #[cfg(test)]
@@ -199,7 +196,10 @@ mod tests {
     use std::{collections::HashMap, io::stdin};
 
     use crate::{
-        base::{table::DataQueryFilter, AppError},
+        base::{
+            table::{DataQueryFilter, UpdateDataOptions},
+            AppError,
+        },
         tests::common::{create_test_instance, get_test_db_table, get_test_user_id},
     };
 
@@ -321,6 +321,60 @@ mod tests {
             let insert_data = table.insert_data(test_data);
 
             assert!(insert_data.is_ok());
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_table_update_data() -> Result<(), AppError> {
+        let user_id = get_test_user_id();
+        let bsbl = create_test_instance(true)?;
+
+        let user = bsbl.find_user(&user_id);
+        let user = user.unwrap().borrow();
+
+        let db = user.db();
+        let db = db.unwrap();
+        let db = db.lock().unwrap();
+
+        let table_name = get_test_db_table();
+
+        if let Some(table) = db.get_table(&table_name) {
+            let mut test_data = UpdateDataOptions::default();
+            
+            // Get update clause 
+            println!("Please enter update clause as key,value");
+            let mut input = String::new();
+
+            stdin()
+                .read_line(&mut input)
+                .expect("Please enter a valid string");
+
+            let input = input.trim().to_string();
+
+            let spl: Vec<&str> = input.split(",").collect();
+            test_data.key = spl[0].to_string();
+            test_data.value = spl[1].to_string();
+
+            // Get update value
+            println!("Please enter update clause as column,value");
+            let mut input = String::new();
+
+            stdin()
+                .read_line(&mut input)
+                .expect("Please enter a valid string");
+
+            let input = input.trim().to_string();
+
+            let spl: Vec<&str> = input.split(",").collect();
+            test_data.input.insert(spl[0].to_string(), spl[1].to_string());
+
+            // update the table
+            let table = table.lock().unwrap();
+            let update_data = table.update_data(test_data);
+
+            assert!(update_data.is_ok());
         }
 
         Ok(())
