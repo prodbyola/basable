@@ -157,8 +157,7 @@ pub(crate) trait Table: Sync + Send {
 
     /// Create a new [`Table`] and assign the given [`ConnectorType`].
     ///
-    /// If `load_table_configs` is true, the we try to build [`TableConfig`] for the [`Table`]
-    /// using available properties from the DB server.
+    /// It creates and returns a [`TableConfig`]  for the table when possible.
     fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
     where
         Self: Sized;
@@ -166,28 +165,26 @@ pub(crate) trait Table: Sync + Send {
     /// [Table]'s name
     fn name(&self) -> &str;
 
+    /// Get the table's [`ConnectorType`].
+    fn connector(&self) -> &ConnectorType;
+
     /// Retrieve all columns for the table
     fn query_columns(&self) -> Result<ColumnList, Self::Error>;
+
+    /// Inserts a new data into the table.
+    fn insert_data(&self, data: HashMap<String, String>) -> Result<(), Self::Error>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
         filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
-
-    /// Get the table's [`ConnectorType`].
-    fn connector(&self) -> &ConnectorType;
-
-    fn insert_data(&self, data: HashMap<String, String>) -> Result<(), Self::Error>;
 }
 
 #[cfg(test)]
 mod tests {
 
-    use std::{
-        collections::HashMap,
-        io::stdin,
-    };
+    use std::{collections::HashMap, io::stdin};
 
     use crate::{
         base::{table::DataQueryFilter, AppError},
