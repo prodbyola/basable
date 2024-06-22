@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::imp::database::DbConnectionDetails;
 
 use super::{
@@ -15,11 +13,8 @@ pub(crate) trait DB: Send + Sync {
     type Error;
     type ColumnValue;
 
-    /// Get the `DB`'s connector instance.
+    /// Get the [`ConnectorType`] instance for [`DB`].
     fn connector(&self) -> &ConnectorType;
-
-    /// Get connection id
-    fn get_id(&self) -> Uuid;
 
     /// Load available tables into `DB` instance. Caller should provide a [`ConnectorType`]
     /// pointer whose copy is assigned to each [Table](`crate::base::table::Table`) that is loaded. The [`ConnectorType`] will be

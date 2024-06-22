@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::base::{
     column::{Column, ColumnList},
-    table::{DataQueryFilter, DataQueryResult, Table, TableConfig},
+    table::{DataQueryFilter, DataQueryResult, Table, TableConfig, UpdateDataOptions},
     ConnectorType,
 };
 
@@ -183,6 +183,22 @@ impl Table for MySqlTable {
         let values = values.join(", ");
 
         let query = format!("INSERT INTO {} ({}) VALUES ({})", self.name, keys, values);
+        let conn = self.connector();
+        conn.exec_query(&query)?;
+
+        Ok(())
+    }
+
+    fn update_data(
+            &self,
+            options: UpdateDataOptions,
+        ) -> Result<(), Self::Error> {
+            let UpdateDataOptions { key, value, input } = options;
+        
+        let data: Vec<String> = input.iter().map(|(k, v)| format!("{} = '{}'", k, v)).collect();
+        let data = data.join(", ");
+
+        let query = format!("UPDATE {} SET {} WHERE {} = '{}'", self.name, data, key, value);
         let conn = self.connector();
         conn.exec_query(&query)?;
 

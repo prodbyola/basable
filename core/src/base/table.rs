@@ -16,16 +16,16 @@ pub(crate) type TableConfigs = Option<Vec<TableConfig>>;
 
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
 
-#[derive(Deserialize, Serialize, Clone)]
 /// Table column used for querying table history such as when a row was added or when a row was updated.
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct HistoryColumn {
     name: String,
     format: String,
     has_time: bool,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// The type of `SpecialColumn`
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) enum SpecialValueType {
     Image,
     Audio,
@@ -34,31 +34,31 @@ pub(crate) enum SpecialValueType {
     Webpage,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// Special columns are columns whose values should lead to some sort of media types.
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct SpecialColumn {
     name: String,
     special_type: SpecialValueType,
     path: String,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// The action that should trigger `NotifyEvent`.
+#[derive(Deserialize, Serialize, Clone)]
 enum NotifyTrigger {
     Create,
     Update,
     Delete,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// When should `NotifyEvent` get triggered around `NotifyTrigger`.
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) enum NotifyTriggerTime {
     Before,
     After,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// The REST API method expected by the webhook URL.
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) enum NotifyEventMethod {
     Get,
     Post,
@@ -67,16 +67,16 @@ pub(crate) enum NotifyEventMethod {
     Patch,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// What should happen to the operation `NotifyTrigger` when there's notification error?
 /// Let's say there's a server error from the webhook URL, should we proceed or fail the operation?
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) enum OnNotifyError {
     Fail,
     Proceed,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// Event sent to a given webhook URL based on certain `NotifyTrigger`
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct NotifyEvent {
     trigger: NotifyTrigger,
     trigger_time: NotifyTriggerTime,
@@ -150,6 +150,13 @@ pub(crate) struct TableSummary {
     pub updated: Option<String>,
 }
 
+#[derive(Deserialize, Default)]
+pub(crate) struct UpdateDataOptions {
+    pub key: String,
+    pub value: String,
+    pub input: HashMap<String, String>,
+}
+
 pub(crate) trait Table: Sync + Send {
     type Error;
     type Row;
@@ -157,8 +164,7 @@ pub(crate) trait Table: Sync + Send {
 
     /// Create a new [`Table`] and assign the given [`ConnectorType`].
     ///
-    /// If `load_table_configs` is true, the we try to build [`TableConfig`] for the [`Table`]
-    /// using available properties from the DB server.
+    /// It creates new [`Table`] and returns a [`TableConfig`]  for the table when possible.
     fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
     where
         Self: Sized;
@@ -166,8 +172,14 @@ pub(crate) trait Table: Sync + Send {
     /// [Table]'s name
     fn name(&self) -> &str;
 
+    /// Get the table's [`ConnectorType`].
+    fn connector(&self) -> &ConnectorType;
+
     /// Retrieve all columns for the table
     fn query_columns(&self) -> Result<ColumnList, Self::Error>;
+
+    /// Inserts a new data into the table.
+    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), Self::Error>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
@@ -175,22 +187,19 @@ pub(crate) trait Table: Sync + Send {
         filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
 
-    /// Get the table's [`ConnectorType`].
-    fn connector(&self) -> &ConnectorType;
-
-    fn insert_data(&self, data: HashMap<String, String>) -> Result<(), Self::Error>;
+    fn update_data(&self, input: UpdateDataOptions) -> Result<(), Self::Error>;
 }
 
 #[cfg(test)]
 mod tests {
 
-    use std::{
-        collections::HashMap,
-        io::stdin,
-    };
+    use std::{collections::HashMap, io::stdin};
 
     use crate::{
-        base::{table::DataQueryFilter, AppError},
+        base::{
+            table::{DataQueryFilter, UpdateDataOptions},
+            AppError,
+        },
         tests::common::{create_test_instance, get_test_db_table, get_test_user_id},
     };
 
@@ -281,9 +290,6 @@ mod tests {
 
         if let Some(table) = db.get_table(&table_name) {
             let mut test_data = HashMap::new();
-            // test_data.insert("username".to_owned(), "toonfortdm".to_owned());
-            // test_data.insert("password".to_owned(), "anewpassword".to_owned());
-
             let quit_word = "quit";
 
             println!(
@@ -315,6 +321,60 @@ mod tests {
             let insert_data = table.insert_data(test_data);
 
             assert!(insert_data.is_ok());
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_table_update_data() -> Result<(), AppError> {
+        let user_id = get_test_user_id();
+        let bsbl = create_test_instance(true)?;
+
+        let user = bsbl.find_user(&user_id);
+        let user = user.unwrap().borrow();
+
+        let db = user.db();
+        let db = db.unwrap();
+        let db = db.lock().unwrap();
+
+        let table_name = get_test_db_table();
+
+        if let Some(table) = db.get_table(&table_name) {
+            let mut test_data = UpdateDataOptions::default();
+            
+            // Get update clause 
+            println!("Please enter update clause as key,value");
+            let mut input = String::new();
+
+            stdin()
+                .read_line(&mut input)
+                .expect("Please enter a valid string");
+
+            let input = input.trim().to_string();
+
+            let spl: Vec<&str> = input.split(",").collect();
+            test_data.key = spl[0].to_string();
+            test_data.value = spl[1].to_string();
+
+            // Get update value
+            println!("Please enter update clause as column,value");
+            let mut input = String::new();
+
+            stdin()
+                .read_line(&mut input)
+                .expect("Please enter a valid string");
+
+            let input = input.trim().to_string();
+
+            let spl: Vec<&str> = input.split(",").collect();
+            test_data.input.insert(spl[0].to_string(), spl[1].to_string());
+
+            // update the table
+            let table = table.lock().unwrap();
+            let update_data = table.update_data(test_data);
+
+            assert!(update_data.is_ok());
         }
 
         Ok(())
