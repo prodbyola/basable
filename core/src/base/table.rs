@@ -164,7 +164,7 @@ pub(crate) trait Table: Sync + Send {
 
     /// Create a new [`Table`] and assign the given [`ConnectorType`].
     ///
-    /// It creates and returns a [`TableConfig`]  for the table when possible.
+    /// It creates new [`Table`] and returns a [`TableConfig`]  for the table when possible.
     fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
     where
         Self: Sized;
