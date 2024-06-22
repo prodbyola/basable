@@ -19,7 +19,7 @@ use crate::{
 };
 
 #[debug_handler]
-async fn save_configuration(
+pub(crate) async fn save_configuration(
     Path(table_name): Path<String>,
     AuthExtractor(user_id): AuthExtractor,
     State(state): State<AppState>,
@@ -53,7 +53,7 @@ async fn save_configuration(
 }
 
 #[debug_handler]
-async fn get_configuration(
+pub(crate) async fn get_configuration(
     Path(table_name): Path<String>,
     AuthExtractor(user_id): AuthExtractor,
     State(state): State<AppState>,
@@ -88,7 +88,7 @@ async fn get_configuration(
 }
 
 #[debug_handler]
-async fn get_columns(
+pub(crate) async fn get_columns(
     Path(table_name): Path<String>,
     AuthExtractor(user_id): AuthExtractor,
     State(state): State<AppState>,
@@ -116,7 +116,7 @@ async fn get_columns(
 }
 
 #[debug_handler]
-async fn query_data(
+pub(crate) async fn query_data(
     Path(table_name): Path<String>,
     AuthExtractor(user_id): AuthExtractor,
     State(state): State<AppState>,
@@ -149,7 +149,7 @@ async fn query_data(
 }
 
 #[debug_handler]
-async fn insert_data(
+pub(crate) async fn insert_data(
     Path(table_name): Path<String>,
     AuthExtractor(user_id): AuthExtractor,
     State(state): State<AppState>,
@@ -181,7 +181,7 @@ async fn insert_data(
 }
 
 #[debug_handler]
-async fn update_data(
+pub(crate) async fn update_data(
     Path(table_name): Path<String>,
     AuthExtractor(user_id): AuthExtractor,
     State(state): State<AppState>,
@@ -221,56 +221,4 @@ pub(super) fn table_routes() -> Router<AppState> {
         .route("/data/:table_name", get(query_data))
         .route("/data/:table_name", post(insert_data))
         .route("/data/:table_name", patch(update_data))
-}
-
-#[cfg(test)]
-mod tests {
-    use axum::{
-        extract::{Path, State},
-        Json,
-    };
-
-    use crate::{
-        base::{table::TableConfig, AppError},
-        http::routes::table::{get_columns, get_configuration, save_configuration},
-        tests::common::{create_test_auth_extractor, create_test_state, get_test_db_table},
-    };
-
-    #[tokio::test]
-    async fn test_save_table_config() -> Result<(), AppError> {
-        let state = create_test_state(true)?;
-        let auth_extractor = create_test_auth_extractor();
-        let config = TableConfig::default();
-        let table_name = get_test_db_table();
-
-        let save_config =
-            save_configuration(Path(table_name), auth_extractor, State(state), Json(config)).await;
-
-        assert!(save_config.is_ok());
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_get_table_config() -> Result<(), AppError> {
-        let state = create_test_state(true)?;
-        let auth_extractor = create_test_auth_extractor();
-        let table_name = get_test_db_table();
-
-        let get_config = get_configuration(Path(table_name), auth_extractor, State(state)).await;
-
-        assert!(get_config.is_ok());
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_get_table_columns() -> Result<(), AppError> {
-        let state = create_test_state(true)?;
-        let auth_extractor = create_test_auth_extractor();
-        let table_name = get_test_db_table();
-
-        let get_cols = get_columns(Path(table_name), auth_extractor, State(state)).await;
-
-        assert!(get_cols.is_ok());
-        Ok(())
-    }
 }

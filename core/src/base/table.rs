@@ -290,9 +290,6 @@ mod tests {
 
         if let Some(table) = db.get_table(&table_name) {
             let mut test_data = HashMap::new();
-            // test_data.insert("username".to_owned(), "toonfortdm".to_owned());
-            // test_data.insert("password".to_owned(), "anewpassword".to_owned());
-
             let quit_word = "quit";
 
             println!(
