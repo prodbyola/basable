@@ -20,7 +20,6 @@ use crate::{
 use super::{table::MySqlTable, MySqlValue};
 
 pub(crate) struct MySqlDB {
-    pub id: Uuid,
     pub connector: ConnectorType,
     pub tables: Vec<SharedTable<mysql::Error, mysql::Row, MySqlValue>>,
 }
@@ -30,7 +29,6 @@ impl MySqlDB {
         MySqlDB {
             connector,
             tables: Vec::new(),
-            id: Uuid::new_v4(),
         }
     }
 
@@ -101,10 +99,6 @@ impl DB for MySqlDB {
 
     fn connector(&self) -> &ConnectorType {
         &self.connector
-    }
-
-    fn get_id(&self) -> Uuid {
-        self.id
     }
 
     fn load_tables(

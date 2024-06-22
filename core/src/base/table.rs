@@ -16,16 +16,16 @@ pub(crate) type TableConfigs = Option<Vec<TableConfig>>;
 
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
 
-#[derive(Deserialize, Serialize, Clone)]
 /// Table column used for querying table history such as when a row was added or when a row was updated.
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct HistoryColumn {
     name: String,
     format: String,
     has_time: bool,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// The type of `SpecialColumn`
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) enum SpecialValueType {
     Image,
     Audio,
@@ -34,31 +34,31 @@ pub(crate) enum SpecialValueType {
     Webpage,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// Special columns are columns whose values should lead to some sort of media types.
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct SpecialColumn {
     name: String,
     special_type: SpecialValueType,
     path: String,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// The action that should trigger `NotifyEvent`.
+#[derive(Deserialize, Serialize, Clone)]
 enum NotifyTrigger {
     Create,
     Update,
     Delete,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// When should `NotifyEvent` get triggered around `NotifyTrigger`.
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) enum NotifyTriggerTime {
     Before,
     After,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// The REST API method expected by the webhook URL.
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) enum NotifyEventMethod {
     Get,
     Post,
@@ -67,16 +67,16 @@ pub(crate) enum NotifyEventMethod {
     Patch,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// What should happen to the operation `NotifyTrigger` when there's notification error?
 /// Let's say there's a server error from the webhook URL, should we proceed or fail the operation?
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) enum OnNotifyError {
     Fail,
     Proceed,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
 /// Event sent to a given webhook URL based on certain `NotifyTrigger`
+#[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct NotifyEvent {
     trigger: NotifyTrigger,
     trigger_time: NotifyTriggerTime,
@@ -150,6 +150,13 @@ pub(crate) struct TableSummary {
     pub updated: Option<String>,
 }
 
+#[derive(Deserialize)]
+pub(crate) struct UpdateDataOptions {
+    pub key: String,
+    pub value: String,
+    pub input: HashMap<String, String>
+}
+
 pub(crate) trait Table: Sync + Send {
     type Error;
     type Row;
@@ -172,13 +179,18 @@ pub(crate) trait Table: Sync + Send {
     fn query_columns(&self) -> Result<ColumnList, Self::Error>;
 
     /// Inserts a new data into the table.
-    fn insert_data(&self, data: HashMap<String, String>) -> Result<(), Self::Error>;
+    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), Self::Error>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
         filter: DataQueryFilter,
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
+
+    fn update_data(
+        &self,
+        input: UpdateDataOptions,
+    ) -> Result<(), Self::Error>;
 }
 
 #[cfg(test)]
