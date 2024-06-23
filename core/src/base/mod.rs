@@ -12,8 +12,9 @@ use axum::{
 use connector::Connector;
 use db::DB;
 use serde::Serialize;
+use table::Table;
 
-use crate::imp::database::mysql::{connector::MysqlConnector, db::MySqlDB};
+use crate::imp::database::mysql::{connector::MysqlConnector, db::MySqlDB, table::MySqlTable};
 
 pub(crate) mod column;
 pub(crate) mod config;
@@ -35,6 +36,13 @@ pub(crate) type ConnectorType = Arc<dyn Connector<
     Row = <MysqlConnector as Connector>::Row,
     Error = <MysqlConnector as Connector>::Error,
 >>;
+
+/// Dynamic [`Table`] type implemented across the app.
+pub(crate) type TableType = dyn Table<
+    Row = <MySqlTable as Table>::Row,
+    Error = <MySqlTable as Table>::Error,
+    ColumnValue = <MySqlTable as Table>::ColumnValue,
+>;
 
 pub(crate) type SharedDB = Arc<DbType>;
 

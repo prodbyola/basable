@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::base::column::ColumnList;
 
-use super::ConnectorType;
+use super::{ConnectorType, TableType};
 
-pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
+pub(crate) type SharedTable = Arc<TableType>;
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
 pub(crate) type TableConfigs = Option<Vec<TableConfig>>;

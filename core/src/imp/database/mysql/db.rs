@@ -5,6 +5,7 @@ use std::{
 
 use mysql::Row;
 use time::Date;
+use uuid::Uuid;
 
 use crate::{
     base::{
@@ -22,6 +23,7 @@ pub(crate) struct MySqlDB {
     pub connector: ConnectorType,
     pub tables: Vec<SharedTable<mysql::Error, mysql::Row, MySqlValue>>,
     user_id: String,
+    id: Uuid,
 }
 
 impl MySqlDB {
@@ -30,6 +32,7 @@ impl MySqlDB {
             connector,
             tables: Vec::new(),
             user_id,
+            id: Uuid::new_v4()
         }
     }
 
@@ -97,6 +100,10 @@ impl DB for MySqlDB {
     type Error = mysql::Error;
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
+
+    fn id(&self) -> &str {
+        &self.id.to_owned()
+    }
 
     fn user_id(&self) -> &str {
         &self.user_id

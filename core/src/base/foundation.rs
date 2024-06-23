@@ -98,22 +98,22 @@ impl Basable {
 
     /// Attaches a DB to user.
     pub(crate) fn add_connection(&mut self, db: &SharedDB) {
-        if let Some(_) = self.get_connection(db.user_id()) {
-            let i = self
-                .connections
-                .iter()
-                .position(|c| c.user_id() == db.user_id())
-                .unwrap();
-            self.connections.remove(i);
-        }
+        // if let Some(_) = self.get_connection(db.user_id()) {
+        //     let i = self
+        //         .connections
+        //         .iter()
+        //         .position(|c| c.user_id() == db.user_id())
+        //         .unwrap();
+        //     self.connections.remove(i);
+        // }
 
         self.connections.push(db.clone());
     }
 
-    pub fn get_connection(&self, user_id: &str) -> Option<SharedDB> {
+    pub fn get_connection(&self, id: &str, user_id: &str) -> Option<SharedDB> {
         self.connections
             .iter()
-            .find(|c| c.user_id() == user_id)
+            .find(|c| c.id() == id && c.user_id() == user_id)
             .map(|c| c.clone())
     }
 }
