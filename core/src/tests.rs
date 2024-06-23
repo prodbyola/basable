@@ -76,7 +76,7 @@ pub(crate) mod common {
 
             std::mem::drop(user);
 
-            bslb.attach_db(&user_id, conn)?;
+            bslb.add_connection(&user_id, conn)?;
         }
 
         Ok(bslb)

@@ -1,13 +1,12 @@
 use std::cell::RefCell;
-use std::sync::{Arc, Mutex};
-
-use axum::http::StatusCode;
+use std::sync::Arc;
 
 use crate::imp::database::mysql::connector::MysqlConnector;
 use crate::imp::database::mysql::db::MySqlDB;
 use crate::User;
 
 use super::connector::Connector;
+use super::db::DB;
 use super::table::TableConfigs;
 use super::SharedDB;
 use super::{
@@ -21,32 +20,32 @@ pub(crate) type SharableUser = RefCell<User>;
 #[derive(Default)]
 pub(crate) struct Basable {
     pub users: Vec<SharableUser>,
+    pub connections: Vec<SharedDB>,
 }
 
 impl Basable {
     /// Creates a new thread-safe instance of [`SharedDB`] as required by the [`Config`] parameter.
-    /// 
+    ///
     /// The `auth_session` param should be set to `true` if current app [`User`] is logged.
-    pub(crate) fn create_shared_db(config: &ConnectionConfig) -> Result<(SharedDB, TableConfigs), AppError> {
-        let db = match config.source_type() {
+    pub(crate) fn create_connection(
+        config: &ConnectionConfig,
+        user_id: String,
+    ) -> Result<(SharedDB, TableConfigs), AppError> {
+        let mut db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
                     let conn = MysqlConnector::new(config.clone())?;
-                    MySqlDB::new(Arc::new(conn))
+                    MySqlDB::new(Arc::new(conn), user_id)
                 }
                 _ => todo!(),
             },
             _ => todo!(),
         };
 
-        let pointer: SharedDB = Arc::new(Mutex::new(db));
-        let db = pointer.clone();
-        let mut db = db.lock().unwrap();
-        
         let conn = db.connector().clone();
         let table_configs = db.load_tables(conn)?;
 
-        Ok((pointer, table_configs))
+        Ok((Arc::new(db), table_configs))
     }
 
     /// Creates a new guest user using the request `SocketAddr`
@@ -98,15 +97,23 @@ impl Basable {
     }
 
     /// Attaches a DB to user.
-    pub(crate) fn attach_db(&mut self, user_id: &str, db: SharedDB) -> Result<(), AppError> {
-        if let Some(user) = self.find_user(user_id) {
-            user.borrow_mut().attach_db(db);
-            return Ok(());
+    pub(crate) fn add_connection(&mut self, db: &SharedDB) {
+        if let Some(_) = self.get_connection(db.user_id()) {
+            let i = self
+                .connections
+                .iter()
+                .position(|c| c.user_id() == db.user_id())
+                .unwrap();
+            self.connections.remove(i);
         }
 
-        Err(AppError::new(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Unable to attach db to user. Looks like user does not exist.",
-        ))
+        self.connections.push(db.clone());
+    }
+
+    pub fn get_connection(&self, user_id: &str) -> Option<SharedDB> {
+        self.connections
+            .iter()
+            .find(|c| c.user_id() == user_id)
+            .map(|c| c.clone())
     }
 }

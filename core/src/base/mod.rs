@@ -1,7 +1,7 @@
 use core::str;
 use std::{
     fmt::Display,
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use axum::{
@@ -36,7 +36,7 @@ pub(crate) type ConnectorType = Arc<dyn Connector<
     Error = <MysqlConnector as Connector>::Error,
 >>;
 
-pub(crate) type SharedDB = Arc<Mutex<DbType>>;
+pub(crate) type SharedDB = Arc<DbType>;
 
 #[derive(Debug)]
 pub(crate) struct AppError(pub StatusCode, pub String);

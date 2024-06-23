@@ -5,7 +5,6 @@ use std::{
 
 use mysql::Row;
 use time::Date;
-use uuid::Uuid;
 
 use crate::{
     base::{
@@ -22,13 +21,15 @@ use super::{table::MySqlTable, MySqlValue};
 pub(crate) struct MySqlDB {
     pub connector: ConnectorType,
     pub tables: Vec<SharedTable<mysql::Error, mysql::Row, MySqlValue>>,
+    user_id: String,
 }
 
 impl MySqlDB {
-    pub fn new(connector: ConnectorType) -> Self {
+    pub fn new(connector: ConnectorType, user_id: String) -> Self {
         MySqlDB {
             connector,
             tables: Vec::new(),
+            user_id,
         }
     }
 
@@ -97,6 +98,10 @@ impl DB for MySqlDB {
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
+    fn user_id(&self) -> &str {
+        &self.user_id
+    }
+
     fn connector(&self) -> &ConnectorType {
         &self.connector
     }
@@ -144,7 +149,7 @@ impl DB for MySqlDB {
         self.connector.exec_query(&query)
     }
 
-    fn query_table_summaries(&mut self) -> Result<TableSummaries, AppError> {
+    fn query_table_summaries(&self) -> Result<TableSummaries, AppError> {
         let results = self.query_tables()?;
         let tables: Vec<TableSummary> = results
             .iter()
@@ -212,7 +217,7 @@ impl DB for MySqlDB {
             .find(|t| t.lock().unwrap().name() == name)
     }
 
-    fn details(&mut self) -> Result<DbConnectionDetails, AppError> {
+    fn details(&self) -> Result<DbConnectionDetails, AppError> {
         let version = self.show_version()?;
         let tables = self.query_table_summaries()?;
         let size = self.size()?;

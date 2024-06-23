@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::base::{
     config::ConnectionConfig,
     table::{TableConfig, TableConfigs},
-    AppError, SharedDB,
+    AppError,
 };
 
 // JWT_SECRET should be defined by the installer and saved as BASABLE_SECRET env variables.
@@ -19,23 +19,10 @@ const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 pub(crate) struct User {
     pub id: String,
     pub is_logged: bool,
-    pub db: Option<SharedDB>,
     pub table_configs: TableConfigs,
 }
 
 impl User {
-    pub fn db(&self) -> Option<&SharedDB> {
-        if let Some(db) = &self.db {
-            return Some(db);
-        }
-
-        None
-    }
-
-    pub fn attach_db(&mut self, db: SharedDB) {
-        self.db = Some(db);
-    }
-
     pub(crate) fn logout(&self) {
         // TODO: Close connection
     }
@@ -92,7 +79,6 @@ impl Default for User {
         Self {
             id: String::new(),
             is_logged: false,
-            db: None,
             table_configs: None,
         }
     }

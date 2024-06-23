@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 use crate::imp::database::DbConnectionDetails;
 
 use super::{
@@ -12,6 +14,8 @@ pub(crate) trait DB: Send + Sync {
     type Row;
     type Error;
     type ColumnValue;
+
+    fn user_id(&self) -> &str;
 
     /// Get the [`ConnectorType`] instance for [`DB`].
     fn connector(&self) -> &ConnectorType;
@@ -37,13 +41,13 @@ pub(crate) trait DB: Send + Sync {
     ) -> Option<&SharedTable<Self::Error, Self::Row, Self::ColumnValue>>;
 
     /// Query connection tables from DB source and return table summaries
-    fn query_table_summaries(&mut self) -> Result<TableSummaries, AppError>;
+    fn query_table_summaries(&self) -> Result<TableSummaries, AppError>;
 
     /// Check if a table with the given name exists in the database connection.
     fn table_exists(&self, name: &str) -> Result<bool, AppError>;
 
     /// Details about the connection
-    fn details(&mut self) -> Result<DbConnectionDetails, AppError>;
+    fn details(&self) -> Result<DbConnectionDetails, AppError>;
 
     /// Get total number of columns
     fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;

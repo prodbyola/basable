@@ -1,3 +1,4 @@
+use axum::http::StatusCode;
 use axum::routing::post;
 use axum::Router;
 
@@ -33,29 +34,24 @@ async fn connect(
     if let Some(user) = bsbl.find_user(&user_id) {
         let user = user.borrow();
         let auth_session = user.is_logged;
-
-        // drop User reference from memory in order to free `Basable` instance
-        // and allow access later.
-        std::mem::drop(user);
-
+        drop(user);
+        
         if auth_session {
             bsbl.save_config(&config, &user_id);
         }
-    }
+        
+        let (db, table_configs) = Basable::create_connection(&config, user_id)?;
+        bsbl.add_connection(&db);
     
-    let (db, table_configs) = Basable::create_shared_db(&config)?;
-    bsbl.attach_db(&user_id, db)?;
+        // let mut user = user.borrow_mut();
+        // user.init_table_configs(table_configs)?;
+    
+        let resp = db.details()?;
+        return Ok(Json(resp))
+    }
 
-    let user = bsbl.find_user(&user_id).unwrap();
-    let mut user = user.borrow_mut();
-    user.init_table_configs(table_configs)?;
-
-
-    let conn = user.db().unwrap();
-    let mut conn = conn.lock().unwrap();
-
-    let resp = conn.details()?;
-    Ok(Json(resp))
+    Err(AppError::new(StatusCode::UNAUTHORIZED, "User unknown"))
+    
 }
 
 pub(super) fn core_routes() -> Router<AppState> {
