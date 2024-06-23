@@ -1,5 +1,8 @@
 use std::cell::RefCell;
+use std::str::FromStr;
 use std::sync::Arc;
+
+use uuid::Uuid;
 
 use crate::imp::database::mysql::connector::MysqlConnector;
 use crate::imp::database::mysql::db::MySqlDB;
@@ -111,9 +114,11 @@ impl Basable {
     }
 
     pub fn get_connection(&self, id: &str, user_id: &str) -> Option<SharedDB> {
+        let id = Uuid::from_str(id).unwrap();
+        
         self.connections
             .iter()
-            .find(|c| c.id() == id && c.user_id() == user_id)
+            .find(|c| *c.id() == id && c.user_id() == user_id)
             .map(|c| c.clone())
     }
 }

@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 use crate::imp::database::DbConnectionDetails;
 
 use super::{
@@ -13,7 +15,7 @@ pub(crate) trait DB: Send + Sync {
     type Error;
     type ColumnValue;
 
-    fn id(&self) -> &str;
+    fn id(&self) -> &Uuid;
 
     fn user_id(&self) -> &str;
 

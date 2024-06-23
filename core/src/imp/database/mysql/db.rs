@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use mysql::Row;
@@ -21,7 +21,7 @@ use super::{table::MySqlTable, MySqlValue};
 
 pub(crate) struct MySqlDB {
     pub connector: ConnectorType,
-    pub tables: Vec<SharedTable<mysql::Error, mysql::Row, MySqlValue>>,
+    pub tables: Vec<SharedTable>,
     user_id: String,
     id: Uuid,
 }
@@ -101,8 +101,8 @@ impl DB for MySqlDB {
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
-    fn id(&self) -> &str {
-        &self.id.to_owned()
+    fn id(&self) -> &Uuid {
+        &self.id
     }
 
     fn user_id(&self) -> &str {
@@ -129,7 +129,7 @@ impl DB for MySqlDB {
                     configs.push(config);
                 }
 
-                self.tables.push(Arc::new(Mutex::new(table)));
+                self.tables.push(Arc::new(table));
             })
         }
 
@@ -218,10 +218,10 @@ impl DB for MySqlDB {
     fn get_table(
         &self,
         name: &str,
-    ) -> Option<&SharedTable<Self::Error, Self::Row, Self::ColumnValue>> {
+    ) -> Option<&SharedTable> {
         self.tables
             .iter()
-            .find(|t| t.lock().unwrap().name() == name)
+            .find(|t| t.name() == name)
     }
 
     fn details(&self) -> Result<DbConnectionDetails, AppError> {

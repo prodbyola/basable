@@ -47,7 +47,7 @@ pub(crate) type TableType = dyn Table<
 pub(crate) type SharedDB = Arc<DbType>;
 
 #[derive(Debug)]
-pub(crate) struct AppError(pub StatusCode, pub String);
+pub struct AppError(pub StatusCode, pub String);
 
 impl AppError {
     pub(crate) fn new(code: StatusCode, msg: &str) -> Self {
