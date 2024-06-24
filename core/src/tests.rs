@@ -2,11 +2,11 @@
 pub(crate) mod common {
     use dotenv::dotenv;
     use std::{
-        cell::RefCell, env, sync::{Arc, Mutex}
+        env, sync::{Arc, Mutex}
     };
 
     use crate::{
-        base::{config::ConnectionConfig, foundation::Basable, user::User, AppError, SharedDB},
+        base::{config::ConnectionConfig, foundation::Basable, AppError, SharedDB},
         http::app::AppState,
     };
 
@@ -61,15 +61,7 @@ pub(crate) mod common {
     pub fn create_test_instance(attach_db: bool) -> Result<Basable, AppError> {
         dotenv().ok();
 
-        let user_id = get_test_user_id();
-
-        let user = User {
-            id: user_id.clone(),
-            ..User::default()
-        };
-
         let mut bslb = Basable::default();
-        bslb.add_user(RefCell::new(user));
 
         if attach_db {
             // TODO: Save configs
@@ -95,13 +87,13 @@ pub(crate) mod common {
 
 #[cfg(test)]
 pub(crate) mod extractors {
-    use crate::{base::AppError, http::middlewares::{AuthExtractor, DbExtractor, TableExtractor}};
+    use crate::{base::{user::User, AppError}, http::middlewares::{AuthExtractor, DbExtractor, TableExtractor}};
 
     use super::common::{create_test_db, get_test_db_table, get_test_user_id};
 
     pub fn auth_extractor() -> AuthExtractor {
-        let user_id = get_test_user_id();
-        AuthExtractor(Some(user_id))
+        let id = get_test_user_id();
+        AuthExtractor(User { id, is_guest: false })
     }
 
     pub fn db_extractor() -> Result<DbExtractor, AppError> {

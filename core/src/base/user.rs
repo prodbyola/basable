@@ -29,6 +29,7 @@ impl Default for User {
 #[derive(Deserialize, Serialize)]
 pub(crate) struct Claims {
     sub: String,
+    is_guest: bool,
     exp: usize,
 }
 
@@ -38,7 +39,7 @@ pub(crate) struct JwtSession {
     pub exp: usize,
 }
 
-pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
+pub(crate) fn create_jwt(user: User) -> Result<JwtSession, AppError> {
     let exp_time = 7200;
 
     // Token expiration is two hours
@@ -48,7 +49,8 @@ pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
         .timestamp() as usize;
 
     let claims = Claims {
-        sub: user_id.to_owned(),
+        sub: user.id,
+        is_guest: user.is_guest,
         exp,
     };
 
@@ -62,7 +64,7 @@ pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
     })
 }
 
-pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<String, AppError> {
+pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<User, AppError> {
     let token = extract_jwt(header_value)?;
 
     let decoded = decode::<Claims>(
@@ -72,7 +74,9 @@ pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<String, AppError>
     )
     .map_err(|e| AppError(StatusCode::UNAUTHORIZED, e.to_string()))?;
 
-    Ok(decoded.claims.sub)
+    let Claims { sub, is_guest, .. } = decoded.claims;
+
+    Ok(User { id: sub, is_guest })
 }
 
 fn extract_jwt(header_value: &HeaderValue) -> Result<String, AppError> {

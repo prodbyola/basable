@@ -22,12 +22,12 @@ pub(super) mod table;
 /// Creates a new `BasableConnection` for current user. It expects `Config` as request's body.
 async fn connect(
     State(state): State<AppState>,
-    AuthExtractor(user_id): AuthExtractor,
+    AuthExtractor(user): AuthExtractor,
     Json(config): Json<ConnectionConfig>,
 ) -> Result<Json<DbConnectionDetails>, AppError> {
     let mut bsbl = state.instance.lock().unwrap();
 
-    let user_id = user_id.unwrap();
+    let user_id = user.id;
     let (db, table_configs) = Basable::create_connection(&config, user_id)?;
 
     bsbl.add_connection(&db);

@@ -80,7 +80,7 @@ impl Serialize for AppError {
 mod test {
     use crate::{
         base::AppError,
-        tests::common::{create_test_db, create_test_instance, get_test_user_id},
+        tests::common::{create_test_db, create_test_instance},
     };
 
     #[test]
@@ -95,16 +95,5 @@ mod test {
     fn test_create_instance() {
         let bsbl = create_test_instance(true);
         assert!(bsbl.is_ok());
-    }
-
-    #[test]
-    fn test_instance_has_user() -> Result<(), AppError> {
-        let bsbl = create_test_instance(true)?;
-        let user_id = get_test_user_id();
-
-        let user = bsbl.find_user(&user_id);
-        assert!(user.is_some());
-
-        Ok(())
     }
 }

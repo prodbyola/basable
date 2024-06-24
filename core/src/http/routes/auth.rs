@@ -20,7 +20,7 @@ async fn create_guest_user(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
 ) -> Result<Json<JwtSession>, AppError> {
-    let mut bsbl = state.instance.lock().unwrap();
+    let bsbl = state.instance.lock().unwrap();
 
     let addr = addr.ip().to_string();
     let session = bsbl.create_guest_user(&addr)?;

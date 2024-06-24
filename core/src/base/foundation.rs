@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -19,11 +18,9 @@ use super::{
     AppError,
 };
 
-pub(crate) type SharableUser = RefCell<User>;
-
 #[derive(Default)]
 pub(crate) struct Basable {
-    pub users: Vec<SharableUser>,
+    // pub users: Vec<SharableUser>,
     pub connections: Vec<SharedDB>,
     pub table_configs: HashMap<String, TableConfigList>,
 }
@@ -54,53 +51,20 @@ impl Basable {
     }
 
     /// Creates a new guest user using the request `SocketAddr`
-    pub(crate) fn create_guest_user(&mut self, req_ip: &str) -> Result<JwtSession, AppError> {
-        let session_id = create_jwt(req_ip)?; // jwt encode the ip
-
+    pub(crate) fn create_guest_user(&self, req_ip: &str) -> Result<JwtSession, AppError> {
         let user = User {
             id: req_ip.to_owned(),
             ..Default::default()
         };
 
-        self.add_user(RefCell::new(user));
+        let session_id = create_jwt(user)?; // jwt encode the ip
+                                            // self.add_user(RefCell::new(user));
 
         Ok(session_id)
     }
 
-    pub fn add_user(&mut self, user: SharableUser) {
-        self.users.push(user);
-    }
-
-    /// Get an active `User` with the `user_id` from Basable's active users.
-    pub(crate) fn find_user(&self, user_id: &str) -> Option<&SharableUser> {
-        self.users.iter().find(|u| u.borrow().id == user_id)
-        // .map(|u| u.clone());
-    }
-
-    // / Get a user's position index
-    pub(crate) fn user_index(&self, user_id: &str) -> Option<usize> {
-        self.users.iter().position(|u| u.borrow().id == user_id)
-    }
-
-    /// Remove the user from Basable's active users.
-    pub(crate) fn log_user_out(&mut self, user_id: &str) {
-        if let Some(_) = self.find_user(user_id) {
-            let i = self.user_index(user_id).unwrap();
-            self.users.remove(i);
-        }
-    }
-
     /// Attaches a DB to user.
     pub(crate) fn add_connection(&mut self, db: &SharedDB) {
-        // if let Some(_) = self.get_connection(db.user_id()) {
-        //     let i = self
-        //         .connections
-        //         .iter()
-        //         .position(|c| c.user_id() == db.user_id())
-        //         .unwrap();
-        //     self.connections.remove(i);
-        // }
-
         self.connections.push(db.clone());
     }
 
@@ -113,7 +77,7 @@ impl Basable {
             .map(|c| c.clone())
     }
 
-    pub fn add_configs(&mut self, conn_id: String, configs: TableConfigList){
+    pub fn add_configs(&mut self, conn_id: String, configs: TableConfigList) {
         self.table_configs.insert(conn_id, configs);
     }
 

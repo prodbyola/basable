@@ -5,13 +5,17 @@ use axum::{
     RequestPartsExt,
 };
 
-use crate::base::{table::SharedTable, user::decode_jwt, AppError, SharedDB};
+use crate::base::{
+    table::SharedTable,
+    user::{decode_jwt, User},
+    AppError, SharedDB,
+};
 use crate::http::app::AppState;
 
 /// Extracts information about the current [`User`] by inspecting the Authorization
 /// header. If Authorization is not provided, it checks for `B-Session-Id`, which should
 /// be provided for guest users. If none of this is found, the `User` is `None`.
-pub(crate) struct AuthExtractor(pub Option<String>);
+pub(crate) struct AuthExtractor(pub User);
 
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthExtractor
@@ -21,47 +25,26 @@ where
 {
     type Rejection = AppError;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let mut is_guest = false;
-
-        let state = extract_app_state(parts, state).await;
-
-        let mut bsbl = state.instance.lock().unwrap();
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let mut auth_value = parts.headers.get(AUTHORIZATION);
 
         // If Authorization header does not exist, use session-id to retrieve guest user.
         if let None = auth_value {
-            is_guest = true;
             auth_value = parts.headers.get("B-Session-Id");
         }
 
-        if let Some(hv) = auth_value {
-            let mut user_id = None;
-
-            if is_guest {
-                match decode_jwt(hv) {
-                    Ok(id) => user_id = Some(id),
-                    Err(e) => {
-                        if let Some(id) = user_id {
-                            bsbl.log_user_out(&id);
-                        }
-
-                        return Err(e);
-                    }
-                };
-            } else {
-                // validate user from remote server
-                let err = AppError::new(StatusCode::NOT_IMPLEMENTED, "Authorization for registered users not implemented. Please use 'B-Session-Id' header.");
+        match auth_value {
+            Some(hv) => match decode_jwt(hv) {
+                Ok(user) => Ok(AuthExtractor(user)),
+                Err(e) => Err(e),
+            },
+            None => {
+                let err = AppError::new(
+                    StatusCode::UNAUTHORIZED,
+                    "User authentication not provided.",
+                );
                 return Err(err);
             }
-
-            return Ok(AuthExtractor(user_id));
-        } else {
-            let err = AppError::new(
-                StatusCode::UNAUTHORIZED,
-                "User authentication not provided.",
-            );
-            return Err(err);
         }
     }
 }
@@ -77,35 +60,29 @@ where
     type Rejection = AppError;
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let user = AuthExtractor::from_request_parts(parts, state).await?;
-        match user.0 {
-            Some(user_id) => {
-                let state = extract_app_state(parts, state).await;
-                let bsbl = state.instance.lock().unwrap();
+        let user = user.0;
 
-                let conn_id = match parts.headers.get("Connection-Id") {
-                    Some(h) => Some(h.to_str().unwrap()),
-                    None => None,
-                };
+        let state = extract_app_state(parts, state).await;
+        let bsbl = state.instance.lock().unwrap();
 
-                if let None = conn_id {
-                    return Err(AppError::new(
-                        StatusCode::PRECONDITION_REQUIRED,
-                        "Connection Id not provided",
-                    ));
-                }
+        let conn_id = match parts.headers.get("Connection-Id") {
+            Some(h) => Some(h.to_str().unwrap()),
+            None => None,
+        };
 
-                let db = bsbl.get_connection(conn_id.unwrap(), &user_id);
-                match db {
-                    Some(db) => Ok(DbExtractor(db)),
-                    None => Err(AppError::new(
-                        StatusCode::PRECONDITION_FAILED,
-                        "You do not have access to this connection.",
-                    )),
-                }
-            }
+        if let None = conn_id {
+            return Err(AppError::new(
+                StatusCode::PRECONDITION_REQUIRED,
+                "Connection Id not provided",
+            ));
+        }
+
+        let db = bsbl.get_connection(conn_id.unwrap(), &user.id);
+        match db {
+            Some(db) => Ok(DbExtractor(db)),
             None => Err(AppError::new(
-                StatusCode::UNAUTHORIZED,
-                "User authentication not provided.",
+                StatusCode::PRECONDITION_FAILED,
+                "You do not have access to this connection.",
             )),
         }
     }
