@@ -14,14 +14,14 @@ const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 
 pub(crate) struct User {
     pub id: String,
-    pub is_logged: bool,
+    pub is_guest: bool,
 }
 
 impl Default for User {
     fn default() -> Self {
         Self {
             id: String::new(),
-            is_logged: false,
+            is_guest: true,
         }
     }
 }
