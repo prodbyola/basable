@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
@@ -194,10 +191,7 @@ pub(crate) trait Table: Sync + Send {
 mod tests {
 
     use crate::{
-        base::{
-            table::DataQueryFilter,
-            AppError,
-        },
+        base::{table::DataQueryFilter, AppError},
         tests::common::{create_test_db, get_test_db_table},
     };
 
@@ -246,7 +240,10 @@ mod tests {
 mod interactive_tests {
     use std::{collections::HashMap, io::stdin};
 
-    use crate::{base::{table::UpdateDataOptions, AppError}, tests::common::{create_test_db, get_test_db_table}};
+    use crate::{
+        base::{table::UpdateDataOptions, AppError},
+        tests::common::{create_test_db, get_test_db_table},
+    };
 
     #[test]
     fn test_table_insert_data() -> Result<(), AppError> {
@@ -335,5 +332,4 @@ mod interactive_tests {
 
         Ok(())
     }
-
 }
