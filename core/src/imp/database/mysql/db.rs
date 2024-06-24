@@ -1,6 +1,5 @@
 use std::{
-    collections::HashMap,
-    sync::Arc,
+    cell::RefCell, collections::HashMap, sync::Arc
 };
 
 use mysql::Row;
@@ -11,7 +10,7 @@ use crate::{
     base::{
         config::ConnectionConfig,
         db::DB,
-        table::{SharedTable, Table, TableConfigs, TableSummaries, TableSummary},
+        table::{SharedTable, Table, TableConfigList, TableSummaries, TableSummary},
         AppError, ConnectorType,
     },
     imp::database::{DBVersion, DbConnectionDetails},
@@ -116,7 +115,7 @@ impl DB for MySqlDB {
     fn load_tables(
         &mut self,
         connector: ConnectorType,
-    ) -> Result<TableConfigs, AppError> {
+    ) -> Result<Option<TableConfigList>, AppError> {
         let tables = self.query_tables()?;
         let mut configs = Vec::with_capacity(tables.len());
 
@@ -126,7 +125,7 @@ impl DB for MySqlDB {
                 let name: String = t.get("TABLE_NAME").unwrap();
                 let (table, config) = MySqlTable::new(name, connector);
                 if let Some(config) = config {
-                    configs.push(config);
+                    configs.push(RefCell::new(config));
                 }
 
                 self.tables.push(Arc::new(table));

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,7 @@ use super::{ConnectorType, TableType};
 pub(crate) type SharedTable = Arc<TableType>;
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
-pub(crate) type TableConfigs = Option<Vec<TableConfig>>;
+pub(crate) type TableConfigList = Vec<RefCell<TableConfig>>;
 
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
 

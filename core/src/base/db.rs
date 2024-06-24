@@ -3,7 +3,7 @@ use uuid::Uuid;
 use crate::imp::database::DbConnectionDetails;
 
 use super::{
-    table::{SharedTable, TableConfigs, TableSummaries},
+    table::{SharedTable, TableConfigList, TableSummaries},
     AppError, ConnectorType,
 };
 
@@ -29,7 +29,7 @@ pub(crate) trait DB: Send + Sync {
     /// We also provide `load_table_configs` param, which which tells `load_tables` to attempt creating default configurations for [Table](`crate::base::table::Table`). Please
     /// see [Table::new](`crate::base::table::Table::new`) to learn more.
     fn load_tables(&mut self, connector: ConnectorType)
-        -> Result<TableConfigs, AppError>;
+        -> Result<Option<TableConfigList>, AppError>;
 
     /// Query [`DB`] server for information about available tables. It only queries the database server and
     /// return results as [`DB::Row`]. It is different from [`DB::load_tables`] which actually loads the [`Table`]

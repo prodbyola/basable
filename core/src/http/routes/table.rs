@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     routing::{get, patch, post, put},
     Json, Router,
 };
@@ -23,52 +22,35 @@ use crate::{
 
 #[debug_handler]
 pub(crate) async fn save_configuration(
-    Path(_): Path<String>,
-    AuthExtractor(user_id): AuthExtractor,
-    DbExtractor(_): DbExtractor,
+    Path(table_name): Path<String>,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(db): DbExtractor,
     TableExtractor(_): TableExtractor,
     State(state): State<AppState>,
     Json(config): Json<TableConfig>,
 ) -> Result<String, AppError> {
     let bsbl = state.instance.lock().unwrap();
+    let conn_id = db.id().to_string();
+    
+    bsbl.save_table_config(&conn_id, &table_name, config);
 
-    if let Some(user_ref) = bsbl.find_user(&user_id.unwrap_or_default()) {
-        let mut user = user_ref.borrow_mut();
-
-        user.save_table_config(config)?;
-        return Ok(String::from("Operation successful."));
-    }
-
-    Err(AppError::new(
-        StatusCode::EXPECTATION_FAILED,
-        "User not active.",
-    ))
+    Ok("Operation successful".to_string())
 }
 
 #[debug_handler]
 pub(crate) async fn get_configuration(
     Path(table_name): Path<String>,
-    AuthExtractor(user_id): AuthExtractor,
-    DbExtractor(_): DbExtractor,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(db): DbExtractor,
     TableExtractor(_): TableExtractor,
     State(state): State<AppState>,
 ) -> Result<Json<Option<TableConfig>>, AppError> {
-    if let Some(user_id) = user_id {
-        let bsbl = state.instance.lock().unwrap();
+    let bsbl = state.instance.lock().unwrap();
+    let conn_id = db.id().to_string();
+   
+    let config = bsbl.get_table_config(&conn_id, &table_name);
 
-        if let Some(user) = bsbl.find_user(&user_id) {
-            let user = user.borrow();
-            let config = user.get_table_config(&table_name)?;
-            let config = config.map(|c| c.clone());
-
-            return Ok(Json(config));
-        }
-    }
-
-    Err(AppError::new(
-        StatusCode::EXPECTATION_FAILED,
-        "User not active.",
-    ))
+    Ok(Json(config))
 }
 
 #[debug_handler]

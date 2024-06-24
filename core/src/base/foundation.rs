@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -10,7 +11,7 @@ use crate::User;
 
 use super::connector::Connector;
 use super::db::DB;
-use super::table::{TableConfig, TableConfigs};
+use super::table::{TableConfig, TableConfigList};
 use super::SharedDB;
 use super::{
     config::{ConnectionConfig, Database, SourceType},
@@ -24,7 +25,7 @@ pub(crate) type SharableUser = RefCell<User>;
 pub(crate) struct Basable {
     pub users: Vec<SharableUser>,
     pub connections: Vec<SharedDB>,
-    pub table_configs: Vec<RefCell<TableConfig>>
+    pub table_configs: HashMap<String, TableConfigList>,
 }
 
 impl Basable {
@@ -34,7 +35,7 @@ impl Basable {
     pub(crate) fn create_connection(
         config: &ConnectionConfig,
         user_id: String,
-    ) -> Result<(SharedDB, TableConfigs), AppError> {
+    ) -> Result<(SharedDB, Option<TableConfigList>), AppError> {
         let mut db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
@@ -116,10 +117,34 @@ impl Basable {
 
     pub fn get_connection(&self, id: &str, user_id: &str) -> Option<SharedDB> {
         let id = Uuid::from_str(id).unwrap();
-        
+
         self.connections
             .iter()
             .find(|c| *c.id() == id && c.user_id() == user_id)
             .map(|c| c.clone())
+    }
+
+    pub fn add_configs(&mut self, conn_id: String, configs: TableConfigList){
+        self.table_configs.insert(conn_id, configs);
+    }
+
+    pub fn get_table_config(&self, conn_id: &str, table_name: &str) -> Option<TableConfig> {
+        let mut config = None;
+        if let Some(configs) = self.table_configs.get(conn_id) {
+            config = configs
+                .iter()
+                .find(|c| c.borrow().table_id == table_name)
+                .map(|c| c.borrow().clone())
+        }
+
+        config
+    }
+
+    pub fn save_table_config(&self, conn_id: &str, table_name: &str, config: TableConfig) {
+        if let Some(configs) = self.table_configs.get(conn_id) {
+            if let Some(c) = configs.iter().find(|c| c.borrow().table_id == table_name) {
+                c.replace(config);
+            }
+        }
     }
 }
