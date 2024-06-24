@@ -10,7 +10,7 @@ use crate::User;
 
 use super::connector::Connector;
 use super::db::DB;
-use super::table::TableConfigs;
+use super::table::{TableConfig, TableConfigs};
 use super::SharedDB;
 use super::{
     config::{ConnectionConfig, Database, SourceType},
@@ -24,6 +24,7 @@ pub(crate) type SharableUser = RefCell<User>;
 pub(crate) struct Basable {
     pub users: Vec<SharableUser>,
     pub connections: Vec<SharedDB>,
+    pub table_configs: Vec<RefCell<TableConfig>>
 }
 
 impl Basable {

@@ -7,7 +7,7 @@ pub(crate) mod common {
 
     use crate::{
         base::{config::ConnectionConfig, foundation::Basable, user::User, AppError, SharedDB},
-        http::{app::AppState, middlewares::AuthExtractor},
+        http::app::AppState,
     };
 
     /// Get `TEST_USER_ID` from env
