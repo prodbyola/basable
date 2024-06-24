@@ -5,10 +5,7 @@ use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use crate::base::{
-    config::ConnectionConfig,
-    AppError,
-};
+use crate::base::AppError;
 
 // JWT_SECRET should be defined by the installer and saved as BASABLE_SECRET env variables.
 // You can generate one at https://djecrety.ir
@@ -18,15 +15,6 @@ const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 pub(crate) struct User {
     pub id: String,
     pub is_logged: bool,
-}
-
-impl User {
-    pub(crate) fn logout(&self) {
-        // TODO: Close connection
-    }
-
-    /// Remotely saves [`ConnectionConfig`] for user.
-    pub(crate) fn save_connection(&self, config: &ConnectionConfig) {}
 }
 
 impl Default for User {

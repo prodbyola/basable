@@ -196,16 +196,6 @@ mod tests {
     };
 
     #[test]
-    fn test_table_exist() -> Result<(), AppError> {
-        let db = create_test_db()?;
-        let table_name = get_test_db_table();
-
-        assert!(db.table_exists(&table_name)?);
-
-        Ok(())
-    }
-
-    #[test]
     fn test_table_query_column() -> Result<(), AppError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();

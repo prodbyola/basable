@@ -179,23 +179,6 @@ impl DB for MySqlDB {
         Ok(tables)
     }
 
-    fn table_exists(&self, name: &str) -> Result<bool, AppError> {
-        let q = format!(
-            "
-                SELECT count(*) 
-                FROM information_schema.tables
-                WHERE table_schema = '{}' AND table_name = '{}'
-            ",
-            self.config().db_name.clone().unwrap(),
-            name
-        );
-
-        let qr = self.exec_query(&q)?;
-        let exists = qr.first().map_or(false, |r| r.get("count(*)").unwrap());
-
-        Ok(exists)
-    }
-
     fn query_column_count(&self, tb_name: &str) -> Result<u32, AppError> {
         let query = format!(
             "

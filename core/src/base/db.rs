@@ -45,9 +45,6 @@ pub(crate) trait DB: Send + Sync {
     /// Query connection tables from DB source and return table summaries
     fn query_table_summaries(&self) -> Result<TableSummaries, AppError>;
 
-    /// Check if a table with the given name exists in the database connection.
-    fn table_exists(&self, name: &str) -> Result<bool, AppError>;
-
     /// Details about the connection
     fn details(&self) -> Result<DbConnectionDetails, AppError>;
 

@@ -71,16 +71,6 @@ impl Basable {
         self.users.push(user);
     }
 
-    /// Saves the `Config` to Basable's remote server in association with the user_id
-    pub(crate) fn save_config(&mut self, config: &ConnectionConfig, user_id: &str) {
-        let user = self.find_user(user_id);
-
-        if let Some(user) = user {
-            let user = user.borrow_mut();
-            user.save_connection(config);
-        }
-    }
-
     /// Get an active `User` with the `user_id` from Basable's active users.
     pub(crate) fn find_user(&self, user_id: &str) -> Option<&SharableUser> {
         self.users.iter().find(|u| u.borrow().id == user_id)
@@ -94,9 +84,8 @@ impl Basable {
 
     /// Remove the user from Basable's active users.
     pub(crate) fn log_user_out(&mut self, user_id: &str) {
-        if let Some(user) = self.find_user(user_id) {
+        if let Some(_) = self.find_user(user_id) {
             let i = self.user_index(user_id).unwrap();
-            user.take().logout();
             self.users.remove(i);
         }
     }

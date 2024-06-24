@@ -1,4 +1,3 @@
-use axum::http::StatusCode;
 use axum::routing::post;
 use axum::Router;
 
@@ -29,29 +28,16 @@ async fn connect(
     let mut bsbl = state.instance.lock().unwrap();
 
     let user_id = user_id.unwrap();
-    // let mut auth_session = false;
+    let (db, table_configs) = Basable::create_connection(&config, user_id)?;
 
-    if let Some(user) = bsbl.find_user(&user_id) {
-        let user = user.borrow();
-        let auth_session = user.is_logged;
-        drop(user);
-        
-        if auth_session {
-            bsbl.save_config(&config, &user_id);
-        }
-        
-        let (db, table_configs) = Basable::create_connection(&config, user_id)?;
-        bsbl.add_connection(&db);
-    
-        // let mut user = user.borrow_mut();
-        // user.init_table_configs(table_configs)?;
-    
-        let resp = db.details()?;
-        return Ok(Json(resp))
+    bsbl.add_connection(&db);
+    if let Some(cfs) = table_configs {
+        let conn_id = db.id().to_string();
+        bsbl.add_configs(conn_id, cfs);
     }
 
-    Err(AppError::new(StatusCode::UNAUTHORIZED, "User unknown"))
-    
+    let resp = db.details()?;
+    Ok(Json(resp))
 }
 
 pub(super) fn core_routes() -> Router<AppState> {
