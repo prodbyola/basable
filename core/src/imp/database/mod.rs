@@ -10,6 +10,7 @@ pub(crate) type DBVersion = HashMap<String, String>;
 
 #[derive(Serialize, Default)]
 pub(crate) struct DbConnectionDetails {
+    pub id: String,
     pub tables: TableSummaries,
     pub version: DBVersion,
     pub db_size: f64,

@@ -228,8 +228,11 @@ impl DB for MySqlDB {
         let version = self.show_version()?;
         let tables = self.query_table_summaries()?;
         let size = self.size()?;
+        let id = self.id.clone();
+        let id = id.to_string();
 
         Ok(DbConnectionDetails {
+            id,
             tables,
             version,
             db_size: size,

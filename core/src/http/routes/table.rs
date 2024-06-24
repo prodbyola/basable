@@ -51,7 +51,6 @@ pub(crate) async fn get_configuration(
     AuthExtractor(user_id): AuthExtractor,
     DbExtractor(_): DbExtractor,
     TableExtractor(_): TableExtractor,
-    State(_): State<AppState>,
     State(state): State<AppState>,
 ) -> Result<Json<Option<TableConfig>>, AppError> {
     if let Some(user_id) = user_id {

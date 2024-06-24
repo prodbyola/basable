@@ -6,7 +6,7 @@ pub(crate) mod common {
     };
 
     use crate::{
-        base::{config::ConnectionConfig, foundation::Basable, user::User, AppError},
+        base::{config::ConnectionConfig, foundation::Basable, user::User, AppError, SharedDB},
         http::{app::AppState, middlewares::AuthExtractor},
     };
 
@@ -20,11 +20,6 @@ pub(crate) mod common {
     pub fn get_test_db_table() -> String {
         dotenv().ok();
         env::var("TEST_DB_TABLE_NAME").unwrap()
-    }
-
-    pub fn create_test_auth_extractor() -> AuthExtractor {
-        let user_id = get_test_user_id();
-        AuthExtractor(Some(user_id))
     }
 
     /// Creates a test `Config`.
@@ -50,6 +45,16 @@ pub(crate) mod common {
         }
     }
 
+    pub fn create_test_db() -> Result<SharedDB, AppError> {
+        dotenv().ok();
+
+        let user_id = get_test_user_id();
+        let config = create_test_config();
+
+        let (conn, _) = Basable::create_connection(&config, user_id)?;
+        Ok(conn)
+    }
+
     /// Creates a `Basable` instance for testing. 
     /// 
     /// Attaches a test `DB` instance if `attach_db` is `true`.
@@ -58,7 +63,6 @@ pub(crate) mod common {
 
         let user_id = get_test_user_id();
 
-        let config = create_test_config();
         let user = User {
             id: user_id.clone(),
             ..User::default()
@@ -68,15 +72,9 @@ pub(crate) mod common {
         bslb.add_user(RefCell::new(user));
 
         if attach_db {
-            let (conn, configs) = Basable::create_shared_db(&config)?;
-            
-            let user = bslb.find_user(&user_id).unwrap();
-            let mut user = user.borrow_mut();
-            user.init_table_configs(configs)?;
-
-            std::mem::drop(user);
-
-            bslb.add_connection(&user_id, conn)?;
+            // TODO: Save configs
+            let db = create_test_db()?;
+            bslb.add_connection(&db);
         }
 
         Ok(bslb)
@@ -93,4 +91,31 @@ pub(crate) mod common {
 
         Ok(state)
     }
+}
+
+#[cfg(test)]
+pub(crate) mod extractors {
+    use crate::{base::AppError, http::middlewares::{AuthExtractor, DbExtractor, TableExtractor}};
+
+    use super::common::{create_test_db, get_test_db_table, get_test_user_id};
+
+    pub fn auth_extractor() -> AuthExtractor {
+        let user_id = get_test_user_id();
+        AuthExtractor(Some(user_id))
+    }
+
+    pub fn db_extractor() -> Result<DbExtractor, AppError> {
+        let db = create_test_db()?;
+        Ok(DbExtractor(db))
+    }
+
+    pub fn table_extractor() -> Result<TableExtractor, AppError> {
+        let table_name = get_test_db_table();
+        let db = create_test_db()?;
+
+        let table = db.get_table(&table_name).unwrap();
+
+        Ok(TableExtractor(table.clone()))
+    }
+
 }
