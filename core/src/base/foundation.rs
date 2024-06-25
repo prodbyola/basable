@@ -22,6 +22,7 @@ use super::{
 #[derive(Default)]
 pub(crate) struct Basable {
     pub connections: RefCell<Vec<SharedDB>>,
+    // TODO: Save this in an sqlite
     pub table_configs: HashMap<String, TableConfigList>,
 }
 
