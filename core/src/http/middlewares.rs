@@ -26,14 +26,14 @@ where
     type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let mut auth_value = parts.headers.get(AUTHORIZATION);
+        let mut auth_header = parts.headers.get(AUTHORIZATION);
 
         // If Authorization header does not exist, use session-id to retrieve guest user.
-        if let None = auth_value {
-            auth_value = parts.headers.get("B-Session-Id");
+        if let None = auth_header {
+            auth_header = parts.headers.get("B-Session-Id");
         }
 
-        match auth_value {
+        match auth_header {
             Some(hv) => match decode_jwt(hv) {
                 Ok(user) => Ok(AuthExtractor(user)),
                 Err(e) => Err(e),

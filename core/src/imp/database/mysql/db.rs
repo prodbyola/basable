@@ -123,6 +123,7 @@ impl DB for MySqlDB {
             tables.iter().for_each(|t| {
                 let connector = connector.clone();
                 let name: String = t.get("TABLE_NAME").unwrap();
+                
                 let (table, config) = MySqlTable::new(name, connector);
                 if let Some(config) = config {
                     configs.push(RefCell::new(config));

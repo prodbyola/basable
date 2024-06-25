@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -20,8 +21,7 @@ use super::{
 
 #[derive(Default)]
 pub(crate) struct Basable {
-    // pub users: Vec<SharableUser>,
-    pub connections: Vec<SharedDB>,
+    pub connections: RefCell<Vec<SharedDB>>,
     pub table_configs: HashMap<String, TableConfigList>,
 }
 
@@ -58,21 +58,31 @@ impl Basable {
         };
 
         let session_id = create_jwt(user)?; // jwt encode the ip
-                                            // self.add_user(RefCell::new(user));
-
         Ok(session_id)
     }
 
-    /// Attaches a DB to user.
-    pub(crate) fn add_connection(&mut self, db: &SharedDB) {
-        self.connections.push(db.clone());
+    /// Add connection.
+    pub(crate) fn add_connection(&self, db: &SharedDB) {
+        let get_conns = self.connections.borrow();
+        let mut conns = get_conns.clone();
+
+        // Drop get_conns immediately to avoid panick when replace it
+        std::mem::drop(get_conns);
+
+        conns.push(db.clone());
+        self.connections.replace(conns.clone());
     }
 
     pub fn get_connection(&self, id: &str, user_id: &str) -> Option<SharedDB> {
         let id = Uuid::from_str(id).unwrap();
 
-        self.connections
-            .iter()
+        let get_conns = self.connections.borrow();
+        let conns = get_conns.clone();
+
+        // Drop get_conns immediately to avoid panick when replace it
+        std::mem::drop(get_conns);
+
+        conns.iter()
             .find(|c| *c.id() == id && c.user_id() == user_id)
             .map(|c| c.clone())
     }
