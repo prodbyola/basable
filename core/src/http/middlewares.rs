@@ -63,8 +63,7 @@ where
         let user = user.0;
 
         let state = extract_app_state(parts, state).await;
-        let bsbl = state.instance.lock().unwrap();
-
+        
         let conn_id = match parts.headers.get("Connection-Id") {
             Some(h) => Some(h.to_str().unwrap()),
             None => None,
@@ -76,8 +75,11 @@ where
                 "Connection Id not provided",
             ));
         }
-
+        
+        let bsbl = state.instance.lock().unwrap();
         let db = bsbl.get_connection(conn_id.unwrap(), &user.id);
+        std::mem::drop(bsbl); // release Mutex lock
+
         match db {
             Some(db) => Ok(DbExtractor(db)),
             None => Err(AppError::new(

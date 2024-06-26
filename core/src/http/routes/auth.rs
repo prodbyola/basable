@@ -8,7 +8,7 @@ use axum::{
 use axum_macros::debug_handler;
 
 use crate::{
-    base::{user::JwtSession, AppError},
+    base::{foundation::Basable, user::JwtSession, AppError},
     http::app::AppState,
 };
 
@@ -18,12 +18,10 @@ use crate::{
 /// Creates a Basable guest `User` and returns a `JwtSession`.
 async fn create_guest_user(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    State(state): State<AppState>,
+    State(_): State<AppState>,
 ) -> Result<Json<JwtSession>, AppError> {
-    let bsbl = state.instance.lock().unwrap();
-
     let addr = addr.ip().to_string();
-    let session = bsbl.create_guest_user(&addr)?;
+    let session = Basable::create_guest_user(&addr)?;
 
     Ok(Json(session))
 }

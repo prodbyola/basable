@@ -23,16 +23,14 @@ use crate::{
 #[debug_handler]
 pub(crate) async fn save_configuration(
     Path(table_name): Path<String>,
-    AuthExtractor(_): AuthExtractor,
+    AuthExtractor(user): AuthExtractor,
     DbExtractor(db): DbExtractor,
     TableExtractor(_): TableExtractor,
-    State(state): State<AppState>,
+    State(_): State<AppState>,
     Json(config): Json<TableConfig>,
 ) -> Result<String, AppError> {
-    let bsbl = state.instance.lock().unwrap();
-    let conn_id = db.id().to_string();
-    
-    bsbl.save_table_config(&conn_id, &table_name, config);
+    let conn_id = db.id().to_string();    
+    user.update_table_config(&conn_id, &table_name, config);
 
     Ok("Operation successful".to_string())
 }
@@ -40,15 +38,13 @@ pub(crate) async fn save_configuration(
 #[debug_handler]
 pub(crate) async fn get_configuration(
     Path(table_name): Path<String>,
-    AuthExtractor(_): AuthExtractor,
+    AuthExtractor(user): AuthExtractor,
     DbExtractor(db): DbExtractor,
     TableExtractor(_): TableExtractor,
-    State(state): State<AppState>,
+    State(_): State<AppState>,
 ) -> Result<Json<Option<TableConfig>>, AppError> {
-    let bsbl = state.instance.lock().unwrap();
     let conn_id = db.id().to_string();
-   
-    let config = bsbl.get_table_config(&conn_id, &table_name);
+    let config = user.get_table_config(&conn_id, &table_name);
 
     Ok(Json(config))
 }

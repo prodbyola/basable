@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -11,7 +9,7 @@ use crate::User;
 
 use super::connector::Connector;
 use super::db::DB;
-use super::table::{TableConfig, TableConfigList};
+use super::table::TableConfigList;
 use super::SharedDB;
 use super::{
     config::{ConnectionConfig, Database, SourceType},
@@ -21,9 +19,7 @@ use super::{
 
 #[derive(Default)]
 pub(crate) struct Basable {
-    pub connections: RefCell<Vec<SharedDB>>,
-    // TODO: Save this in an sqlite
-    pub table_configs: HashMap<String, TableConfigList>,
+    pub connections: Vec<SharedDB>,
 }
 
 impl Basable {
@@ -52,7 +48,7 @@ impl Basable {
     }
 
     /// Creates a new guest user using the request `SocketAddr`
-    pub(crate) fn create_guest_user(&self, req_ip: &str) -> Result<JwtSession, AppError> {
+    pub(crate) fn create_guest_user(req_ip: &str) -> Result<JwtSession, AppError> {
         let user = User {
             id: req_ip.to_owned(),
             ..Default::default()
@@ -63,52 +59,15 @@ impl Basable {
     }
 
     /// Add connection.
-    pub(crate) fn add_connection(&self, db: &SharedDB) {
-        let get_conns = self.connections.borrow();
-        let mut conns = get_conns.clone();
-
-        // Drop get_conns immediately to avoid panick when replace it
-        std::mem::drop(get_conns);
-
-        conns.push(db.clone());
-        self.connections.replace(conns.clone());
+    pub(crate) fn add_connection(&mut self, db: &SharedDB) {
+        self.connections.push(db.clone());
     }
 
     pub fn get_connection(&self, id: &str, user_id: &str) -> Option<SharedDB> {
         let id = Uuid::from_str(id).unwrap();
 
-        let get_conns = self.connections.borrow();
-        let conns = get_conns.clone();
-
-        // Drop get_conns immediately to avoid panick when replace it
-        std::mem::drop(get_conns);
-
-        conns.iter()
+        self.connections.iter()
             .find(|c| *c.id() == id && c.user_id() == user_id)
             .map(|c| c.clone())
-    }
-
-    pub fn add_configs(&mut self, conn_id: String, configs: TableConfigList) {
-        self.table_configs.insert(conn_id, configs);
-    }
-
-    pub fn get_table_config(&self, conn_id: &str, table_name: &str) -> Option<TableConfig> {
-        let mut config = None;
-        if let Some(configs) = self.table_configs.get(conn_id) {
-            config = configs
-                .iter()
-                .find(|c| c.borrow().table_id == table_name)
-                .map(|c| c.borrow().clone())
-        }
-
-        config
-    }
-
-    pub fn save_table_config(&self, conn_id: &str, table_name: &str, config: TableConfig) {
-        if let Some(configs) = self.table_configs.get(conn_id) {
-            if let Some(c) = configs.iter().find(|c| c.borrow().table_id == table_name) {
-                c.replace(config);
-            }
-        }
     }
 }

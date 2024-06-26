@@ -4,8 +4,11 @@ use axum::http::{HeaderValue, StatusCode};
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use time::format_description::well_known::iso8601::Config;
 
 use crate::base::AppError;
+
+use super::table::{TableConfig, TableConfigList};
 
 // JWT_SECRET should be defined by the installer and saved as BASABLE_SECRET env variables.
 // You can generate one at https://djecrety.ir
@@ -15,6 +18,15 @@ const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 pub(crate) struct User {
     pub id: String,
     pub is_guest: bool,
+}
+
+impl User {
+    pub fn save_connection(&self, config: Config){}
+    pub fn save_table_configs(&self, conn_id: &str, configs: TableConfigList) {}
+    pub fn get_table_config(&self, conn_id: &str, table_name: &str) -> Option<TableConfig> {
+        None
+    }
+    pub fn update_table_config(&self, conn_id: &str, table_name: &str, config: TableConfig) {}
 }
 
 impl Default for User {

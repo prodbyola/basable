@@ -27,13 +27,15 @@ async fn connect(
 ) -> Result<Json<DbConnectionDetails>, AppError> {
     let mut bsbl = state.instance.lock().unwrap();
 
-    let user_id = user.id;
+    let user_id = user.id.clone();
     let (db, table_configs) = Basable::create_connection(&config, user_id)?;
 
     bsbl.add_connection(&db);
+    std::mem::drop(bsbl); // release Mutex lock
+
     if let Some(cfs) = table_configs {
         let conn_id = db.id().to_string();
-        bsbl.add_configs(conn_id, cfs);
+        user.save_table_configs(&conn_id, cfs);
     }
 
     let resp = db.details()?;
