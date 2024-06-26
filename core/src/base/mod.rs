@@ -1,7 +1,7 @@
 use core::str;
 use std::{
     fmt::Display,
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use axum::{
@@ -12,8 +12,9 @@ use axum::{
 use connector::Connector;
 use db::DB;
 use serde::Serialize;
+use table::Table;
 
-use crate::imp::database::mysql::{connector::MysqlConnector, db::MySqlDB};
+use crate::imp::database::mysql::{connector::MysqlConnector, db::MySqlDB, table::MySqlTable};
 
 pub(crate) mod column;
 pub(crate) mod config;
@@ -36,10 +37,17 @@ pub(crate) type ConnectorType = Arc<dyn Connector<
     Error = <MysqlConnector as Connector>::Error,
 >>;
 
-pub(crate) type SharedDB = Arc<Mutex<DbType>>;
+/// Dynamic [`Table`] type implemented across the app.
+pub(crate) type TableType = dyn Table<
+    Row = <MySqlTable as Table>::Row,
+    Error = <MySqlTable as Table>::Error,
+    ColumnValue = <MySqlTable as Table>::ColumnValue,
+>;
+
+pub(crate) type SharedDB = Arc<DbType>;
 
 #[derive(Debug)]
-pub(crate) struct AppError(pub StatusCode, pub String);
+pub struct AppError(pub StatusCode, pub String);
 
 impl AppError {
     pub(crate) fn new(code: StatusCode, msg: &str) -> Self {
@@ -72,19 +80,13 @@ impl Serialize for AppError {
 mod test {
     use crate::{
         base::AppError,
-        tests::common::{create_test_instance, get_test_user_id},
+        tests::common::{create_test_db, create_test_instance},
     };
 
     #[test]
     fn test_instance_has_db() -> Result<(), AppError> {
-        let bsbl = create_test_instance(true)?;
-        let user_id = get_test_user_id();
-
-        let user = bsbl.find_user(&user_id);
-        assert!(user.is_some());
-
-        let user = user.unwrap().borrow();
-        assert!(user.db().is_some());
+        let db = create_test_db();
+        assert!(db.is_ok());
 
         Ok(())
     }
@@ -93,16 +95,5 @@ mod test {
     fn test_create_instance() {
         let bsbl = create_test_instance(true);
         assert!(bsbl.is_ok());
-    }
-
-    #[test]
-    fn test_instance_has_user() -> Result<(), AppError> {
-        let bsbl = create_test_instance(true)?;
-        let user_id = get_test_user_id();
-
-        let user = bsbl.find_user(&user_id);
-        assert!(user.is_some());
-
-        Ok(())
     }
 }

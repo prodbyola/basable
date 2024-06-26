@@ -22,39 +22,23 @@ pub(super) mod table;
 /// Creates a new `BasableConnection` for current user. It expects `Config` as request's body.
 async fn connect(
     State(state): State<AppState>,
-    AuthExtractor(user_id): AuthExtractor,
+    AuthExtractor(user): AuthExtractor,
     Json(config): Json<ConnectionConfig>,
 ) -> Result<Json<DbConnectionDetails>, AppError> {
     let mut bsbl = state.instance.lock().unwrap();
 
-    let user_id = user_id.unwrap();
-    // let mut auth_session = false;
+    let user_id = user.id.clone();
+    let (db, table_configs) = Basable::create_connection(&config, user_id)?;
 
-    if let Some(user) = bsbl.find_user(&user_id) {
-        let user = user.borrow();
-        let auth_session = user.is_logged;
+    bsbl.add_connection(&db);
+    std::mem::drop(bsbl); // release Mutex lock
 
-        // drop User reference from memory in order to free `Basable` instance
-        // and allow access later.
-        std::mem::drop(user);
-
-        if auth_session {
-            bsbl.save_config(&config, &user_id);
-        }
+    if let Some(cfs) = table_configs {
+        let conn_id = db.id().to_string();
+        user.save_table_configs(&conn_id, cfs);
     }
-    
-    let (db, table_configs) = Basable::create_shared_db(&config)?;
-    bsbl.attach_db(&user_id, db)?;
 
-    let user = bsbl.find_user(&user_id).unwrap();
-    let mut user = user.borrow_mut();
-    user.init_table_configs(table_configs)?;
-
-
-    let conn = user.db().unwrap();
-    let mut conn = conn.lock().unwrap();
-
-    let resp = conn.details()?;
+    let resp = db.details()?;
     Ok(Json(resp))
 }
 
@@ -71,7 +55,7 @@ mod tests {
 
     use crate::{
         base::AppError,
-        tests::common::{create_test_config, create_test_state, create_test_auth_extractor},
+        tests::{common::{create_test_config, create_test_state}, extractors::auth_extractor},
     };
 
     use super::connect;
@@ -81,7 +65,7 @@ mod tests {
         let state = create_test_state(false)?;
         let config = create_test_config();
 
-        let extractor = create_test_auth_extractor();
+        let extractor = auth_extractor();
 
         let c = connect(State(state), extractor, Json(config)).await;
         assert!(c.is_ok());

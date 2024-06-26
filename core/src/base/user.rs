@@ -4,12 +4,11 @@ use axum::http::{HeaderValue, StatusCode};
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use time::format_description::well_known::iso8601::Config;
 
-use crate::base::{
-    config::ConnectionConfig,
-    table::{TableConfig, TableConfigs},
-    AppError, SharedDB,
-};
+use crate::base::AppError;
+
+use super::table::{TableConfig, TableConfigList};
 
 // JWT_SECRET should be defined by the installer and saved as BASABLE_SECRET env variables.
 // You can generate one at https://djecrety.ir
@@ -18,82 +17,23 @@ const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 
 pub(crate) struct User {
     pub id: String,
-    pub is_logged: bool,
-    pub db: Option<SharedDB>,
-    pub table_configs: TableConfigs,
+    pub is_guest: bool,
 }
 
 impl User {
-    pub fn db(&self) -> Option<&SharedDB> {
-        if let Some(db) = &self.db {
-            return Some(db);
-        }
-
+    pub fn save_connection(&self, config: Config){}
+    pub fn save_table_configs(&self, conn_id: &str, configs: TableConfigList) {}
+    pub fn get_table_config(&self, conn_id: &str, table_name: &str) -> Option<TableConfig> {
         None
     }
-
-    pub fn attach_db(&mut self, db: SharedDB) {
-        self.db = Some(db);
-    }
-
-    pub(crate) fn logout(&self) {
-        // TODO: Close connection
-    }
-
-    /// Remotely saves [`ConnectionConfig`] for user.
-    pub(crate) fn save_connection(&self, config: &ConnectionConfig) {}
-
-    pub fn init_table_configs(&mut self, configs: TableConfigs) -> Result<(), AppError> {
-        if !self.is_logged {
-            self.table_configs = configs;
-        }
-
-        Ok(())
-    }
-
-    pub fn save_table_config(&mut self, config: TableConfig) -> Result<(), AppError> {
-        if self.is_logged {
-            // TODO: Get config remotely
-        } else {
-            // If config vec is already created, insert new config else create new vec with config.
-            match self.table_configs.as_mut() {
-                // Check if a config exists for table and replace it with new config
-                // Else push new config into vec.
-                Some(cfgs) => match cfgs.iter().find(|c| *c == &config).as_mut() {
-                    Some(c) => {
-                        let _ = std::mem::replace(c, &config);
-                    }
-                    None => cfgs.push(config),
-                },
-                None => self.table_configs = Some(vec![config]),
-            }
-        }
-
-        Ok(())
-    }
-
-    pub fn get_table_config(&self, table_name: &str) -> Result<Option<&TableConfig>, AppError> {
-        let mut config = None;
-
-        if self.is_logged {
-            // TODO: Get config remotely
-        } else {
-            if let Some(cfg) = &self.table_configs {
-                config = cfg.iter().find(|t| t.table_id == table_name);
-            }
-        }
-
-        Ok(config)
-    }
+    pub fn update_table_config(&self, conn_id: &str, table_name: &str, config: TableConfig) {}
 }
 
 impl Default for User {
     fn default() -> Self {
         Self {
             id: String::new(),
-            is_logged: false,
-            db: None,
-            table_configs: None,
+            is_guest: true,
         }
     }
 }
@@ -101,6 +41,7 @@ impl Default for User {
 #[derive(Deserialize, Serialize)]
 pub(crate) struct Claims {
     sub: String,
+    is_guest: bool,
     exp: usize,
 }
 
@@ -110,7 +51,7 @@ pub(crate) struct JwtSession {
     pub exp: usize,
 }
 
-pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
+pub(crate) fn create_jwt(user: User) -> Result<JwtSession, AppError> {
     let exp_time = 7200;
 
     // Token expiration is two hours
@@ -120,7 +61,8 @@ pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
         .timestamp() as usize;
 
     let claims = Claims {
-        sub: user_id.to_owned(),
+        sub: user.id,
+        is_guest: user.is_guest,
         exp,
     };
 
@@ -134,7 +76,7 @@ pub(crate) fn create_jwt(user_id: &str) -> Result<JwtSession, AppError> {
     })
 }
 
-pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<String, AppError> {
+pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<User, AppError> {
     let token = extract_jwt(header_value)?;
 
     let decoded = decode::<Claims>(
@@ -144,7 +86,9 @@ pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<String, AppError>
     )
     .map_err(|e| AppError(StatusCode::UNAUTHORIZED, e.to_string()))?;
 
-    Ok(decoded.claims.sub)
+    let Claims { sub, is_guest, .. } = decoded.claims;
+
+    Ok(User { id: sub, is_guest })
 }
 
 fn extract_jwt(header_value: &HeaderValue) -> Result<String, AppError> {

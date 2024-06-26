@@ -1,6 +1,5 @@
 use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
+    cell::RefCell, collections::HashMap, sync::Arc
 };
 
 use mysql::Row;
@@ -11,7 +10,7 @@ use crate::{
     base::{
         config::ConnectionConfig,
         db::DB,
-        table::{SharedTable, Table, TableConfigs, TableSummaries, TableSummary},
+        table::{SharedTable, Table, TableConfigList, TableSummaries, TableSummary},
         AppError, ConnectorType,
     },
     imp::database::{DBVersion, DbConnectionDetails},
@@ -21,14 +20,18 @@ use super::{table::MySqlTable, MySqlValue};
 
 pub(crate) struct MySqlDB {
     pub connector: ConnectorType,
-    pub tables: Vec<SharedTable<mysql::Error, mysql::Row, MySqlValue>>,
+    pub tables: Vec<SharedTable>,
+    user_id: String,
+    id: Uuid,
 }
 
 impl MySqlDB {
-    pub fn new(connector: ConnectorType) -> Self {
+    pub fn new(connector: ConnectorType, user_id: String) -> Self {
         MySqlDB {
             connector,
             tables: Vec::new(),
+            user_id,
+            id: Uuid::new_v4()
         }
     }
 
@@ -97,6 +100,14 @@ impl DB for MySqlDB {
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
+    fn id(&self) -> &Uuid {
+        &self.id
+    }
+
+    fn user_id(&self) -> &str {
+        &self.user_id
+    }
+
     fn connector(&self) -> &ConnectorType {
         &self.connector
     }
@@ -104,7 +115,7 @@ impl DB for MySqlDB {
     fn load_tables(
         &mut self,
         connector: ConnectorType,
-    ) -> Result<TableConfigs, AppError> {
+    ) -> Result<Option<TableConfigList>, AppError> {
         let tables = self.query_tables()?;
         let mut configs = Vec::with_capacity(tables.len());
 
@@ -112,12 +123,13 @@ impl DB for MySqlDB {
             tables.iter().for_each(|t| {
                 let connector = connector.clone();
                 let name: String = t.get("TABLE_NAME").unwrap();
+                
                 let (table, config) = MySqlTable::new(name, connector);
                 if let Some(config) = config {
-                    configs.push(config);
+                    configs.push(RefCell::new(config));
                 }
 
-                self.tables.push(Arc::new(Mutex::new(table)));
+                self.tables.push(Arc::new(table));
             })
         }
 
@@ -144,7 +156,7 @@ impl DB for MySqlDB {
         self.connector.exec_query(&query)
     }
 
-    fn query_table_summaries(&mut self) -> Result<TableSummaries, AppError> {
+    fn query_table_summaries(&self) -> Result<TableSummaries, AppError> {
         let results = self.query_tables()?;
         let tables: Vec<TableSummary> = results
             .iter()
@@ -168,23 +180,6 @@ impl DB for MySqlDB {
         Ok(tables)
     }
 
-    fn table_exists(&self, name: &str) -> Result<bool, AppError> {
-        let q = format!(
-            "
-                SELECT count(*) 
-                FROM information_schema.tables
-                WHERE table_schema = '{}' AND table_name = '{}'
-            ",
-            self.config().db_name.clone().unwrap(),
-            name
-        );
-
-        let qr = self.exec_query(&q)?;
-        let exists = qr.first().map_or(false, |r| r.get("count(*)").unwrap());
-
-        Ok(exists)
-    }
-
     fn query_column_count(&self, tb_name: &str) -> Result<u32, AppError> {
         let query = format!(
             "
@@ -206,18 +201,21 @@ impl DB for MySqlDB {
     fn get_table(
         &self,
         name: &str,
-    ) -> Option<&SharedTable<Self::Error, Self::Row, Self::ColumnValue>> {
+    ) -> Option<&SharedTable> {
         self.tables
             .iter()
-            .find(|t| t.lock().unwrap().name() == name)
+            .find(|t| t.name() == name)
     }
 
-    fn details(&mut self) -> Result<DbConnectionDetails, AppError> {
+    fn details(&self) -> Result<DbConnectionDetails, AppError> {
         let version = self.show_version()?;
         let tables = self.query_table_summaries()?;
         let size = self.size()?;
+        let id = self.id.clone();
+        let id = id.to_string();
 
         Ok(DbConnectionDetails {
+            id,
             tables,
             version,
             db_size: size,

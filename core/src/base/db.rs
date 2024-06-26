@@ -1,7 +1,9 @@
+use uuid::Uuid;
+
 use crate::imp::database::DbConnectionDetails;
 
 use super::{
-    table::{SharedTable, TableConfigs, TableSummaries},
+    table::{SharedTable, TableConfigList, TableSummaries},
     AppError, ConnectorType,
 };
 
@@ -13,6 +15,10 @@ pub(crate) trait DB: Send + Sync {
     type Error;
     type ColumnValue;
 
+    fn id(&self) -> &Uuid;
+
+    fn user_id(&self) -> &str;
+
     /// Get the [`ConnectorType`] instance for [`DB`].
     fn connector(&self) -> &ConnectorType;
 
@@ -23,7 +29,7 @@ pub(crate) trait DB: Send + Sync {
     /// We also provide `load_table_configs` param, which which tells `load_tables` to attempt creating default configurations for [Table](`crate::base::table::Table`). Please
     /// see [Table::new](`crate::base::table::Table::new`) to learn more.
     fn load_tables(&mut self, connector: ConnectorType)
-        -> Result<TableConfigs, AppError>;
+        -> Result<Option<TableConfigList>, AppError>;
 
     /// Query [`DB`] server for information about available tables. It only queries the database server and
     /// return results as [`DB::Row`]. It is different from [`DB::load_tables`] which actually loads the [`Table`]
@@ -34,16 +40,13 @@ pub(crate) trait DB: Send + Sync {
     fn get_table(
         &self,
         name: &str,
-    ) -> Option<&SharedTable<Self::Error, Self::Row, Self::ColumnValue>>;
+    ) -> Option<&SharedTable>;
 
     /// Query connection tables from DB source and return table summaries
-    fn query_table_summaries(&mut self) -> Result<TableSummaries, AppError>;
-
-    /// Check if a table with the given name exists in the database connection.
-    fn table_exists(&self, name: &str) -> Result<bool, AppError>;
+    fn query_table_summaries(&self) -> Result<TableSummaries, AppError>;
 
     /// Details about the connection
-    fn details(&mut self) -> Result<DbConnectionDetails, AppError>;
+    fn details(&self) -> Result<DbConnectionDetails, AppError>;
 
     /// Get total number of columns
     fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;

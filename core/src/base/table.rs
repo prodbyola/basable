@@ -1,20 +1,18 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
 use crate::base::column::ColumnList;
 
-use super::ConnectorType;
+use super::{ConnectorType, TableType};
 
-pub(crate) type SharedTable<E, R, C> = Arc<Mutex<dyn Table<Error = E, Row = R, ColumnValue = C>>>;
+pub(crate) type SharedTable = Arc<TableType>;
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
-pub(crate) type TableConfigs = Option<Vec<TableConfig>>;
+pub(crate) type TableConfigList = Vec<RefCell<TableConfig>>;
 
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
+pub(crate) type SharedTableConfig = RefCell<TableConfig>;
 
 /// Table column used for querying table history such as when a row was added or when a row was updated.
 #[derive(Deserialize, Serialize, Clone)]
@@ -188,60 +186,25 @@ pub(crate) trait Table: Sync + Send {
     ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
 
     fn update_data(&self, input: UpdateDataOptions) -> Result<(), Self::Error>;
+
 }
 
 #[cfg(test)]
 mod tests {
 
-    use std::{collections::HashMap, io::stdin};
-
     use crate::{
-        base::{
-            table::{DataQueryFilter, UpdateDataOptions},
-            AppError,
-        },
-        tests::common::{create_test_instance, get_test_db_table, get_test_user_id},
+        base::{table::DataQueryFilter, AppError},
+        tests::common::{create_test_db, get_test_db_table},
     };
 
     #[test]
-    fn test_table_exist() -> Result<(), AppError> {
-        let user_id = get_test_user_id();
-        let bsbl = create_test_instance(true)?;
-
-        let user = bsbl.find_user(&user_id);
-        let user = user.unwrap().borrow();
-
-        let db = user.db().unwrap();
-        // let db_ref = db.clone();
-        let db = db.lock().unwrap();
-
-        let table_name = get_test_db_table();
-
-        // let tt = Arc::new(Box::new(db_ref));
-        // db.load_tables(db_ref)?;
-        assert!(db.table_exists(&table_name)?);
-
-        Ok(())
-    }
-
-    #[test]
     fn test_table_query_column() -> Result<(), AppError> {
-        let user_id = get_test_user_id();
-        let bsbl = create_test_instance(true)?;
-
-        let user = bsbl.find_user(&user_id);
-        let user = user.unwrap().borrow();
-
-        let db = user.db();
-        let db = db.unwrap();
-        let db = db.lock().unwrap();
-
+        let db = create_test_db()?;
         let table_name = get_test_db_table();
 
         assert!(db.get_table(&table_name).is_some());
 
         if let Some(table) = db.get_table("swp") {
-            let table = table.lock().unwrap();
             let cols = table.query_columns();
 
             assert!(cols.is_ok());
@@ -252,20 +215,10 @@ mod tests {
 
     #[test]
     fn test_table_query_data() -> Result<(), AppError> {
-        let user_id = get_test_user_id();
-        let bsbl = create_test_instance(true)?;
-
-        let user = bsbl.find_user(&user_id);
-        let user = user.unwrap().borrow();
-
-        let db = user.db();
-        let db = db.unwrap();
-        let db = db.lock().unwrap();
-
+        let db = create_test_db()?;
         let table_name = get_test_db_table();
 
         if let Some(table) = db.get_table(&table_name) {
-            let table = table.lock().unwrap();
             let filter = DataQueryFilter::default();
             let data = table.query_data(filter);
             assert!(data.is_ok());
@@ -273,30 +226,31 @@ mod tests {
 
         Ok(())
     }
+}
+
+#[cfg(test)]
+mod interactive_tests {
+    use std::{collections::HashMap, io::stdin};
+
+    use crate::{
+        base::{table::UpdateDataOptions, AppError},
+        tests::common::{create_test_db, get_test_db_table},
+    };
 
     #[test]
     fn test_table_insert_data() -> Result<(), AppError> {
-        let user_id = get_test_user_id();
-        let bsbl = create_test_instance(true)?;
-
-        let user = bsbl.find_user(&user_id);
-        let user = user.unwrap().borrow();
-
-        let db = user.db();
-        let db = db.unwrap();
-        let db = db.lock().unwrap();
-
+        let db = create_test_db()?;
         let table_name = get_test_db_table();
 
         if let Some(table) = db.get_table(&table_name) {
             let mut test_data = HashMap::new();
-            let quit_word = "quit";
+            let quit_word = "cont";
 
             println!(
                 "
                 Let's add some data into our TEST_DB_TABLE_NAME. \n
                 Please enter your data inputs in the format: column,value. \n
-                Enter '{}' to quit the program.
+                Enter '{}' to continue the test.
             ",
                 quit_word
             );
@@ -317,7 +271,6 @@ mod tests {
                 test_data.insert(spl[0].to_string(), spl[1].to_string());
             }
 
-            let table = table.lock().unwrap();
             let insert_data = table.insert_data(test_data);
 
             assert!(insert_data.is_ok());
@@ -328,22 +281,13 @@ mod tests {
 
     #[test]
     fn test_table_update_data() -> Result<(), AppError> {
-        let user_id = get_test_user_id();
-        let bsbl = create_test_instance(true)?;
-
-        let user = bsbl.find_user(&user_id);
-        let user = user.unwrap().borrow();
-
-        let db = user.db();
-        let db = db.unwrap();
-        let db = db.lock().unwrap();
-
+        let db = create_test_db()?;
         let table_name = get_test_db_table();
 
         if let Some(table) = db.get_table(&table_name) {
             let mut test_data = UpdateDataOptions::default();
-            
-            // Get update clause 
+
+            // Get update clause
             println!("Please enter update clause as key,value");
             let mut input = String::new();
 
@@ -368,10 +312,11 @@ mod tests {
             let input = input.trim().to_string();
 
             let spl: Vec<&str> = input.split(",").collect();
-            test_data.input.insert(spl[0].to_string(), spl[1].to_string());
+            test_data
+                .input
+                .insert(spl[0].to_string(), spl[1].to_string());
 
             // update the table
-            let table = table.lock().unwrap();
             let update_data = table.update_data(test_data);
 
             assert!(update_data.is_ok());
