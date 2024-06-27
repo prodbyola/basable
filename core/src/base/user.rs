@@ -6,14 +6,9 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use serde::{Deserialize, Serialize};
 use time::format_description::well_known::iso8601::Config;
 
-use crate::base::AppError;
+use crate::{base::AppError, utils::get_env};
 
 use super::table::{TableConfig, TableConfigList};
-
-// JWT_SECRET should be defined by the installer and saved as BASABLE_SECRET env variables.
-// You can generate one at https://djecrety.ir
-const BEARER: &str = "Bearer ";
-const JWT_SECRET: &[u8] = b"n!d5-s4ab_mp^a=w)p83vphpbm%y2s7vc!re481*ycw&szsyff";
 
 pub(crate) struct User {
     pub id: String,
@@ -67,7 +62,11 @@ pub(crate) fn create_jwt(user: User) -> Result<JwtSession, AppError> {
     };
 
     let header = Header::new(Algorithm::HS512);
-    let token = encode(&header, &claims, &EncodingKey::from_secret(JWT_SECRET))
+
+    let secret = get_env("BASABLE_JWT_SECRET");
+    let secret = secret.as_bytes();
+
+    let token = encode(&header, &claims, &EncodingKey::from_secret(secret))
         .map_err(|e| AppError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(JwtSession {
@@ -79,9 +78,12 @@ pub(crate) fn create_jwt(user: User) -> Result<JwtSession, AppError> {
 pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<User, AppError> {
     let token = extract_jwt(header_value)?;
 
+    let secret = get_env("BASABLE_JWT_SECRET");
+    let secret = secret.as_bytes();
+
     let decoded = decode::<Claims>(
         &token,
-        &DecodingKey::from_secret(JWT_SECRET),
+        &DecodingKey::from_secret(secret),
         &Validation::new(Algorithm::HS512),
     )
     .map_err(|e| AppError(StatusCode::UNAUTHORIZED, e.to_string()))?;
@@ -97,9 +99,12 @@ fn extract_jwt(header_value: &HeaderValue) -> Result<String, AppError> {
         String::from("Invalid token!"),
     ));
 
+    let bearer = get_env("BASABLE_JWT_BEARER");
+    let bearer = bearer.as_str();
+
     if let Ok(v) = from_utf8(header_value.as_bytes()) {
-        if v.starts_with(BEARER) {
-            let ext = v.trim_start_matches(BEARER);
+        if v.starts_with(bearer) {
+            let ext = v.trim_start_matches(bearer);
             jwt = Ok(ext.to_owned());
         }
     }
