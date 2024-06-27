@@ -1,7 +1,7 @@
 use core::str;
 use std::{
     fmt::Display,
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use axum::{
@@ -11,6 +11,7 @@ use axum::{
 };
 use connector::Connector;
 use db::DB;
+use foundation::Basable;
 use serde::Serialize;
 use table::Table;
 
@@ -45,6 +46,11 @@ pub(crate) type TableType = dyn Table<
 >;
 
 pub(crate) type SharedDB = Arc<DbType>;
+
+#[derive(Clone, Default)]
+pub(crate) struct AppState {
+    pub instance: Arc<Mutex<Basable>>,
+}
 
 #[derive(Debug)]
 pub struct AppError(pub StatusCode, pub String);

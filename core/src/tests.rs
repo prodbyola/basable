@@ -2,12 +2,12 @@
 pub(crate) mod common {
     use dotenv::dotenv;
     use std::{
-        env, sync::{Arc, Mutex}
+        env,
+        sync::{Arc, Mutex},
     };
 
-    use crate::{
-        base::{config::ConnectionConfig, foundation::Basable, AppError, SharedDB},
-        http::app::AppState,
+    use crate::base::{
+        config::ConnectionConfig, foundation::Basable, AppError, AppState, SharedDB,
     };
 
     /// Get `TEST_USER_ID` from env
@@ -55,8 +55,8 @@ pub(crate) mod common {
         Ok(conn)
     }
 
-    /// Creates a `Basable` instance for testing. 
-    /// 
+    /// Creates a `Basable` instance for testing.
+    ///
     /// Attaches a test `DB` instance if `attach_db` is `true`.
     pub fn create_test_instance(attach_db: bool) -> Result<Basable, AppError> {
         dotenv().ok();
@@ -72,8 +72,8 @@ pub(crate) mod common {
         Ok(bslb)
     }
 
-    /// Creates an `AppState` for testing. 
-    /// 
+    /// Creates an `AppState` for testing.
+    ///
     /// Attaches a test [DB](`crate::base::db::DB`) instance if `attach_db` is `true`.
     pub fn create_test_state(attach_db: bool) -> Result<AppState, AppError> {
         let instance = create_test_instance(attach_db)?;
@@ -87,13 +87,19 @@ pub(crate) mod common {
 
 #[cfg(test)]
 pub(crate) mod extractors {
-    use crate::{base::{user::User, AppError}, http::middlewares::{AuthExtractor, DbExtractor, TableExtractor}};
+    use crate::{
+        base::{user::User, AppError},
+        http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
+    };
 
     use super::common::{create_test_db, get_test_db_table, get_test_user_id};
 
     pub fn auth_extractor() -> AuthExtractor {
         let id = get_test_user_id();
-        AuthExtractor(User { id, is_guest: false })
+        AuthExtractor(User {
+            id,
+            is_guest: false,
+        })
     }
 
     pub fn db_extractor() -> Result<DbExtractor, AppError> {
@@ -109,5 +115,4 @@ pub(crate) mod extractors {
 
         Ok(TableExtractor(table.clone()))
     }
-
 }
