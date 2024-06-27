@@ -39,6 +39,8 @@ pub fn app() -> IntoMakeServiceWithConnectInfo<Router<()>, std::net::SocketAddr>
         .allow_headers([ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE]);
 
     let state = AppState::default();
+    state.setup_local_db();
+    
     let routes = core_routes();
 
     Router::new()

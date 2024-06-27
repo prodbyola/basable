@@ -79,6 +79,7 @@ pub(crate) mod common {
         let instance = create_test_instance(attach_db)?;
         let state = AppState {
             instance: Arc::new(Mutex::new(instance)),
+            ..Default::default()
         };
 
         Ok(state)
