@@ -1,7 +1,7 @@
 use core::str;
 use std::{
     fmt::Display,
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use axum::{
@@ -11,6 +11,10 @@ use axum::{
 };
 use connector::Connector;
 use db::DB;
+use foundation::Basable;
+use r2d2::{Pool, PooledConnection};
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::params;
 use serde::Serialize;
 use table::Table;
 
@@ -32,10 +36,12 @@ pub(crate) type DbType = dyn DB<
 >;
 
 /// Dynamic [`Connector`] type implemented across the app.
-pub(crate) type ConnectorType = Arc<dyn Connector<
-    Row = <MysqlConnector as Connector>::Row,
-    Error = <MysqlConnector as Connector>::Error,
->>;
+pub(crate) type ConnectorType = Arc<
+    dyn Connector<
+        Row = <MysqlConnector as Connector>::Row,
+        Error = <MysqlConnector as Connector>::Error,
+    >,
+>;
 
 /// Dynamic [`Table`] type implemented across the app.
 pub(crate) type TableType = dyn Table<
@@ -45,6 +51,38 @@ pub(crate) type TableType = dyn Table<
 >;
 
 pub(crate) type SharedDB = Arc<DbType>;
+
+#[derive(Clone)]
+pub(crate) struct AppState {
+    pub instance: Arc<Mutex<Basable>>,
+    pub local_db: Pool<SqliteConnectionManager>,
+}
+
+impl AppState {
+    fn pool(&self) -> PooledConnection<SqliteConnectionManager> {
+        self.local_db.get().unwrap()
+    }
+    pub fn setup_local_db(&self) {
+        let pool = self.pool();
+        pool.execute(
+            "CREATE TABLE IF NOT EXISTS table_configs (id INTEGER)",
+            params![],
+        )
+        .unwrap();
+    }
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        let manager = SqliteConnectionManager::memory();
+        let pool = r2d2::Pool::new(manager).unwrap();
+
+        Self {
+            instance: Default::default(),
+            local_db: pool,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct AppError(pub StatusCode, pub String);

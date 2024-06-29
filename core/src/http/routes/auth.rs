@@ -7,10 +7,7 @@ use axum::{
 };
 use axum_macros::debug_handler;
 
-use crate::{
-    base::{foundation::Basable, user::JwtSession, AppError},
-    http::app::AppState,
-};
+use crate::base::{foundation::Basable, user::JwtSession, AppError, AppState};
 
 #[debug_handler]
 /// POST: /core/auth/guest

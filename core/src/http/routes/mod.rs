@@ -3,8 +3,7 @@ use axum::Router;
 
 use crate::base::config::ConnectionConfig;
 use crate::base::foundation::Basable;
-use crate::base::AppError;
-use crate::http::app::AppState;
+use crate::base::{AppError, AppState};
 use crate::http::middlewares::AuthExtractor;
 use crate::imp::database::DbConnectionDetails;
 use axum::{extract::State, Json};

@@ -6,11 +6,8 @@ use axum::{
 };
 
 use crate::base::{
-    table::SharedTable,
-    user::{decode_jwt, User},
-    AppError, SharedDB,
+    table::SharedTable, user::{decode_jwt, User}, AppError, AppState, SharedDB
 };
-use crate::http::app::AppState;
 
 /// Extracts information about the current [`User`] by inspecting the Authorization
 /// header. If Authorization is not provided, it checks for `B-Session-Id`, which should

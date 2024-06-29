@@ -11,12 +11,9 @@ use crate::{
     base::{
         column::ColumnList,
         table::{DataQueryFilter, Table, TableConfig, UpdateDataOptions},
-        AppError,
+        AppError, AppState,
     },
-    http::{
-        app::AppState,
-        middlewares::{AuthExtractor, DbExtractor, TableExtractor},
-    },
+    http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
     imp::database::mysql::table::MySqlTable,
 };
 
@@ -29,7 +26,7 @@ pub(crate) async fn save_configuration(
     State(_): State<AppState>,
     Json(config): Json<TableConfig>,
 ) -> Result<String, AppError> {
-    let conn_id = db.id().to_string();    
+    let conn_id = db.id().to_string();
     user.update_table_config(&conn_id, &table_name, config);
 
     Ok("Operation successful".to_string())

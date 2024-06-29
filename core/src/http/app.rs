@@ -1,5 +1,4 @@
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex, MutexGuard};
 
 use axum::extract::connect_info::IntoMakeServiceWithConnectInfo;
 use axum::{
@@ -16,14 +15,9 @@ use axum::{
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
-use crate::base::foundation::Basable;
+use crate::base::AppState;
 
 use super::routes::core_routes;
-
-#[derive(Clone, Default)]
-pub(crate) struct AppState {
-    pub instance: Arc<Mutex<Basable>>,
-}
 
 #[async_trait]
 impl<S> FromRequestParts<S> for AppState
@@ -45,6 +39,8 @@ pub fn app() -> IntoMakeServiceWithConnectInfo<Router<()>, std::net::SocketAddr>
         .allow_headers([ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE]);
 
     let state = AppState::default();
+    state.setup_local_db();
+    
     let routes = core_routes();
 
     Router::new()

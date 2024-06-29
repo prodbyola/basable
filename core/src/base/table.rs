@@ -12,7 +12,6 @@ pub(crate) type TableSummaries = Vec<TableSummary>;
 pub(crate) type TableConfigList = Vec<RefCell<TableConfig>>;
 
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
-pub(crate) type SharedTableConfig = RefCell<TableConfig>;
 
 /// Table column used for querying table history such as when a row was added or when a row was updated.
 #[derive(Deserialize, Serialize, Clone)]
