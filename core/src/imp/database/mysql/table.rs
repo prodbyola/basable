@@ -189,16 +189,27 @@ impl Table for MySqlTable {
         Ok(())
     }
 
-    fn update_data(
-            &self,
-            options: UpdateDataOptions,
-        ) -> Result<(), Self::Error> {
-            let UpdateDataOptions { key, value, input } = options;
-        
-        let data: Vec<String> = input.iter().map(|(k, v)| format!("{} = '{}'", k, v)).collect();
+    fn update_data(&self, options: UpdateDataOptions) -> Result<(), Self::Error> {
+        let UpdateDataOptions { key, value, input } = options;
+
+        let data: Vec<String> = input
+            .iter()
+            .map(|(k, v)| format!("{} = '{}'", k, v))
+            .collect();
         let data = data.join(", ");
 
-        let query = format!("UPDATE {} SET {} WHERE {} = '{}'", self.name, data, key, value);
+        let query = format!(
+            "UPDATE {} SET {} WHERE {} = '{}'",
+            self.name, data, key, value
+        );
+        let conn = self.connector();
+        conn.exec_query(&query)?;
+
+        Ok(())
+    }
+
+    fn delete_data(&self, col: String, value: String) -> Result<(), Self::Error> {
+        let query = format!("DELETE FROM {} WHERE {} = '{}'", self.name, col, value);
         let conn = self.connector();
         conn.exec_query(&query)?;
 

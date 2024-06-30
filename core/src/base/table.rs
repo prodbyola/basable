@@ -186,6 +186,8 @@ pub(crate) trait Table: Sync + Send {
 
     fn update_data(&self, input: UpdateDataOptions) -> Result<(), Self::Error>;
 
+    fn delete_data(&self, col: String, value: String) -> Result<(), Self::Error>;
+
 }
 
 #[cfg(test)]

@@ -99,7 +99,7 @@ fn extract_jwt(header_value: &HeaderValue) -> Result<String, AppError> {
         String::from("Invalid token!"),
     ));
 
-    let bearer = get_env("BASABLE_JWT_BEARER");
+    let bearer = format!("{} ", get_env("BASABLE_JWT_BEARER"));
     let bearer = bearer.as_str();
 
     if let Ok(v) = from_utf8(header_value.as_bytes()) {
