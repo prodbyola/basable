@@ -61,7 +61,7 @@ npm run dev
 Once you make a change you'd want us to merge into Basable, please feel free to submit a Pull Request.
 
 #### 6. Database Setup (Optional)
-You may also need to to setup a MySQL database for testing. But your current setup will do for now.
+You may also need to to setup a MySQL database for testing. But your current setup will do for now. If you need some sample data, please check [Maven Analytics Free Dataset](https://mavenanalytics.io/data-playground).
 
 ## Contact
 For questions or support, please contact [prodbyola@gmail.com](mailto:prodbyola@gmail.com).

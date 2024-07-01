@@ -53,17 +53,23 @@ pub(crate) type TableType = dyn Table<
 pub(crate) type SharedDB = Arc<DbType>;
 
 #[derive(Clone)]
+pub(crate) struct LocalDB(pub Pool<SqliteConnectionManager>);
+
+impl LocalDB {
+    fn pool(&self) -> PooledConnection<SqliteConnectionManager> {
+        self.0.get().unwrap()
+    }
+}
+
+#[derive(Clone)]
 pub(crate) struct AppState {
     pub instance: Arc<Mutex<Basable>>,
-    pub local_db: Pool<SqliteConnectionManager>,
+    pub local_db: LocalDB,
 }
 
 impl AppState {
-    fn pool(&self) -> PooledConnection<SqliteConnectionManager> {
-        self.local_db.get().unwrap()
-    }
     pub fn setup_local_db(&self) {
-        let pool = self.pool();
+        let pool = self.local_db.pool();
         pool.execute(
             "CREATE TABLE IF NOT EXISTS table_configs (id INTEGER)",
             params![],
@@ -79,7 +85,7 @@ impl Default for AppState {
 
         Self {
             instance: Default::default(),
-            local_db: pool,
+            local_db: LocalDB(pool),
         }
     }
 }
