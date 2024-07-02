@@ -59,23 +59,20 @@ pub(crate) mod datetime_parser {
             ]
         }
     }
+
+    impl<'a> TryFrom<String> for DateFormat<'a> {
+        type Error = ParseError;
     
-    pub(crate) trait ParseDate<'a> {
-        fn parse(&self) -> Result<DateFormat<'a>, ParseError>;
-    }
-    
-    impl<'a> ParseDate<'a> for String {
-        fn parse(&self) -> Result<DateFormat<'a>, ParseError> {
+        fn try_from(value: String) -> Result<Self, Self::Error> {
             for pattern in DateFormat::patterns() {
-                if let Ok(datetime) = NaiveDateTime::parse_from_str(self, pattern.0) {
+                if let Ok(_) = NaiveDateTime::parse_from_str(&value, pattern.0) {
                     return Ok(pattern)
                 }
             }
     
             Err(ParseError::NotAvailable)
         }
-    }
-    
+    }    
     pub enum ParseError {
         NotAvailable
     }
