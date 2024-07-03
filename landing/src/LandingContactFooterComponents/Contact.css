@@ -99,3 +99,55 @@ body {
 .contact-caller {
     width: 63.4%;
 }
+
+/* MEDIA QUERY!!! */
+
+@media screen and (min-width: 481px) and (max-width: 768px) {
+    .contact-caller {
+        display: none;
+    }
+
+    .landing-contact {
+        margin: 1rem;
+        padding: 0;
+    }
+
+    .contact-left {
+        border: 1px solid rgba(176, 176, 176, 1);
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .logo-icon{
+        width: 20%;
+    }
+
+    .contact-get-started p{
+        font-size: .9rem;
+    }
+}
+
+@media screen and (max-width: 480px){
+        .contact-caller {
+                display: none;
+            }
+        
+            .landing-contact {
+                margin: 1rem;
+                padding: 0;
+            }
+        
+            .contact-left {
+                border: 1px solid rgba(176, 176, 176, 1);
+                width: 100%;
+                padding: 1rem;
+            }
+        
+            .logo-icon {
+                width: 20%;
+            }
+        
+            .contact-get-started p {
+                font-size: .9rem;
+            }
+}

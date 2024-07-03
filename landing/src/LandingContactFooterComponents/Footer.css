@@ -95,15 +95,21 @@ body {
 
     .footer-left p {
         font-size: .6rem;
-        width: 60%;
+        width: 85%;
     }
 
     .footer-logo {
-        width: 30%;
+        width: 50%;
     }
 
     .footer-right {
         flex-wrap: nowrap;
+        gap: 1.8rem;
+    }
+
+    .footer-link-header-text {
+        font-size: .8rem;
+        white-space: nowrap;
     }
 
     .footer-right-link a,
@@ -136,6 +142,11 @@ body {
     .footer-left {
         align-self: flex-start;
         width: 50%;
+    }
+
+    .footer-right {
+        width: 50%;
+        flex-wrap: wrap;
     }
 
     /* .footer-right {
@@ -177,4 +188,14 @@ body {
     .copyright {
         font-size: 1rem;
     }
+
+    .footer-socials {
+        width: 60%;
+    }
+
+    .footer-link-header-text {
+        white-space: nowrap;
+    }
+
+
 }
