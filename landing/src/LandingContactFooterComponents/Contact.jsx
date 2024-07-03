@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./Contact.css";
 import icon from "../images/icon.svg";
 import caller from "../images/contactpic.svg";
 
@@ -12,7 +13,7 @@ function Contact() {
   };
 
   return (
-    <div>
+    <div className="container">
       <section className="landing-contact">
         <div className="contact-left">
           <div className="contact-get-started">
@@ -51,7 +52,7 @@ function Contact() {
 
             <div className="contact-messsage">
               <label className="form-label">
-                Message
+                Your Message
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}

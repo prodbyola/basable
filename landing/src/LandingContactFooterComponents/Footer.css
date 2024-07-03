@@ -28,7 +28,7 @@ body {
 .footer-right {
     display: flex;
     /* flex-wrap: wrap; */
-    gap: 2rem;
+    gap: 3rem;
 }
 
 .footer-right-sections {
@@ -79,7 +79,7 @@ body {
     align-items: center;
     padding: .4rem 0;
     border-top: 1px solid rgba(169, 175, 231, 1);
-    width: 66%;
+    width: 60%;
 }
 
 /* MEDIA QUERY!!! */

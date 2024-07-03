@@ -6,7 +6,7 @@ import Footer from "./LandingContactFooterComponents/Footer";
 function App() {
   return (
     <>
-      {/* <Contact /> */}
+      <Contact />
       <Footer />
     </>
   );

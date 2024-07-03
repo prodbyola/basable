@@ -1,0 +1,101 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+}
+
+/* .container{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border: 1px solid green;
+} */
+
+.landing-contact {
+    display: flex;
+    justify-content: center;
+    margin: 4rem 0;
+    gap: 2rem;
+    width: 100%;
+    padding-left: 20%;
+}
+
+.contact-get-started {
+    display: flex;
+    align-items: center;
+    border: none;
+    background-color: rgba(236, 238, 250, 1);
+    width: 30%;
+    gap: .2rem;
+    border-radius: 20px;
+    padding: .2rem .4rem;
+    cursor: pointer;
+}
+
+.contact-left {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contact-header-text p {
+    width: 80%;
+}
+
+.contact-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+.form-label {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+.form-label input {
+    width: 100%;
+    height: 3rem;
+    background-color: rgba(236, 238, 250, 1);
+    border: none;
+    border-radius: 5px;
+    padding-left: 1rem;
+}
+
+
+.form-label textarea {
+    height: 10rem;
+    padding-top: 1rem;
+    padding-left: 1rem;
+    width: 100%;
+    background-color: rgba(236, 238, 250, 1);
+    border: none;
+    border-radius: 5px;
+}
+
+.contact-form-button {
+    padding: .4rem;
+    width: 15%;
+    background-color: rgba(62, 74, 184, 1);
+    border: none;
+    color: rgba(255, 255, 255, 1);
+    border-radius: 3px;
+    align-self: flex-end;
+    cursor: pointer;
+}
+
+.contact-caller {
+    width: 63.4%;
+}
