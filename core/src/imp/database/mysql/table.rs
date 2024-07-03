@@ -18,36 +18,36 @@ impl Table for MySqlTable {
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
-    fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
+    fn new(name: String, conn: ConnectorType) -> Self
     where
         Self: Sized,
     {
-        let table = MySqlTable {
+        MySqlTable {
             name,
             connector: conn,
-        };
-
-        let mut config = None;
-
-        if let Ok(cols) = table.query_columns() {
-            let mut iter = cols.iter();
-            let mut pk = iter.find(|c| c.name == "id");
-
-            if let None = pk {
-                pk = iter.find(|c| c.unique);
-            }
-
-            let pk = pk.map(|pk| pk.name.clone());
-            let c = TableConfig {
-                pk,
-                table_id: table.name.clone(),
-                ..TableConfig::default()
-            };
-
-            config = Some(c);
         }
 
-        (table, config)
+        // let mut config = None;
+
+        // if let Ok(cols) = table.query_columns() {
+        //     let mut iter = cols.iter();
+        //     let mut pk = iter.find(|c| c.name == "id");
+
+        //     if let None = pk {
+        //         pk = iter.find(|c| c.unique);
+        //     }
+
+        //     let pk = pk.map(|pk| pk.name.clone());
+        //     let c = TableConfig {
+        //         pk,
+        //         table_id: table.name.clone(),
+        //         ..TableConfig::default()
+        //     };
+
+        //     config = Some(c);
+        // }
+
+        // (table, config)
     }
 
     fn name(&self) -> &str {
@@ -214,5 +214,29 @@ impl Table for MySqlTable {
         conn.exec_query(&query)?;
 
         Ok(())
+    }
+
+    fn init_config(&self) -> Option<TableConfig> {
+        let mut config = None;
+
+        if let Ok(cols) = self.query_columns() {
+            let mut iter = cols.iter();
+            let mut pk = iter.find(|c| c.name == "id");
+
+            if let None = pk {
+                pk = iter.find(|c| c.unique);
+            }
+
+            let pk = pk.map(|pk| pk.name.clone());
+            let c = TableConfig {
+                pk,
+                table_id: self.name.clone(),
+                ..TableConfig::default()
+            };
+
+            config = Some(c);
+        }
+
+        config
     }
 }

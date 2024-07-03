@@ -27,14 +27,18 @@ async fn connect(
     let mut bsbl = state.instance.lock().unwrap();
 
     let user_id = user.id.clone();
-    let (db, table_configs) = Basable::create_connection(&config, user_id)?;
+    let db = Basable::create_connection(&config, user_id)?;
 
     bsbl.add_connection(&db);
     std::mem::drop(bsbl); // release Mutex lock
 
-    if let Some(cfs) = table_configs {
-        let conn_id = db.id().to_string();
-        user.save_table_configs(&conn_id, cfs);
+    let tables = db.tables();
+    if !tables.is_empty() {
+        tables.iter().for_each(|tbl| {
+            if let Some(config) = tbl.init_config() {
+                // TODO: Save table config to local db
+            }
+        })
     }
 
     let resp = db.details()?;

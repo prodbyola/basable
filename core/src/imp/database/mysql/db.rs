@@ -1,6 +1,4 @@
-use std::{
-    cell::RefCell, collections::HashMap, sync::Arc
-};
+use std::{collections::HashMap, sync::Arc};
 
 use mysql::Row;
 use time::Date;
@@ -10,7 +8,7 @@ use crate::{
     base::{
         config::ConnectionConfig,
         db::DB,
-        table::{SharedTable, Table, TableConfigList, TableSummaries, TableSummary},
+        table::{SharedTable, Table, TableSummaries, TableSummary},
         AppError, ConnectorType,
     },
     imp::database::{DBVersion, DbConnectionDetails},
@@ -31,7 +29,7 @@ impl MySqlDB {
             connector,
             tables: Vec::new(),
             user_id,
-            id: Uuid::new_v4()
+            id: Uuid::new_v4(),
         }
     }
 
@@ -112,34 +110,24 @@ impl DB for MySqlDB {
         &self.connector
     }
 
-    fn load_tables(
-        &mut self,
-        connector: ConnectorType,
-    ) -> Result<Option<TableConfigList>, AppError> {
+    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError> {
         let tables = self.query_tables()?;
-        let mut configs = Vec::with_capacity(tables.len());
 
         if !tables.is_empty() {
             tables.iter().for_each(|t| {
                 let connector = connector.clone();
                 let name: String = t.get("TABLE_NAME").unwrap();
-                
-                let (table, config) = MySqlTable::new(name, connector);
-                if let Some(config) = config {
-                    configs.push(RefCell::new(config));
-                }
 
+                let table = MySqlTable::new(name, connector);
                 self.tables.push(Arc::new(table));
             })
         }
 
-        let configs = if configs.is_empty() {
-            None
-        } else {
-            Some(configs)
-        };
+        Ok(())
+    }
 
-        Ok(configs)
+    fn tables(&self) -> &Vec<SharedTable> {
+        &self.tables
     }
 
     fn query_tables(&self) -> mysql::Result<Vec<Row>> {
@@ -198,13 +186,8 @@ impl DB for MySqlDB {
         Ok(c)
     }
 
-    fn get_table(
-        &self,
-        name: &str,
-    ) -> Option<&SharedTable> {
-        self.tables
-            .iter()
-            .find(|t| t.name() == name)
+    fn get_table(&self, name: &str) -> Option<&SharedTable> {
+        self.tables.iter().find(|t| t.name() == name)
     }
 
     fn details(&self) -> Result<DbConnectionDetails, AppError> {

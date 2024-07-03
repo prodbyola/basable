@@ -9,7 +9,6 @@ use crate::User;
 
 use super::connector::Connector;
 use super::db::DB;
-use super::table::TableConfigList;
 use super::SharedDB;
 use super::{
     config::{ConnectionConfig, Database, SourceType},
@@ -29,7 +28,7 @@ impl Basable {
     pub(crate) fn create_connection(
         config: &ConnectionConfig,
         user_id: String,
-    ) -> Result<(SharedDB, Option<TableConfigList>), AppError> {
+    ) -> Result<SharedDB, AppError> {
         let mut db = match config.source_type() {
             SourceType::Database(db) => match db {
                 Database::Mysql => {
@@ -42,9 +41,9 @@ impl Basable {
         };
 
         let conn = db.connector().clone();
-        let table_configs = db.load_tables(conn)?;
+        db.load_tables(conn)?;
 
-        Ok((Arc::new(db), table_configs))
+        Ok(Arc::new(db))
     }
 
     /// Creates a new guest user using the request `SocketAddr`

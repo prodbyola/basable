@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,6 @@ use super::{ConnectorType, TableType};
 pub(crate) type SharedTable = Arc<TableType>;
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
-pub(crate) type TableConfigList = Vec<RefCell<TableConfig>>;
 
 pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
 
@@ -17,8 +16,7 @@ pub(crate) type DataQueryResult<V, E> = Result<Vec<HashMap<String, V>>, E>;
 #[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct HistoryColumn {
     name: String,
-    format: String,
-    has_time: bool,
+    pattern: String,
 }
 
 /// The type of `SpecialColumn`
@@ -161,8 +159,19 @@ pub(crate) trait Table: Sync + Send {
 
     /// Create a new [`Table`] and assign the given [`ConnectorType`].
     ///
-    /// It creates new [`Table`] and returns a [`TableConfig`]  for the table when possible.
-    fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
+    /// It returns the new [`Table`]. And if a [`TableConfig`] is created for the table, 
+    /// then the config is also returned. It is up to the caller to save or send the config for the table.
+    /// 
+    /// # Example:
+    /// ```
+    /// let (table, config) = Table::new("table_name".to_string(), conn);
+    /// // config is Option<TableConfig>
+    /// ```
+    /// 
+    /// This call initializes [`TableConfig`] for the table if certain query conditions are true for the table. 
+    /// For example if the table has a column named id, a primary key or a unique column, we automatically
+    /// set the `pk` field of the table to any of the column.
+    fn new(name: String, conn: ConnectorType) -> Self
     where
         Self: Sized;
 
@@ -188,6 +197,7 @@ pub(crate) trait Table: Sync + Send {
 
     fn delete_data(&self, col: String, value: String) -> Result<(), Self::Error>;
 
+    fn init_config(&self) -> Option<TableConfig>;
 }
 
 #[cfg(test)]

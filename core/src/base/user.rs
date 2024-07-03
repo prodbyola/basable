@@ -8,7 +8,7 @@ use time::format_description::well_known::iso8601::Config;
 
 use crate::{base::AppError, utils::get_env};
 
-use super::table::{TableConfig, TableConfigList};
+use super::table::TableConfig;
 
 pub(crate) struct User {
     pub id: String,
@@ -17,7 +17,6 @@ pub(crate) struct User {
 
 impl User {
     pub fn save_connection(&self, config: Config){}
-    pub fn save_table_configs(&self, conn_id: &str, configs: TableConfigList) {}
     pub fn get_table_config(&self, conn_id: &str, table_name: &str) -> Option<TableConfig> {
         None
     }
