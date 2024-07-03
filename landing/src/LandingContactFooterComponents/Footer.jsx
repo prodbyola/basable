@@ -1,4 +1,5 @@
 import React from 'react';
+import "./Footer.css";
 import logo from '../images/logo.svg'
 import linkedin from "../images/LinkedIn - Original.svg";
 import tweeter from "../images/prime_twitter.svg";
@@ -9,7 +10,7 @@ function Footer() {
 
 
   return (
-    <div className="Footer">
+    <div className="footer-body">
       <div className="footer-container">
         <div className="footer-left">
           <img className="footer-logo" src={logo} alt="logo" />
@@ -46,18 +47,18 @@ function Footer() {
                 <img className="footer-socials" src={linkedin} alt="linkedin" />
               </a>
               <a href="#">
-                <img src={tweeter} alt="twitter" />
+                <img className="footer-socials" src={tweeter} alt="twitter" />
               </a>
               <a href="#">
-                <img src={github} alt="github" />
+                <img className="footer-socials" src={github} alt="github" />
               </a>
             </div>
           </div>
         </div>
       </div>
       <div className="footer-bottom">
-        <p className='copyright-container'>
-          <span className='copyright'>&copy;</span> {currentYear} BASABLE
+        <p className="copyright-container">
+          <span className="copyright">&copy;</span> {currentYear} BASABLE
         </p>
         <p>All Rights Reserved</p>
       </div>

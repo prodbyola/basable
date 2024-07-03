@@ -116,6 +116,10 @@ body {
 
 
 /* Footer here!!! */
+.Footer {
+  border: 1px solid;
+  margin-bottom: 2rem;
+}
 
 .footer-container {
   display: flex;
@@ -180,9 +184,10 @@ body {
   font-size: .6rem;
   display: flex;
   justify-content: space-between;
-  padding: 1rem 23rem;
+  align-items: center;
+  padding: 1rem 21rem;
   border-top: 1px solid rgba(169, 175, 231, 1);
-  width: fit-content;
+  width: 58%;
   margin-left: 21rem;
 
 }
@@ -278,6 +283,7 @@ body {
   .footer-left p {
     font-size: 1rem;
     width: 20rem;
+    word-wrap: break-word;
   }
 
   .footer-right {
@@ -308,6 +314,7 @@ body {
     border-top: 2px solid rgba(169, 175, 231, 1);
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
   }
 
   .footer-bottom p {
