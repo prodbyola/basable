@@ -23,6 +23,7 @@ body {
     gap: 2rem;
     width: 100%;
     margin: 2rem 0;
+    padding: 0 18rem;
 }
 
 .footer-right {
@@ -34,7 +35,6 @@ body {
 .footer-right-sections {
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 1rem;
 }
 
@@ -71,6 +71,7 @@ body {
 .footer-link-header-text {
     color: rgba(68, 81, 202, 1);
     font-family: Exo;
+    white-space: nowrap;
 }
 
 .footer-bottom {
@@ -147,6 +148,7 @@ body {
     .footer-right {
         width: 50%;
         flex-wrap: wrap;
+        gap: 1rem;
     }
 
     /* .footer-right {
