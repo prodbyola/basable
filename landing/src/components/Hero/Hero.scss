@@ -1,0 +1,135 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+ 
+  
+  .grid-pattern {
+    position: absolute;
+    top: -208px;
+    left: -240px;
+    width: 100%;
+    height: 100%; 
+    pointer-events: none;
+  }
+
+  .hero-content {
+    max-width: 925px;
+    text-align: center;
+    z-index: 1;
+
+    h1 {
+      font-family: Exo;
+      font-size: 72px;
+      font-weight: 700;
+      color: #4a4a4a;
+
+      .highlight {
+        color: #4451CA;
+      }
+    }
+
+    p {
+      font-family: Exo;
+      font-size: 24px;
+      font-weight: 400;
+      line-height: 32px;
+      color: #6c6c6c;
+      margin: 1.5rem 0;
+    }
+
+    .primary-btn {
+      background: #4451CA;
+      color: #fff;
+      width: hug(313px); 
+      height: Fixed(56px);
+      padding: 8px 56px;
+      border-radius: 8px;
+      font-family: Lexend;
+      font-size: 24px;
+      font-weight: 500;
+      line-height: 30px;
+      text-align: center;
+      transition: background 0.3s;
+      box-shadow: none; 
+      border: none; 
+
+      &:hover {
+        background: #0056b3;
+      }
+    }
+  }
+
+  .hero-image {
+    position: relative; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 2rem;
+
+    img {
+      max-width: 100%;
+      height: auto;
+      
+    }
+
+    .dashboard-image {
+      position: relative; // Ensure the dashboard image is the main centered image
+      z-index: 0; 
+    }
+
+    .table-image {
+      position: absolute; // Overlap the table image
+      width: 215.54px;
+      height: 174px;
+      top: 52%;
+      left: 1%;
+      z-index: 1;
+      padding: 11.79px 17.96px 11.79px 17.96px;
+      gap: 0px;
+      border-radius: 8px 0px 0px 0px;
+      opacity: 0px;
+    }
+
+    .profile-bar-image {
+      position: absolute;
+      top: 10%; 
+      right: 5%; 
+      width: 100px; 
+      height: auto;
+      z-index: 1; 
+    }
+
+    .v-up-image {
+      position: absolute;
+      top: 91.66%; 
+      width: Hug (1440px);
+      Height: Hug (60px);
+      padding: 0;
+      z-index: 3; 
+    }
+
+    .v-down-image {
+      position: absolute;
+      top: 92.66%; 
+      width: Hug(1440px); 
+      height: Hug(60px); 
+      padding: 10.44px 0px 9.56px 0px;
+      
+      z-index: 2; 
+    }
+
+    .color-bar-image { 
+      position: absolute;
+      z-index: -1;
+      width: Hug(413px);
+      height: 421.18px;
+      top: 5%;
+      opacity: 0px;
+      left: -1px;
+    }
+  }
+}
