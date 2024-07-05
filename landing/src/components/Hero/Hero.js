@@ -10,7 +10,7 @@ import colorBar from './assets/Vector.svg';
 
 const Hero = () => {
   return (
-    <section className="hero">
+    <section id="hero" className="hero">
       <div className="grid-pattern" style={{ backgroundImage: `url(${backgroundPattern})` }}></div>
       <div className="hero-content">
         <h1>

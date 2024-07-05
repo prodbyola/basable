@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './Header.scss';
 import Logo from './assets/logo.svg';
 import LinkedIn from './assets/LinkedIn.svg';
@@ -6,14 +6,47 @@ import X from './assets/X.svg';
 import Github from './assets/Github.svg';
 
 const Header = () => {
+  const [activeLink, setActiveLink] = useState('');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = [
+        { id: 'hero', link: 'about' },
+        { id: 'features', link: 'features' },
+        { id: 'contact', link: 'contact' },
+      ];
+
+      const scrollPosition = window.scrollY + window.innerHeight / 2;
+
+      for (let section of sections) {
+        const sectionElement = document.getElementById(section.id);
+        if (sectionElement) {
+          const sectionTop = sectionElement.offsetTop;
+          const sectionHeight = sectionElement.offsetHeight;
+          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            setActiveLink(section.link);
+            return;
+          }
+        }
+      }
+
+      setActiveLink('');
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
     <header className="header">
       <div className="container">
         <img src={Logo} alt="Logo" className="logo" />
         <nav className="nav">
-          <a href="#about" className="nav-link">About us</a>
-          <a href="#features" className="nav-link">Features</a>
-          <a href="#contact" className="nav-link">Contact us</a>
+          <a href="#about" className={`nav-link ${activeLink === 'about' ? 'active' : ''}`}>About us</a>
+          <a href="#features" className={`nav-link ${activeLink === 'features' ? 'active' : ''}`}>Features</a>
+          <a href="#contact" className={`nav-link ${activeLink === 'contact' ? 'active' : ''}`}>Contact us</a>
         </nav>
         <div className="header-buttons">
           <button className="btn login">Join now</button>

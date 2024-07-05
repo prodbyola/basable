@@ -1,3 +1,7 @@
+html {
+  scroll-behavior: smooth;
+}
+
 .header {
     position: sticky;
     top: 1rem; 
@@ -40,6 +44,11 @@
         text-align: left;
 
         transition: color 0.3s;
+
+        &.active {
+          color: #4451CA;
+          font-weight: bold;
+        }
   
         &:hover {
           color: #007bff; 
@@ -93,4 +102,5 @@
       }
     }
   }
-  
+
+
