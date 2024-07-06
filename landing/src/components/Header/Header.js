@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './Header.scss';
 import Logo from './assets/logo.svg';
 import LinkedIn from './assets/LinkedIn.svg';
 import X from './assets/X.svg';
 import Github from './assets/Github.svg';
+import HamburgerIcon from './assets/Hamburger.png'; 
 
 const Header = () => {
   const [activeLink, setActiveLink] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef(null);
+  const buttonsRef = useRef(null);
+  const mobileViewRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,16 +44,40 @@ const Header = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => {
+      const mobileView = mobileViewRef.current;
+      if (window.innerWidth <= 770) {
+        if (mobileView && navRef.current && buttonsRef.current) {
+          mobileView.appendChild(navRef.current);
+          mobileView.appendChild(buttonsRef.current);
+        }
+      } else {
+        if (mobileView && navRef.current && buttonsRef.current) {
+          mobileView.parentElement.insertBefore(navRef.current, mobileView);
+          mobileView.parentElement.insertBefore(buttonsRef.current, mobileView);
+        }
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
     <header className="header">
       <div className="container">
         <img src={Logo} alt="Logo" className="logo" />
-        <nav className="nav">
+        <nav ref={navRef} className="nav">
           <a href="#about" className={`nav-link ${activeLink === 'about' ? 'active' : ''}`}>About us</a>
           <a href="#features" className={`nav-link ${activeLink === 'features' ? 'active' : ''}`}>Features</a>
           <a href="#contact" className={`nav-link ${activeLink === 'contact' ? 'active' : ''}`}>Contact us</a>
         </nav>
-        <div className="header-buttons">
+        <div ref={buttonsRef} className="header-buttons">
           <button className="btn login">Join now</button>
           <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">
             <img src={LinkedIn} alt="LinkedIn" className="icon" />
@@ -60,6 +89,13 @@ const Header = () => {
             <img src={Github} alt="GitHub" className="icon" />
           </a>
         </div>
+        <img
+          src={HamburgerIcon}
+          alt="Menu"
+          className="hamburger-icon"
+          onClick={() => setMenuOpen(!menuOpen)}
+        />
+        <div ref={mobileViewRef} className={`mobile-view ${menuOpen ? 'open' : ''}`}></div>
       </div>
     </header>
   );
