@@ -11,10 +11,15 @@ body {
 .landing-contact {
     display: flex;
     justify-content: center;
-    margin: 4rem 0;
-    gap: 1rem;
+    margin: 2rem 0;
+    gap: 116px;
     width: 100%;
-    padding-left: 20%;
+    height: 899px;
+    font-family: Lexend;
+    /* position: fixed;
+    top: 0.01px; */
+    padding: 0 0 0 137px;
+
 }
 
 .contact-get-started {
@@ -22,17 +27,40 @@ body {
     align-items: center;
     border: none;
     background-color: rgba(236, 238, 250, 1);
-    width: 30%;
+    width: fit-content;
     gap: .2rem;
     border-radius: 20px;
-    padding: .2rem .4rem;
+    padding: .2rem .8rem;
     cursor: pointer;
 }
+
+.contact-get-started p{
+    font-size: 24px;
+}
+
+.logo-icon{
+    width: 40px;
+}
+
+.contact-h1{
+    font-size: 64px;
+}
+
+.form-message-text{
+    font-size: 24px;
+}
+
 
 .contact-left {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 40px;
+    height: 881px;
+    width: 550px;
+}
+
+.contact-h1 {
+    font-family: Exo;
 }
 
 .contact-header-text p {
@@ -48,18 +76,21 @@ body {
 .contact-form {
     display: flex;
     flex-direction: column;
-    gap: .6rem;
+    gap: 23px;
+    width: 550px;
+    height: 616px;
 }
 
 .form-label {
     display: flex;
     flex-direction: column;
     gap: .6rem;
+    font-size: 24px;
 }
 
 .form-label input {
-    width: 100%;
-    height: 3rem;
+    width: 550px;
+    height: 64px;
     background-color: rgba(236, 238, 250, 1);
     border: none;
     border-radius: 5px;
@@ -68,29 +99,30 @@ body {
 
 
 .form-label textarea {
-    height: 10rem;
     padding-top: 1rem;
     padding-left: 1rem;
-    width: 100%;
+    width: 550px;
+    height: 257px;
     background-color: rgba(236, 238, 250, 1);
     border: none;
     border-radius: 5px;
 }
 
 .contact-form-button {
-    padding: .4rem;
-    width: 15%;
+    padding: 8px, 16px, 8px, 16px;
+    width: 115px;
+    height: 46px;
     background-color: rgba(62, 74, 184, 1);
     border: none;
     color: rgba(255, 255, 255, 1);
-    border-radius: 3px;
+    border-radius: 8px;
     align-self: flex-end;
     cursor: pointer;
+    font-size: 24px;
+    font-weight: 400;
 }
 
-.contact-caller {
-    width: 63.4%;
-}
+
 
 /* MEDIA QUERY!!! */
 
@@ -110,36 +142,36 @@ body {
         padding: 1rem;
     }
 
-    .logo-icon{
+    .logo-icon {
         width: 20%;
     }
 
-    .contact-get-started p{
+    .contact-get-started p {
         font-size: .9rem;
     }
 }
 
-@media screen and (max-width: 480px){
-        .contact-caller {
-                display: none;
-            }
-        
-            .landing-contact {
-                margin: 1rem;
-                padding: 0;
-            }
-        
-            .contact-left {
-                border: 1px solid rgba(176, 176, 176, 1);
-                width: 100%;
-                padding: 1rem;
-            }
-        
-            .logo-icon {
-                width: 20%;
-            }
-        
-            .contact-get-started p {
-                font-size: .9rem;
-            }
+@media screen and (max-width: 480px) {
+    .contact-caller {
+        display: none;
+    }
+
+    .landing-contact {
+        margin: 1rem;
+        padding: 0;
+    }
+
+    .contact-left {
+        border: 1px solid rgba(176, 176, 176, 1);
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .logo-icon {
+        width: 20%;
+    }
+
+    .contact-get-started p {
+        font-size: .9rem;
+    }
 }

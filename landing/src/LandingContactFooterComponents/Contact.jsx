@@ -63,7 +63,7 @@ function Contact() {
           </form>
         </div>
         <div className="contact-image-container">
-          <img className="contact-caller" src={caller} alt="caller" />
+          <img className="contact-caller" src={caller} alt="caller" width="708px" height="899px"/>
         </div>
       </section>
     </div>
