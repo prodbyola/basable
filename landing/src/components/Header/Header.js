@@ -47,7 +47,7 @@ const Header = () => {
   useEffect(() => {
     const handleResize = () => {
       const mobileView = mobileViewRef.current;
-      if (window.innerWidth <= 770) {
+      if (window.innerWidth <= 601) {
         if (mobileView && navRef.current && buttonsRef.current) {
           mobileView.appendChild(navRef.current);
           mobileView.appendChild(buttonsRef.current);

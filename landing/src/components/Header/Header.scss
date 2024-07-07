@@ -8,13 +8,12 @@ html {
   top: 1rem; 
   width: calc(100% - 2rem); 
   height: Hug(96px);
-  padding: 24px, 40px;
   margin: 0 auto;
   background: #ffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   border-radius: 72px; 
-  max-width: 1200px; 
+  
   
   .container {
     display: flex;
@@ -62,7 +61,7 @@ html {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: Hug(227px);
+    width: Hug(277px);
     height: Hug(48px);
     gap: 23px;
 
@@ -110,9 +109,10 @@ html {
 }
 
 
-/* Mobile view */
-@media (max-width: 430px) {
+/*Media Query: Mobile view */
+@media (max-width: 600px) {
   .header {
+    
     .container {
       display: flex;
       justify-content: space-between;
@@ -164,6 +164,63 @@ html {
 
     .hamburger-icon {
       display: block; 
+    }
+  }
+}
+
+
+/* Media Query: TABLET */
+@media (min-width: 601px) and (max-width: 1023px) {
+  .header {
+    height: Hug(60px); 
+    top: 34px;
+    .container {
+       
+      padding: 24px, 40px;
+  
+  
+    }
+
+    .logo {
+      width: 110px;
+      height: 25.81px;
+    }
+
+    .nav {
+      width: Hug(226px);
+      height: Hug(21px);
+      gap: 8px;
+
+      .nav-link {
+        font-size: 16px; 
+      }
+    }
+
+    .header-buttons {
+      
+      width: Hug(230px);
+      height: Hug(36px);
+      gap: 16px;
+
+      .btn {
+        padding: 8px 20px;
+      }
+
+      .icon {
+        width: 24px; 
+        height: 24px; 
+      }
+    }
+
+    .mobile-view {
+      display: none;
+    }
+
+    .hamburger-icon {
+      display: none; 
+      width: 24px; 
+      height: 24px; 
+      cursor: pointer;
     }
   }
 }
