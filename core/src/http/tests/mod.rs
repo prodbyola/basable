@@ -6,7 +6,7 @@ mod routes {
     };
 
     use crate::{
-        base::{table::TableConfig, AppError},
+        base::{imp::table::TableConfig, AppError},
         http::routes::table::{get_columns, get_configuration, save_configuration},
         tests::{
             common::{create_test_state, get_test_db_table},

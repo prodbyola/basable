@@ -7,9 +7,9 @@ use crate::imp::database::mysql::connector::MysqlConnector;
 use crate::imp::database::mysql::db::MySqlDB;
 use crate::User;
 
-use super::connector::Connector;
-use super::db::DB;
-use super::SharedDB;
+use super::imp::connector::Connector;
+use super::imp::db::DB;
+use super::imp::SharedDB;
 use super::{
     config::{ConnectionConfig, Database, SourceType},
     user::{create_jwt, JwtSession},

@@ -159,16 +159,16 @@ pub(crate) trait Table: Sync + Send {
 
     /// Create a new [`Table`] and assign the given [`ConnectorType`].
     ///
-    /// It returns the new [`Table`]. And if a [`TableConfig`] is created for the table, 
+    /// It returns the new [`Table`]. And if a [`TableConfig`] is created for the table,
     /// then the config is also returned. It is up to the caller to save or send the config for the table.
-    /// 
+    ///
     /// # Example:
     /// ```
     /// let (table, config) = Table::new("table_name".to_string(), conn);
     /// // config is Option<TableConfig>
     /// ```
-    /// 
-    /// This call initializes [`TableConfig`] for the table if certain query conditions are true for the table. 
+    ///
+    /// This call initializes [`TableConfig`] for the table if certain query conditions are true for the table.
     /// For example if the table has a column named id, a primary key or a unique column, we automatically
     /// set the `pk` field of the table to any of the column.
     fn new(name: String, conn: ConnectorType) -> Self
@@ -204,7 +204,7 @@ pub(crate) trait Table: Sync + Send {
 mod tests {
 
     use crate::{
-        base::{table::DataQueryFilter, AppError},
+        base::{imp::table::DataQueryFilter, AppError},
         tests::common::{create_test_db, get_test_db_table},
     };
 
@@ -244,7 +244,7 @@ mod interactive_tests {
     use std::{collections::HashMap, io::stdin};
 
     use crate::{
-        base::{table::UpdateDataOptions, AppError},
+        base::{imp::table::UpdateDataOptions, AppError},
         tests::common::{create_test_db, get_test_db_table},
     };
 

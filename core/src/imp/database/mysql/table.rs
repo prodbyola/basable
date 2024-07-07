@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use crate::base::{
     column::{Column, ColumnList},
-    table::{DataQueryFilter, DataQueryResult, Table, TableConfig, UpdateDataOptions},
-    ConnectorType,
+    imp::{table::{DataQueryFilter, DataQueryResult, Table, TableConfig, UpdateDataOptions}, ConnectorType},
 };
 
 use super::MySqlValue;

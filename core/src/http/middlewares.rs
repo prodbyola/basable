@@ -6,7 +6,7 @@ use axum::{
 };
 
 use crate::base::{
-    table::SharedTable, user::{decode_jwt, User}, AppError, AppState, SharedDB
+    imp::{table::SharedTable, SharedDB}, user::{decode_jwt, User}, AppError, AppState
 };
 
 /// Extracts information about the current [`User`] by inspecting the Authorization

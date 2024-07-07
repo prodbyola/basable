@@ -1,11 +1,9 @@
 use uuid::Uuid;
 
+use crate::base::AppError;
 use crate::imp::database::DbConnectionDetails;
 
-use super::{
-    table::{SharedTable, TableSummaries},
-    AppError, ConnectorType,
-};
+use super::{table::{SharedTable, TableSummaries}, ConnectorType};
 
 pub(crate) type DBQueryResult<R, E> = Result<Vec<R>, E>;
 

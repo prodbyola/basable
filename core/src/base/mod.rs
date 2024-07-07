@@ -9,48 +9,20 @@ use axum::{
     http::{Response, StatusCode},
     response::IntoResponse,
 };
-use connector::Connector;
-use db::DB;
+use imp::connector::Connector;
 use foundation::Basable;
 use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::params;
 use serde::Serialize;
-use table::Table;
+use imp::table::Table;
 
-use crate::imp::database::mysql::{connector::MysqlConnector, db::MySqlDB, table::MySqlTable};
 
 pub(crate) mod column;
 pub(crate) mod config;
-pub(crate) mod connector;
-pub(crate) mod db;
 pub(crate) mod foundation;
-pub(crate) mod table;
+pub(crate) mod imp;
 pub(crate) mod user;
-
-/// Dynamic [`DB`] type implemented across the app.
-pub(crate) type DbType = dyn DB<
-    Row = <MySqlDB as DB>::Row,
-    Error = <MySqlDB as DB>::Error,
-    ColumnValue = <MySqlDB as DB>::ColumnValue,
->;
-
-/// Dynamic [`Connector`] type implemented across the app.
-pub(crate) type ConnectorType = Arc<
-    dyn Connector<
-        Row = <MysqlConnector as Connector>::Row,
-        Error = <MysqlConnector as Connector>::Error,
-    >,
->;
-
-/// Dynamic [`Table`] type implemented across the app.
-pub(crate) type TableType = dyn Table<
-    Row = <MySqlTable as Table>::Row,
-    Error = <MySqlTable as Table>::Error,
-    ColumnValue = <MySqlTable as Table>::ColumnValue,
->;
-
-pub(crate) type SharedDB = Arc<DbType>;
 
 #[derive(Clone)]
 pub(crate) struct LocalDB(pub Pool<SqliteConnectionManager>);
