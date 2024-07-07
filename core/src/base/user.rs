@@ -8,7 +8,7 @@ use time::format_description::well_known::iso8601::Config;
 
 use crate::{base::AppError, utils::get_env};
 
-use super::imp::table::TableConfig;
+use crate::base::data::table::TableConfig;
 
 pub(crate) struct User {
     pub id: String,

@@ -6,7 +6,10 @@ use uuid::Uuid;
 
 use crate::{
     base::{
-        config::ConnectionConfig, imp::{db::DB, table::{SharedTable, Table, TableSummaries, TableSummary}, ConnectorType}, AppError
+        config::ConnectionConfig,
+        data::table::{TableSummaries, TableSummary},
+        imp::{db::DB, table::Table, ConnectorType, SharedTable},
+        AppError,
     },
     imp::database::{DBVersion, DbConnectionDetails},
 };

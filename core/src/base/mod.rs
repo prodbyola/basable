@@ -9,20 +9,18 @@ use axum::{
     http::{Response, StatusCode},
     response::IntoResponse,
 };
-use imp::connector::Connector;
 use foundation::Basable;
 use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::params;
 use serde::Serialize;
-use imp::table::Table;
-
 
 pub(crate) mod column;
 pub(crate) mod config;
 pub(crate) mod foundation;
 pub(crate) mod imp;
 pub(crate) mod user;
+pub(crate) mod data;
 
 #[derive(Clone)]
 pub(crate) struct LocalDB(pub Pool<SqliteConnectionManager>);

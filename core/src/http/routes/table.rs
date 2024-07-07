@@ -8,7 +8,8 @@ use axum_macros::debug_handler;
 use crate::{
     base::{
         column::ColumnList,
-        imp::table::{DataQueryFilter, Table, TableConfig, UpdateDataOptions},
+        data::table::{DataQueryFilter, TableConfig, UpdateDataOptions},
+        imp::table::Table,
         AppError, AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},

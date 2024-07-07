@@ -33,3 +33,4 @@ pub(crate) type TableType = dyn Table<
 >;
 
 pub(crate) type SharedDB = Arc<DbType>;
+pub(crate) type SharedTable = Arc<TableType>;
