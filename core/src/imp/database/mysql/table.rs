@@ -41,7 +41,8 @@ impl Table for MySqlTable {
                     cols.column_type,
                     cols.is_nullable,
                     cols.column_default,
-                    IF(stats.index_name IS NOT NULL, 'YES', 'NO') AS IS_UNIQUE
+                    IF(stats.index_name IS NOT NULL, 'YES', 'NO') AS IS_UNIQUE,
+                    IF(kcus.constraint_name IS NOT NULL, 'YES', 'NO') AS IS_PRIMARY
                 FROM 
                     information_schema.columns AS cols
                 LEFT JOIN 
@@ -56,6 +57,12 @@ impl Table for MySqlTable {
                 ON 
                     cols.column_name = stats.column_name
                     AND cols.table_name = '{}'
+                LEFT JOIN
+                    information_schema.key_column_usage AS kcus
+                ON
+                    cols.table_name = kcus.table_name
+                    AND cols.column_name = kcus.column_name
+                    AND kcus.constraint_name = 'PRIMARY'
                 WHERE
                     cols.table_name = '{}'
 
@@ -78,6 +85,9 @@ impl Table for MySqlTable {
 
                 let unique: Option<String> = r.get("IS_UNIQUE");
                 let unique = unique.map(|s| s == "YES".to_owned()).unwrap();
+                
+                let primary: Option<String> = r.get("IS_PRIMARY");
+                let primary = primary.map(|s| s == "YES".to_owned()).unwrap();
 
                 Column {
                     name,
@@ -85,6 +95,7 @@ impl Table for MySqlTable {
                     default_value: default,
                     nullable,
                     unique,
+                    primary
                 }
             })
             .collect();
@@ -102,13 +113,14 @@ impl Table for MySqlTable {
 
         if let Ok(cols) = self.query_columns() {
             let mut iter = cols.iter();
-            let mut pk = iter.find(|c| c.name == "id");
+            let mut pk = iter.find(|c| c.primary);
 
             if let None = pk {
                 pk = iter.find(|c| c.unique);
             }
 
             let pk = pk.map(|pk| pk.name.clone());
+            
             let c = TableConfig {
                 pk,
                 table_id: self.name.clone(),

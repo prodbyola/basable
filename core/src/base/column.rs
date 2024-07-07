@@ -6,7 +6,8 @@ pub(crate) struct Column {
     pub col_type: String,
     pub nullable: bool,
     pub default_value: Option<String>,
-    pub unique: bool
+    pub unique: bool,
+    pub primary: bool
 }
 
 pub(crate) type ColumnList = Vec<Column>;

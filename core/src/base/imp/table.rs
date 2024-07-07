@@ -36,9 +36,11 @@ pub(crate) trait Table: TableCRUD + Sync + Send {
     /// Get the table's [`ConnectorType`].
     fn connector(&self) -> &ConnectorType;
 
-    /// Retrieve all columns for the table
+    /// Retrieve available columns for the table and build a [`ColumnList`].
     fn query_columns(&self) -> Result<ColumnList, <Self as Table>::Error>;
 
+    /// Create table's initial [`TableConfig`] if possible. Caller is responsible for
+    /// saving the configuration in persistent DB.
     fn init_config(&self) -> Option<TableConfig>;
 }
 
@@ -72,7 +74,7 @@ mod tests {
 
         assert!(db.get_table(&table_name).is_some());
 
-        if let Some(table) = db.get_table("swp") {
+        if let Some(table) = db.get_table(&table_name) {
             let cols = table.query_columns();
 
             assert!(cols.is_ok());
