@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 
-use crate::base::{column::ColumnList, data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateDataOptions}};
+use crate::{base::{column::ColumnList, data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateDataOptions}}, imp::database::mysql::table::MySqlTable};
 
 use super::ConnectorType;
 
-pub(crate) trait Table: Sync + Send {
+pub(crate) type TableError = <MySqlTable as Table>::Error;
+pub(crate) type TableColumn = <MySqlTable as Table>::ColumnValue;
+
+pub(crate) trait Table: TableCRUD + Sync + Send {
     type Error;
     type Row;
     type ColumnValue;
@@ -34,22 +37,24 @@ pub(crate) trait Table: Sync + Send {
     fn connector(&self) -> &ConnectorType;
 
     /// Retrieve all columns for the table
-    fn query_columns(&self) -> Result<ColumnList, Self::Error>;
+    fn query_columns(&self) -> Result<ColumnList, <Self as Table>::Error>;
 
+    fn init_config(&self) -> Option<TableConfig>;
+}
+
+pub(crate) trait TableCRUD {
     /// Inserts a new data into the table.
-    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), Self::Error>;
+    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), TableError>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
         filter: DataQueryFilter,
-    ) -> DataQueryResult<Self::ColumnValue, Self::Error>;
+    ) -> DataQueryResult<TableColumn, TableError>;
 
-    fn update_data(&self, input: UpdateDataOptions) -> Result<(), Self::Error>;
+    fn update_data(&self, input: UpdateDataOptions) -> Result<(), TableError>;
 
-    fn delete_data(&self, col: String, value: String) -> Result<(), Self::Error>;
-
-    fn init_config(&self) -> Option<TableConfig>;
+    fn delete_data(&self, col: String, value: String) -> Result<(), TableError>;
 }
 
 #[cfg(test)]

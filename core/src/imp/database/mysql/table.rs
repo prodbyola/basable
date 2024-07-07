@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::base::{
     column::{Column, ColumnList},
     data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateDataOptions},
-    imp::{table::Table, ConnectorType},
+    imp::{table::{Table, TableColumn, TableError, TableCRUD}, ConnectorType},
 };
 
 use super::MySqlValue;
@@ -26,28 +26,6 @@ impl Table for MySqlTable {
             name,
             connector: conn,
         }
-
-        // let mut config = None;
-
-        // if let Ok(cols) = table.query_columns() {
-        //     let mut iter = cols.iter();
-        //     let mut pk = iter.find(|c| c.name == "id");
-
-        //     if let None = pk {
-        //         pk = iter.find(|c| c.unique);
-        //     }
-
-        //     let pk = pk.map(|pk| pk.name.clone());
-        //     let c = TableConfig {
-        //         pk,
-        //         table_id: table.name.clone(),
-        //         ..TableConfig::default()
-        //     };
-
-        //     config = Some(c);
-        // }
-
-        // (table, config)
     }
 
     fn name(&self) -> &str {
@@ -114,10 +92,41 @@ impl Table for MySqlTable {
         Ok(cols)
     }
 
+    fn connector(&self) -> &ConnectorType {
+        &self.connector
+    }
+
+    
+    fn init_config(&self) -> Option<TableConfig> {
+        let mut config = None;
+
+        if let Ok(cols) = self.query_columns() {
+            let mut iter = cols.iter();
+            let mut pk = iter.find(|c| c.name == "id");
+
+            if let None = pk {
+                pk = iter.find(|c| c.unique);
+            }
+
+            let pk = pk.map(|pk| pk.name.clone());
+            let c = TableConfig {
+                pk,
+                table_id: self.name.clone(),
+                ..TableConfig::default()
+            };
+
+            config = Some(c);
+        }
+
+        config
+    }
+}
+
+impl TableCRUD for MySqlTable {
     fn query_data(
         &self,
         filter: DataQueryFilter,
-    ) -> DataQueryResult<Self::ColumnValue, Self::Error> {
+    ) -> DataQueryResult<TableColumn, TableError> {
         let cols = self.query_columns()?;
         let mut excluded_cols: Vec<&Column> = vec![]; // columns to exclude from query
 
@@ -139,10 +148,10 @@ impl Table for MySqlTable {
         let result = conn.exec_query(&query)?;
 
         // std::mem::drop(db);
-        let data: Vec<HashMap<String, Self::ColumnValue>> = result
+        let data: Vec<HashMap<String, TableColumn>> = result
             .iter()
             .map(|r| {
-                let mut map: HashMap<String, Self::ColumnValue> = HashMap::new();
+                let mut map: HashMap<String, TableColumn> = HashMap::new();
 
                 for col in &cols {
                     if let None = excluded_cols.iter().find(|c| c.name == col.name) {
@@ -159,11 +168,7 @@ impl Table for MySqlTable {
         Ok(data)
     }
 
-    fn connector(&self) -> &ConnectorType {
-        &self.connector
-    }
-
-    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), Self::Error> {
+    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), TableError> {
         let len = input.len();
         let mut data = HashMap::new();
 
@@ -189,7 +194,7 @@ impl Table for MySqlTable {
         Ok(())
     }
 
-    fn update_data(&self, options: UpdateDataOptions) -> Result<(), Self::Error> {
+    fn update_data(&self, options: UpdateDataOptions) -> Result<(), TableError> {
         let UpdateDataOptions { key, value, input } = options;
 
         let data: Vec<String> = input
@@ -208,7 +213,7 @@ impl Table for MySqlTable {
         Ok(())
     }
 
-    fn delete_data(&self, col: String, value: String) -> Result<(), Self::Error> {
+    fn delete_data(&self, col: String, value: String) -> Result<(), TableError> {
         let query = format!("DELETE FROM {} WHERE {} = '{}'", self.name, col, value);
         let conn = self.connector();
         conn.exec_query(&query)?;
@@ -216,27 +221,4 @@ impl Table for MySqlTable {
         Ok(())
     }
 
-    fn init_config(&self) -> Option<TableConfig> {
-        let mut config = None;
-
-        if let Ok(cols) = self.query_columns() {
-            let mut iter = cols.iter();
-            let mut pk = iter.find(|c| c.name == "id");
-
-            if let None = pk {
-                pk = iter.find(|c| c.unique);
-            }
-
-            let pk = pk.map(|pk| pk.name.clone());
-            let c = TableConfig {
-                pk,
-                table_id: self.name.clone(),
-                ..TableConfig::default()
-            };
-
-            config = Some(c);
-        }
-
-        config
-    }
 }
