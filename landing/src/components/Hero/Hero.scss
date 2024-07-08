@@ -4,15 +4,32 @@
   justify-content: center;
   align-items: center;
   position: relative;
- 
+  
   
   .grid-pattern {
     position: absolute;
+    background-size: cover;
+    background-position: center;
     top: -208px;
-    left: -240px;
+    bottom: auto;
     width: 100%;
     height: 100%; 
     pointer-events: none;
+  }
+
+
+  .color-bar-image { 
+    position: absolute;
+    z-index: -1;
+    width: 413px;
+    height: 421.18px;
+    top: 56%;
+    left: -124px;
+    gap: 0px;
+    opacity: 0px;
+
+    
+    
   }
 
   .hero-content {
@@ -32,6 +49,8 @@
     }
 
     p {
+      width: 701px;
+      height: 64px;
       font-family: Exo;
       font-size: 24px;
       font-weight: 400;
@@ -43,8 +62,8 @@
     .primary-btn {
       background: #4451CA;
       color: #fff;
-      width: hug(313px); 
-      height: Fixed(56px);
+      width: 313px; 
+      height: 56px;
       padding: 8px 56px;
       border-radius: 8px;
       font-family: Lexend;
@@ -62,6 +81,7 @@
     }
   }
 
+
   .hero-image {
     position: relative; 
     display: flex;
@@ -77,12 +97,12 @@
     }
 
     .dashboard-image {
-      position: relative; // Ensure the dashboard image is the main centered image
+      position: relative; 
       z-index: 0; 
     }
 
     .table-image {
-      position: absolute; // Overlap the table image
+      position: absolute; 
       width: 215.54px;
       height: 174px;
       top: 52%;
@@ -90,7 +110,7 @@
       z-index: 1;
       padding: 11.79px 17.96px 11.79px 17.96px;
       gap: 0px;
-      border-radius: 8px 0px 0px 0px;
+      border-radius: 8px;
       opacity: 0px;
     }
 
@@ -106,33 +126,163 @@
       z-index: 1; 
     }
 
+    //slope down
     .v-up-image {
       position: absolute;
       top: 91.66%; 
-      width: Hug (1440px);
-      Height: Hug (60px);
+      
+      
       padding: 0;
       z-index: 3; 
     }
 
+    //slope up
     .v-down-image {
       position: absolute;
       top: 92.66%; 
-      width: Hug(1440px); 
-      height: Hug(60px); 
       padding: 10.44px 0px 9.56px 0px;
-      
       z-index: 2; 
     }
 
+    
+  }
+}
+
+
+/* Media Query: TABLET */
+@media (min-width: 640px) and (max-width: 1024px){
+  .hero{
+    
     .color-bar-image { 
       position: absolute;
       z-index: -1;
-      width: Hug(413px);
-      height: 421.18px;
-      top: 5%;
-      opacity: 0px;
-      left: -1px;
+      top: 42%;  
+    }
+    .hero-content{
+      margin-top: 100px;
+      h1 {
+        
+        font-size: 56px;
+      }
+
+      .primary-btn{
+        width: 279px;
+        height: 41px;
+        font-size: 20px;
+        line-height: 25px;
+      }
+    }
+
+    .hero-image{
+      white-space: nowrap;
+      .dashboard-image {
+        width: 550px;
+        height: 300x;
+      }
+
+      .table-image{
+        width: 150px;
+        height: 120.83px;
+        top: 41%;
+        left: 0.2%;
+      }
+
+      .profile-bar-image{
+        width: 171px;
+        height: 66.42px;
+        top: 0%;
+        right: 0%;
+      }
+      
+      //slope down img
+      .v-up-image{
+        top: 90%;
+        
+        
+      
+      }
+
+      //slope up img
+      .v-down-image{
+        top: 83%;
+        
+      }
+
+      
+    }
+  }
+}
+
+
+/*Media Query: Mobile view */
+@media (max-width: 639px){
+  .hero{
+    padding: auto;
+    .color-bar-image { 
+      position: absolute;
+      z-index: -1;
+      top: 32%;  
+    }
+    .hero-content{
+      margin-top: 100px;
+      h1 {
+        
+        font-size: 32px;
+      }
+
+      p{
+        width: 312px;
+        height: 60px;
+        font-size: 16px;
+      }
+
+      .primary-btn{
+        margin-top: 28px;
+        width: 200px; 
+        height: 36px;
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 20px;
+        padding: 8px;
+      }
+    }
+
+    .hero-image{
+      
+      .dashboard-image {
+        width: 301px;
+        height: 214px;
+      }
+
+      .table-image{
+        width: 80px;
+        height: 64.58px;
+        top: 45%;
+        left: 3%;
+      }
+
+      .profile-bar-image{
+        width: 81.04px;
+        height: 27px;
+        top: 18%;
+        right: 6%;
+      }
+      
+      //slope down img
+      .v-up-image{
+        top: 90%;
+        
+        
+      
+      }
+
+      //slope up img
+      .v-down-image{
+        top: 85%;
+        
+      }
+
+      
     }
   }
 }

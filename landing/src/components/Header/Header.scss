@@ -1,18 +1,20 @@
 html {
   scroll-behavior: smooth;
+  
 }
 
 
 .header {
   position: sticky;
-  top: 1rem; 
-  width: calc(100% - 2rem); 
+  top: 2rem; 
+  width: calc(100% - 4rem); 
   height: Hug(96px);
   margin: 0 auto;
   background: #ffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  border-radius: 72px; 
+  border-radius: 72px;
+  
   
   
   .container {
@@ -33,8 +35,8 @@ html {
   .nav {
     display: flex;
     align-items: center;
-    width: Hug(258px);
-    height: Hug(21px);
+    width: 258px;
+    height: 21px;
     gap: 24px;
 
     .nav-link {
@@ -61,8 +63,8 @@ html {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: Hug(277px);
-    height: Hug(48px);
+    width: 277px;
+    height: 48px;
     gap: 23px;
 
     .btn {
@@ -110,7 +112,7 @@ html {
 
 
 /*Media Query: Mobile view */
-@media (max-width: 600px) {
+@media (max-width: 639px) {
   .header {
     
     .container {
@@ -170,9 +172,9 @@ html {
 
 
 /* Media Query: TABLET */
-@media (min-width: 601px) and (max-width: 1023px) {
+@media (min-width: 640px) and (max-width: 1023px) {
   .header {
-    height: Hug(60px); 
+    height: 60px; 
     top: 34px;
     .container {
        
@@ -187,8 +189,8 @@ html {
     }
 
     .nav {
-      width: Hug(226px);
-      height: Hug(21px);
+      width: 226px;
+      height: 21px;
       gap: 8px;
 
       .nav-link {
@@ -198,8 +200,8 @@ html {
 
     .header-buttons {
       
-      width: Hug(230px);
-      height: Hug(36px);
+      width: 230px;
+      height: 36px;
       gap: 16px;
 
       .btn {
