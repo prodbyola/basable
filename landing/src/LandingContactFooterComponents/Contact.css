@@ -1,0 +1,229 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+}
+
+.landing-contact {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+    gap: 116px;
+    width: 100%;
+    height: 899px;
+    font-family: Lexend;
+    /* position: fixed;
+    top: 0.01px; */
+    padding: 0 0 0 137px;
+
+}
+
+.contact-get-started {
+    display: flex;
+    align-items: center;
+    border: none;
+    background-color: rgba(236, 238, 250, 1);
+    cursor: pointer;
+    width: 225px;
+    height: 56px;
+    border-radius: 24px;
+    padding: 8px 16px 8px 16px;
+    gap: 16px;
+}
+
+.contact-get-started p {
+    width: 137px;
+    height: 30px;
+    font-size: 24px;
+    font-weight: 400;
+    color: rgba(68, 81, 202, 1);
+}
+
+.logo-icon {
+    width: 40px;
+}
+
+.contact-h1 {
+    font-size: 64px;
+}
+
+.form-message-text {
+    font-size: 24px;
+    color: rgba(84, 84, 84, 1);
+    font-weight: 400;
+    width: 706px;
+    height: 60px;
+}
+
+
+.contact-left {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    height: 881px;
+    width: 550px;
+}
+
+.contact-h1 {
+    font-family: Exo;
+}
+
+.contact-header-text p {
+    width: 80%;
+}
+
+.contact-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 23px;
+    width: 550px;
+    height: 616px;
+}
+
+.form-label {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    font-size: 24px;
+}
+
+.form-label input {
+    width: 550px;
+    height: 64px;
+    background-color: rgba(236, 238, 250, 1);
+    border: none;
+    border-radius: 5px;
+    padding-left: 1rem;
+}
+
+
+.form-label textarea {
+    padding-top: 1rem;
+    padding-left: 1rem;
+    width: 550px;
+    height: 257px;
+    background-color: rgba(236, 238, 250, 1);
+    border: none;
+    border-radius: 5px;
+}
+
+.contact-form-button {
+    padding: 8px, 16px, 8px, 16px;
+    width: 115px;
+    height: 46px;
+    background-color: rgba(62, 74, 184, 1);
+    border: none;
+    color: rgba(255, 255, 255, 1);
+    border-radius: 8px;
+    align-self: flex-end;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: 400;
+}
+
+
+
+/* MEDIA QUERY!!! */
+
+@media screen and (min-width: 481px) and (max-width: 768px) {
+
+    .contact-image-container {
+        display: none;
+    }
+
+    .landing-contact {
+        flex-direction: column;
+        width: 770px;
+        height: 940px;
+        border-radius: 16px;
+        padding: 40px 32px 40px 32px;
+        /* border: 2px solid brown; */
+        border: 1px solid rgba(176, 176, 176, 1);
+    }
+
+    .contact-left {
+        
+        width: 706px;
+        height: 908px;
+        gap: 40px;
+        /* padding: 16px; */
+    }
+
+    .contact-form {
+        width: 706px;
+        height: 616px;
+        gap: 23px;
+        /* padding-bottom: 64px; */
+    }
+
+    .form-label {
+        width: 706px;
+        /* height: 102px; */
+        gap: 8px;
+    }
+
+    .form-label input {
+        width: 706px;
+        height: 64px;
+        border-radius: 8px;
+    }
+
+    .form-label textarea {
+        width: 706px;
+        /* this height affects the heights of it's parent container. i had to make it 230px compared to the .contact-left div. */
+        height: 230px;
+        border-radius: 8px;
+    }
+
+    .logo-icon {
+        width: 20%;
+    }
+
+    .contact-h1 {
+        font-weight: 600;
+        font-size: 48px;
+        line-height: 63.79px;
+        width: 240px;
+        height: 64px;
+    }
+
+
+    .contact-get-started p {
+        font-size: .9rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .contact-caller {
+        display: none;
+    }
+
+    .landing-contact {
+        margin: 1rem;
+        padding: 0;
+    }
+
+    .contact-left {
+        border: 1px solid rgba(176, 176, 176, 1);
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .logo-icon {
+        width: 20%;
+    }
+
+    .contact-get-started p {
+        font-size: .9rem;
+    }
+}
