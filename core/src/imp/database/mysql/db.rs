@@ -9,7 +9,7 @@ use crate::{
         config::ConnectionConfig,
         data::table::{TableSummaries, TableSummary},
         imp::{
-            db::{AnalyzeDB, ChronoAnalysisOpts, DBError, DB},
+            db::{AnalysisResult, AnalysisResults, AnalyzeDB, ChronoAnalysisOpts, DBError, DB},
             table::Table,
             ConnectorType, SharedTable,
         },
@@ -211,35 +211,39 @@ impl DB for MySqlDB {
 }
 
 impl AnalyzeDB for MySqlDB {
-    fn chrono_analysis(&self, opts: ChronoAnalysisOpts) -> Result<(), DBError> {
+    fn chrono_analysis(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError> {
         let query = format!(
             "
             SELECT
-                DATE({col}) as basable_chrono_date,
-                COUNT(*) as basable_total_results
+                {basis}({col}) as BASABLE_CHRONO_BASIS_VALUE,
+                COUNT(*) as BASABLE_CHRONO_RESULT
             FROM
                 {table}
             WHERE
                 {col} BETWEEN '{start}' AND '{end}'
             GROUP BY
-                DATE({col})
+                {basis}({col})
             ORDER BY
-                basable_chrono_date
+                BASABLE_CHRONO_BASIS_VALUE
 
         ",
             col = opts.chrono_col,
             table = opts.table,
-            start = opts.range.0,
-            end = opts.range.1,
+            start = opts.range.start(),
+            end = opts.range.end(),
+            basis = opts.basis
         );
 
         let conn = self.connector();
         let rows = conn.exec_query(&query)?;
 
-        for r in rows {
-            println!("{:?}", r);
-        }
+        let results: Vec<AnalysisResult> = rows.iter().map(|r| {
+            let x: String = r.get("BASABLE_CHRONO_BASIS_VALUE").unwrap();
+            let y: isize = r.get("BASABLE_CHRONO_RESULT").unwrap();
 
-        Ok(())
+            AnalysisResult::new(x, y)
+        }).collect();
+
+        Ok(results)
     }
 }
