@@ -8,7 +8,11 @@ use crate::{
     base::{
         config::ConnectionConfig,
         data::table::{TableSummaries, TableSummary},
-        imp::{db::DB, table::Table, ConnectorType, SharedTable},
+        imp::{
+            db::{AnalyzeDB, ChronoAnalysisOpts, DBError, DB},
+            table::Table,
+            ConnectorType, SharedTable,
+        },
         AppError,
     },
     imp::database::{DBVersion, DbConnectionDetails},
@@ -203,5 +207,39 @@ impl DB for MySqlDB {
             version,
             db_size: size,
         })
+    }
+}
+
+impl AnalyzeDB for MySqlDB {
+    fn chrono_analysis(&self, opts: ChronoAnalysisOpts) -> Result<(), DBError> {
+        let query = format!(
+            "
+            SELECT
+                DATE({col}) as basable_chrono_date,
+                COUNT(*) as basable_total_results
+            FROM
+                {table}
+            WHERE
+                {col} BETWEEN '{start}' AND '{end}'
+            GROUP BY
+                DATE({col})
+            ORDER BY
+                basable_chrono_date
+
+        ",
+            col = opts.chrono_col,
+            table = opts.table,
+            start = opts.range.0,
+            end = opts.range.1,
+        );
+
+        let conn = self.connector();
+        let rows = conn.exec_query(&query)?;
+
+        for r in rows {
+            println!("{:?}", r);
+        }
+
+        Ok(())
     }
 }

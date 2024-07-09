@@ -1,14 +1,17 @@
 use uuid::Uuid;
 
 use crate::base::{data::table::TableSummaries, AppError};
+use crate::imp::database::mysql::db::MySqlDB;
 use crate::imp::database::DbConnectionDetails;
 
 use super::{ ConnectorType, SharedTable};
 
 pub(crate) type DBQueryResult<R, E> = Result<Vec<R>, E>;
 
+pub(crate) type DBError = <MySqlDB as DB>::Error;
+
 /// An abstraction of database connection.
-pub(crate) trait DB: Send + Sync {
+pub(crate) trait DB: AnalyzeDB + Send + Sync {
     type Row;
     type Error;
     type ColumnValue;
@@ -44,4 +47,44 @@ pub(crate) trait DB: Send + Sync {
 
     /// Get total number of columns
     fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;
+}
+
+pub(crate) enum ChronoAnalysisBasis {
+    Daily,
+    Monthly,
+    Yearly
+}
+
+pub (crate) struct ChronoAnalysisRange(pub String, pub String);
+pub(crate) struct ChronoAnalysisOpts {
+    pub table: String,
+    pub chrono_col: String,
+    pub basis: ChronoAnalysisBasis,
+    pub range: ChronoAnalysisRange
+}
+
+pub(crate) trait AnalyzeDB {
+    fn chrono_analysis(&self, opts: ChronoAnalysisOpts) -> Result<(), DBError>;
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{base::{imp::db::ChronoAnalysisRange, AppError}, tests::common::create_test_db};
+
+    use super::ChronoAnalysisOpts;
+
+    #[test]
+    fn test_chrono_analysis() -> Result<(), AppError>{
+        let db = create_test_db()?;
+        let analyze = db.chrono_analysis(ChronoAnalysisOpts{
+            table: "vgchartz".to_string(),
+            chrono_col: "release_date".to_string(),
+            basis: super::ChronoAnalysisBasis::Daily,
+            range: ChronoAnalysisRange("2010-11-01".to_string(), "2010-11-30".to_string())
+        });
+
+        assert!(analyze.is_ok());
+
+        Ok(())
+    }
 }
