@@ -129,16 +129,18 @@ html {
 
     .mobile-view {
       display: none;
-
+    
       &.open {
         display: flex;
         align-items: flex-start;
         gap: 8px;
         position: absolute;
         top: 60px; 
-        right: 0;
-        background: #fff;
-        width: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 8px;
+        background: #ffffff;
+        width: 80%; 
         padding: 1rem 2rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         flex-direction: column;
@@ -146,7 +148,7 @@ html {
         gap: 16px;
       }
     }
-
+    
     .nav {
       display: flex;
       flex-direction: column;
@@ -162,6 +164,7 @@ html {
       justify-content: center;
       width: 100%;
       gap: 8px;
+      margin-top: 4rem;
     }
 
     .hamburger-icon {
@@ -172,7 +175,7 @@ html {
 
 
 /* Media Query: TABLET */
-@media (min-width: 640px) and (max-width: 1023px) {
+@media (min-width: 640px) and (max-width: 1024px) {
   .header {
     height: 60px; 
     top: 34px;
