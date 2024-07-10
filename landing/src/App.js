@@ -1,15 +1,17 @@
-import logo from "./logo.svg";
-import Contact from "./LandingContactFooterComponents/Contact";
-import Footer from "./LandingContactFooterComponents/Footer";
+import React from 'react';
+import Header from './components/Header';
+import Hero from './components/Hero';
+import './App.css';
 
 
-function App() {
+const App = () => {
   return (
-    <>
-      <Contact />
-      <Footer />
-    </>
+    <div className="App">
+      <Header />
+      <Hero />
+      
+    </div>
   );
-}
+};
 
 export default App;
