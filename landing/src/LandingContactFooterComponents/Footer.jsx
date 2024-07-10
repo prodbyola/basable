@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react";
 import "./Footer.css";
-import logo from '../images/logo.svg'
+import logo from "../images/logo.svg";
 import linkedin from "../images/LinkedIn - Original.svg";
 import tweeter from "../images/prime_twitter.svg";
 import github from "../images/Github - Original.svg";
@@ -8,10 +8,9 @@ import github from "../images/Github - Original.svg";
 function Footer() {
   const currentYear = new Date().getFullYear();
 
-
   return (
     <div className="footer-body">
-      <div className='footer-inner-container'>
+      <div className="footer-inner-container">
         <div className="footer-container">
           <div className="footer-left">
             <img className="footer-logo" src={logo} alt="logo" />
@@ -65,11 +64,11 @@ function Footer() {
           <p className="copyright-container">
             <span className="copyright">&copy;</span> {currentYear} BASABLE
           </p>
-          <p className='reserve'>All Rights Reserved</p>
+          <p className="reserve">All Rights Reserved</p>
         </div>
       </div>
     </div>
   );
 }
 
-export default Footer
+export default Footer;

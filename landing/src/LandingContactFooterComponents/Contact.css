@@ -6,20 +6,55 @@
 
 body {
     height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 1440px;
+    height: 899px;
 }
 
 .landing-contact {
     display: flex;
     justify-content: center;
+    align-items: center;
     margin: 2rem 0;
     gap: 116px;
-    width: 100%;
+    width: 1440px;
     height: 899px;
     font-family: Lexend;
     /* position: fixed;
     top: 0.01px; */
-    padding: 0 0 0 137px;
+    padding: 0 0 0 96px;
+    /* padding: 0 0 0 137px; */
 
+}
+
+.contact-left {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    height: 881px;
+    width: 550px;
+}
+
+.contact-mid-container {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.contact-head {
+    width: 550px;
+    height: 225px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
 .contact-get-started {
@@ -35,7 +70,7 @@ body {
     gap: 16px;
 }
 
-.contact-get-started p {
+.get-started-text {
     width: 137px;
     height: 30px;
     font-size: 24px;
@@ -45,42 +80,38 @@ body {
 
 .logo-icon {
     width: 40px;
+    height: 40px;
+    border-radius: 32px;
+}
+
+.contact-header-text {
+    display: flex;
+    flex-direction: column;
+    width: 550px;
+    height: 145px;
+    gap: .6rem;
 }
 
 .contact-h1 {
     font-size: 64px;
+    width: 320px;
+    height: 85px;
+    font-weight: 600;
+    font-family: Exo;
+    line-height: 85.06px;
+    color: rgba(22, 22, 22, 1);
 }
 
 .form-message-text {
     font-size: 24px;
     color: rgba(84, 84, 84, 1);
     font-weight: 400;
-    width: 706px;
-    height: 60px;
-}
-
-
-.contact-left {
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-    height: 881px;
     width: 550px;
+    height: 60px;
+    font-family: Lexend;
+    line-height: 30px;
 }
 
-.contact-h1 {
-    font-family: Exo;
-}
-
-.contact-header-text p {
-    width: 80%;
-}
-
-.contact-header-text {
-    display: flex;
-    flex-direction: column;
-    gap: .6rem;
-}
 
 .contact-form {
     display: flex;
@@ -90,31 +121,95 @@ body {
     height: 616px;
 }
 
+.form-field {
+    width: 550px;
+    height: 547px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
 .form-label {
     display: flex;
     flex-direction: column;
-    gap: .6rem;
-    font-size: 24px;
+    gap: 8px;
+    width: 550px;
+    height: 102px;
 }
 
-.form-label input {
+.label-text3 {
+    width: 163px;
+    height: 30px;
+    font-family: Lexend;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 30px;
+}
+
+.label-text {
+    width: 118px;
+    height: 30px;
+    font-family: Lexend;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 30px;
+}
+
+.label-text2 {
+    width: 65px;
+    height: 30px;
+    font-size: 24px;
+    font-family: Lexend;
+    font-weight: 400;
+    line-height: 30px;
+}
+
+.input-field {
     width: 550px;
     height: 64px;
     background-color: rgba(236, 238, 250, 1);
     border: none;
-    border-radius: 5px;
-    padding-left: 1rem;
+    border-radius: 8px;
+    /* padding-left: 1rem; */
+}
+
+.message-container {
+    width: 550px;
+    height: 295px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 
-.form-label textarea {
-    padding-top: 1rem;
-    padding-left: 1rem;
+.message-field {
     width: 550px;
     height: 257px;
     background-color: rgba(236, 238, 250, 1);
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
+}
+
+.btn-container {
+    padding: 8px, 16px, 8px, 16px;
+    width: 115px;
+    height: 46px;
+    background-color: rgba(62, 74, 184, 1);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+
+
+    color: rgba(255, 255, 255, 1);
+    font-size: 24px;
+    font-weight: 400;
+    font-family: Lexend;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 30px;
 }
 
 .contact-form-button {
@@ -123,107 +218,381 @@ body {
     height: 46px;
     background-color: rgba(62, 74, 184, 1);
     border: none;
-    color: rgba(255, 255, 255, 1);
     border-radius: 8px;
-    align-self: flex-end;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 1);
     font-size: 24px;
     font-weight: 400;
+    font-family: Lexend;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 30px;
+    align-self: flex-end;
 }
 
 
 
 /* MEDIA QUERY!!! */
 
-@media screen and (min-width: 481px) and (max-width: 768px) {
-
-    .contact-image-container {
-        display: none;
+@media screen and (min-width: 481px) and (max-width: 770px) {
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 769px;
     }
 
+
     .landing-contact {
+        display: flex;
         flex-direction: column;
-        width: 770px;
-        height: 940px;
-        border-radius: 16px;
-        padding: 40px 32px 40px 32px;
-        /* border: 2px solid brown; */
-        border: 1px solid rgba(176, 176, 176, 1);
+        padding: 0;
+
     }
 
     .contact-left {
-        
-        width: 706px;
-        height: 908px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 770px;
+        height: 940px;
+        /* position: fixed;
+        top: 3916.13px;
+        left: 32px; */
+        border: 1px solid;
+        border-radius: 16px;
+        padding: 40px 32px 40px 32px;
+        gap: 36px;
+    }
+
+    .contact-mid-container {
+        max-width: 706px;
+        width: 100%;
+        height: 860px;
+        display: flex;
+        flex-direction: column;
         gap: 40px;
-        /* padding: 16px; */
+    }
+
+    .contact-head {
+        max-width: 706px;
+        height: 204px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .contact-get-started {
+        width: 225px;
+        height: 56px;
+        border-radius: 24px;
+        padding: 8px 16px 8px 16px;
+        gap: 16px;
+        background-color: rgba(236, 238, 250, 1);
+    }
+
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 32px;
+    }
+
+    .get-started-text {
+        width: 137px;
+        height: 30px;
+        font-family: Lexend;
+        font-size: 24px;
+        line-height: 30px;
+        font-weight: 400;
+    }
+
+    .contact-header-text {
+        width: 706px;
+        height: 124px;
+    }
+
+    .contact-h1 {
+        width: 240px;
+        height: 64px;
+        font-family: Exo;
+        font-weight: 600;
+        font-size: 48px;
+        line-height: 63.79px;
+    }
+
+    .form-message-text {
+        width: 706px;
+        height: 60px;
+        font-family: Lexend;
+        font-weight: 400;
+        font-size: 24px;
+        line-height: 30px;
     }
 
     .contact-form {
         width: 706px;
         height: 616px;
         gap: 23px;
-        /* padding-bottom: 64px; */
+    }
+
+    .message-container,
+    .contact-fullname {
+        width: 706px;
+    }
+
+    .form-field {
+        width: 706px;
+        height: 547px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
     }
 
     .form-label {
         width: 706px;
-        /* height: 102px; */
+        height: 102px;
+        display: flex;
+        flex-direction: column;
         gap: 8px;
     }
 
-    .form-label input {
+    .label-text {
+        width: 118px;
+        height: 30px;
+        font-family: Lexend;
+        font-weight: 400;
+        font-size: 24px;
+        line-height: 30px;
+        color: rgba(84, 84, 84, 1);
+    }
+
+    .label-text2 {
+        width: 65px;
+        height: 30px;
+        font-family: Lexend;
+        font-weight: 400;
+        font-size: 24px;
+        line-height: 30px;
+        color: rgba(84, 84, 84, 1);
+    }
+
+    .label-text3 {
+        width: 163px;
+        height: 30px;
+        font-family: Lexend;
+        font-weight: 400;
+        font-size: 24px;
+        line-height: 30px;
+        color: rgba(84, 84, 84, 1);
+    }
+
+    .input-field {
         width: 706px;
         height: 64px;
         border-radius: 8px;
+        background-color: rgba(236, 238, 250, 1);
     }
 
-    .form-label textarea {
+    .message-field {
         width: 706px;
-        /* this height affects the heights of it's parent container. i had to make it 230px compared to the .contact-left div. */
-        height: 230px;
+        /* width: 100%; */
+        height: 257px;
         border-radius: 8px;
+        background-color: rgba(236, 238, 250, 1);
     }
 
-    .logo-icon {
-        width: 20%;
-    }
-
-    .contact-h1 {
-        font-weight: 600;
-        font-size: 48px;
-        line-height: 63.79px;
-        width: 240px;
-        height: 64px;
-    }
-
-
-    .contact-get-started p {
-        font-size: .9rem;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .contact-caller {
+    .contact-image-container {
         display: none;
     }
 
+}
+
+@media screen and (max-width: 480px) {
+.container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 480px;
+    margin: 0;
+    padding: 0;
+}
+
     .landing-contact {
-        margin: 1rem;
+        justify-content: center;
+        align-items: center;
         padding: 0;
+        margin: 0;
+        width: 312px;
+        height: 586px;
     }
 
-    .contact-left {
-        border: 1px solid rgba(176, 176, 176, 1);
-        width: 100%;
-        padding: 1rem;
+    .contact-left{
+        border: 1px solid;
+        width: 312px;
+        height: 586px;
+        border-radius: 16px;
+        padding: 28px 24px 28px 24px;
+        margin: 0;
+        gap: 24px;
+        justify-content: center;
+        align-items: center;
     }
 
-    .logo-icon {
-        width: 20%;
+    .contact-mid-container{
+        margin: 0;
+        padding: 0;
+        gap: 8px;
+
     }
 
-    .contact-get-started p {
-        font-size: .9rem;
+    .contact-head{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        margin: 0;
+        gap: 8px;
     }
+
+    .contact-get-started{
+        width: 131px;
+        height: 32px;
+        border-radius: 16px;
+        padding: 8px 16px 8px 16px;
+        gap: 8px;
+    }
+
+    .logo-icon{
+        width: 24px;
+        height: 24px;
+        border-radius: 32px;
+    }
+
+    .get-started-text{
+        width: 67px;
+        height: 15px;
+        font-family: Lexend;
+        font-size: 12px;
+        line-height: 15px;
+        text-wrap: nowrap;
+    }
+
+    .contact-header-text{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 264px;
+        height: 67px;
+    }
+
+    .contact-h1{
+        width: 140px;
+        height: 37px;
+        font-family: Exo;
+        font-size: 28px;
+        font-weight: 600;
+        line-height: 37.21px;
+    }
+
+    .form-message-text{
+        width: 264px;
+        height: 30px;
+        font-family: Lexend;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 15px;
+        text-align: center;
+    }
+
+    .contact-form{
+        align-items: center;
+    }
+
+    .form-field{
+        width: 264px;
+        height: 323px;
+        gap: 12px;
+    }
+
+    .form-label{
+        width: 262px;
+        height: 63px;
+        gap: 8px;
+    }
+
+    .label-text{
+        width: 59px;
+        height: 15px;
+        font-family: Lexend;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 15px;
+    }
+
+    .input-field{
+        width: 264px;
+        height: 40px;
+        border-radius: 8px;
+
+    }
+
+    .label-text2{
+        width: 33px;
+        height: 15px;
+        font-family: Lexend;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 15px;
+    }
+
+    .message-container{
+        width: 264px;
+        height: 173px;
+        border-radius: 8px;
+        gap: 8px;
+    }
+
+    .label-text3{
+        width: 82px;
+        height: 15px;
+        font-family: Lexend;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 15px;
+    }
+
+    .message-field{
+        width: 264px;
+        height: 150px;
+        border-radius: 8px;
+
+    }
+
+    .contact-form-button{
+        width: 104px;
+        height: 36px;
+        border-radius: 8px;
+        padding: 8px 24px 8px 24px;
+        font-family: Lexend;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 20px;
+        align-self: center;
+    }
+
+
+    .contact-image-container {
+        display: none;
+    }
+
+
 }

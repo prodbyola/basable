@@ -16,54 +16,73 @@ function Contact() {
     <div className="container">
       <section className="landing-contact">
         <div className="contact-left">
-          <div className="contact-get-started">
-            <img className="logo-icon" src={icon} alt="icon" />
-            <p>Get Started</p>
+          <div className="contact-mid-container">
+            {" "}
+            <div className="contact-head">
+              {" "}
+              <div className="contact-get-started">
+                <img className="logo-icon" src={icon} alt="icon" />
+                <p className="get-started-text">Get Started</p>
+              </div>
+              <div className="contact-header-text">
+                <h1 className="contact-h1">Contact Us</h1>
+                <p className="form-message-text">
+                  Please fill this form to send us any questions or concerns you
+                  have.
+                </p>
+              </div>
+            </div>
+            <form className="contact-form" onSubmit={handleSubmit}>
+              <div className="form-field">
+                {" "}
+                {/* <div className="contact-fullname"> */}
+                <div className="form-label">
+                  <p className="label-text">Full Name</p>
+                  <input
+                    className="input-field"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  ></input>
+                </div>
+                {/* </div> */}
+                {/* <div className="contact-fullname"> */}
+                <div className="form-label">
+                  <p className="label-text2">Email</p>
+                  <input
+                    className="input-field"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  ></input>
+                </div>
+                {/* </div> */}
+                <div className="">
+                  <div className="message-container">
+                    <p className="label-text3">Your Message</p>
+                    <input
+                      className="message-field"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    ></input>
+                  </div>
+                </div>
+              </div>
+              {/* <div className="btn-container"> */}
+                <button className="contact-form-button">Submit</button>
+              {/* </div> */}
+            </form>
           </div>
-          <div className="contact-header-text">
-            <h1 className="contact-h1">Contact Us</h1>
-            <p className="form-message-text">
-              Please fill this form to send us any questions or concerns you
-              have.
-            </p>
-          </div>
-          <form className="contact-form" onSubmit={handleSubmit}>
-            <div className="contact-fullname">
-              <label className="form-label">
-                Full Name
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                ></input>
-              </label>
-            </div>
-
-            <div className="contact-email">
-              <label className="form-label">
-                Email
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                ></input>
-              </label>
-            </div>
-
-            <div className="contact-messsage">
-              <label className="form-label">
-                Your Message
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                ></textarea>
-              </label>
-            </div>
-            <button className="contact-form-button">Submit</button>
-          </form>
         </div>
         <div className="contact-image-container">
-          <img className="contact-caller" src={caller} alt="caller" width="708px" height="899px"/>
+          <img
+            className="contact-caller"
+            src={caller}
+            alt="caller"
+            width="708px"
+            height="899px"
+          />
         </div>
       </section>
     </div>

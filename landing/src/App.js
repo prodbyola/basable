@@ -7,7 +7,7 @@ function App() {
   return (
     <>
       <Contact />
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }
