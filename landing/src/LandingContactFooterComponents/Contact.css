@@ -1,0 +1,502 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: Lexend;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 99.5vw;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 1);
+    margin-bottom: 8rem;
+}
+
+
+.contact-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 116px;
+    padding: 0px 0px 0px 96px;
+}
+
+.contact-left-side {
+    width: 550px;
+    height: 881px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+}
+
+/* .left-contact-top{
+    width: 550px;
+    height: 881px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+} */
+
+.contact-top-head {
+    width: 550px;
+    height: 881px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.started {
+    width: 225px;
+    height: 56px;
+    border-radius: 24px;
+    padding: 8px 16px 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: rgba(236, 238, 250, 1);
+}
+
+.icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 32px;
+}
+
+.started-text {
+    width: 137px;
+    height: 30px;
+    font-size: 24px;
+    line-height: 30px;
+}
+
+.header-texts {
+    width: 550px;
+    height: 145px;
+}
+
+.header-h1 {
+    width: 320px;
+    height: 85px;
+    font-family: Exo;
+    font-weight: 600;
+    font-size: 64px;
+    line-height: 85.06px;
+    color: rgba(22, 22, 22, 1);
+}
+
+.header-text {
+    width: 550px;
+    height: 60px;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 30px;
+    color: rgba(84, 84, 84, 1);
+}
+
+.form-part {
+    width: 550px;
+    height: 616px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 23px;
+}
+
+.form-field {
+    width: 550px;
+    height: 547px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.label {
+    width: 550px;
+    height: 102px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fullname {
+    width: 118px;
+    width: 30px;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 30px;
+    color: rgba(84, 84, 84, 1);
+    text-wrap: nowrap;
+}
+
+.form-input {
+    width: 550px;
+    height: 64px;
+    border-radius: 8px;
+    background-color: rgba(236, 238, 250, 1);
+    border: none;
+}
+
+.email {
+    width: 65px;
+    height: 30px;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 30px;
+    color: rgba(84, 84, 84, 1);
+}
+
+.message-label {
+    width: 550px;
+    height: 295px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.message {
+    width: 163px;
+    height: 30px;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 30px;
+    color: rgba(84, 84, 84, 1);
+}
+
+.form-message {
+    width: 550px;
+    height: 257px;
+    border-radius: 8px;
+    background-color: rgba(236, 238, 250, 1);
+    border: none;
+}
+
+.left-contact-button {
+    width: 115px;
+    height: 46px;
+    border-radius: 8px;
+    padding: 8px 16px 8px 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(62, 74, 184, 1);
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 30px;
+    color: rgba(255, 255, 255, 1);
+    border: none;
+    align-self: flex-end;
+}
+
+.contact-hero-part {
+    width: 100%;
+    height: 899px;
+    /* position: relative; */
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    /* position: absolute;
+    top: 0;
+    left: 0; */
+}
+
+
+
+
+@media (max-width: 834px) {
+    .contact-container {
+        gap: 80px;
+        padding: 0;
+        flex-direction: column;
+    }
+
+    .contact-left-side {
+        width: 770px;
+        height: 940px;
+        border-radius: 16px;
+        border: 1px solid rgba(176, 176, 176, 1);
+        padding: 40px 32px 40px 32px;
+        gap: 36px;
+    }
+
+    .contact-top-head {
+        width: 705px;
+        height: 204px;
+        gap: 24px;
+    }
+
+    .started {
+        width: 225px;
+        height: 56px;
+        border-radius: 24px;
+        padding: 8px 16px 8px 16px;
+        gap: 16px;
+    }
+
+    .icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 32px;
+        background-color: rgba(255, 255, 255, 1);
+    }
+
+    .started-text {
+        width: 137px;
+        height: 30px;
+        font-size: 24px;
+        line-height: 30px;
+        color: rgba(68, 81, 202, 1);
+    }
+
+    .header-texts {
+        width: 706px;
+        height: 124px;
+    }
+
+    .header-h1 {
+        width: 240px;
+        height: 64px;
+        font-size: 48px;
+        line-height: 63.79px;
+    }
+
+    .header-text {
+        width: 706px;
+        height: 60px;
+        font-size: 24px;
+        line-height: 30px;
+    }
+
+    .form-part {
+        width: 706px;
+        height: 616px;
+        gap: 23px;
+    }
+
+    .form-field {
+        width: 706px;
+        height: 547px;
+        gap: 24px;
+    }
+
+    .label {
+        width: 706px;
+        height: 102px;
+        gap: 8px;
+    }
+
+    .fullname {
+        width: 118px;
+        font-size: 30px;
+        line-height: 30px;
+        font-size: 24px;
+    }
+
+    .form-input {
+        width: 706px;
+        height: 64px;
+        border-radius: 8px;
+    }
+
+    .email {
+        width: 65px;
+        font-size: 30px;
+        line-height: 30px;
+        font-size: 24px;
+    }
+
+    .message-label {
+        width: 706px;
+        height: 295px;
+        border-radius: 8px;
+        gap: 8px;
+    }
+
+    .message {
+        width: 163px;
+        font-size: 30px;
+        line-height: 30px;
+        font-size: 24px;
+    }
+
+    .form-message {
+        width: 706px;
+        height: 257px;
+    }
+
+    .left-contact-button {
+        width: 115px;
+        height: 46px;
+        border-radius: 8px;
+        padding: 8px 16px 8px 16px;
+        gap: 10px;
+        font-size: 24px;
+        line-height: 30px;
+    }
+
+
+    .contact-hero-part{
+        display: none;
+    }
+
+}
+
+
+
+@media (max-width: 360px) {
+    .main-container {
+        width: 100vw;
+    }
+
+    .contact-container {
+        flex-direction: column;
+        gap: 20px;
+        padding: 0 16px;
+    }
+
+    .contact-left-side {
+        width: 312px;
+        height: auto;
+    }
+
+    .contact-top-head {
+        width: 100%;
+        height: auto;
+        text-align: center;
+    }
+
+    .started {
+        width: 100%;
+        height: 48px;
+        justify-content: center;
+    }
+
+    .icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 32px;
+    }
+
+    .started-text {
+        width: 67px;
+        height: 15px;
+        font-size: 12px;
+        line-height: 15px;
+        text-align: center;
+    }
+
+    .header-texts {
+        width: 264px;
+        height: 67px;
+    }
+
+    .header-h1 {
+        width: 140px;
+        height: 37px;
+        font-size: 28px;
+        line-height: 37.21px;
+    }
+
+    .header-text {
+        width: 264px;
+        height: 30px;
+        font-size: 12px;
+        line-height: 15px;
+        align-items: center;
+        text-align: center;
+    }
+
+    .form-part {
+        width: 100%;
+        height: auto;
+    }
+
+    .form-field {
+        width: 264px;
+        height: 323px;
+        gap: 12px;
+    }
+
+    .label {
+        width: 264px;
+        height: 63px;
+        gap: 8px;
+    }
+
+    .fullname {
+        width: 59px;
+        height: 15px;
+        font-size: 12px;
+        line-height: 15px;
+    }
+
+    .form-input {
+        width: 264px;
+        height: 40px;
+        border-radius: 8px;
+    }
+
+    .email {
+        width: 33px;
+        height: 15px;
+        font-size: 12px;
+        line-height: 15px;
+    }
+
+    .message-label {
+        width: 264px;
+        height: 173px;
+        gap: 8px;
+        border-radius: 8px;
+    }
+
+    .message {
+        width: 82px;
+        height: 15px;
+        font-size: 12px;
+        line-height: 15px;
+    }
+
+    .form-message {
+        width: 264px;
+        height: 150px;
+        border-radius: 8px;
+    }
+
+    .left-contact-button {
+        width: 104px;
+        height: 36px;
+        border-radius: 8px;
+        padding: 8px 24px 8px 24px;
+        gap: 10px;
+        font-size: 16px;
+        line-height: 20px;
+        justify-content: center;
+        align-self: center;
+    }
+
+    .contact-hero-part {
+       display: none;
+    }
+
+
+}
