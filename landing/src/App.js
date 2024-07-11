@@ -1,13 +1,11 @@
+import FooterSection from "./LandingContactFooterComponents/FooterSection";
 import logo from "./logo.svg";
-import Contact from "./LandingContactFooterComponents/Contact";
-import Footer from "./LandingContactFooterComponents/Footer";
 
 
 function App() {
   return (
     <>
-      <Contact />
-      {/* <Footer /> */}
+      <FooterSection />
     </>
   );
 }
