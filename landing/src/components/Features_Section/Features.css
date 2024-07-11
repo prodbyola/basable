@@ -1,0 +1,241 @@
+*{
+    box-sizing: border-box;    
+}
+
+.featureSection {
+    background-color: white;
+}
+
+.Section {
+    position: relative;
+    top: 120px;
+}
+
+.features {
+    margin-top: 50px;
+    margin-bottom: 20px;
+    
+}
+
+
+.mainFeatures{
+   text-align: center;  
+}
+
+.main{   
+    
+    display: grid;
+    grid-template-areas: 'section1 section1 section4' ' section1 section1 section2' 'section3 section3 section3';
+    justify-content: center;
+    gap: 24px;
+    margin-top: 40px;
+}
+
+.section1 {
+    grid-area: section1;      
+    border-radius: 7px;
+}
+
+.section2{
+    grid-area: section2;  
+    border-radius: 7px;
+    
+}
+
+.section3{
+    grid-area: section3;
+    border-radius: 7px;
+    
+}
+
+.section4{
+    grid-area: section4;
+    border-radius: 7px;
+    
+}
+
+.mobileEffort, .mobileAction {
+    display: none;
+}
+
+.exploreMore {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.explore:hover{
+    opacity: 0.7;
+}
+
+
+@media (max-width: 1310px) and (min-width: 1011px){
+    .main {
+        gap: 10px 3px;
+    }
+    
+     .stunning, .enhanced, .effort {
+        width: 95%;
+        height: 100%;
+     }
+
+    .action {
+        width: 97%;
+        height: 100%;
+    }
+}
+
+@media (max-width: 1010px) and (min-width: 601px) {
+   .main {
+    grid-template-areas: 'section1 section1' ' section1 section1' 'section4 section2' 'section3 section3';  
+    text-align: center;
+    gap: 1px 1px;
+    margin-top: 2px;
+   }
+
+.effort {
+    width: 90%;
+    height: 100%;
+    margin-top: 16px;
+    
+}
+.stunning {
+    width: 88%;
+    height: 100%;
+    margin-left: -22px;
+    
+       
+}
+.enhanced {
+       width: 88%;
+       height: 100%;
+       margin-right: -22px;
+}
+.action{
+    width: 92%;
+    height: 100%;
+}
+
+.heading{
+  width: 187px;
+  margin-bottom: -10px;
+}
+
+.mainHeading{
+     width: 539px;
+     margin-bottom: -12px;
+}
+.Section{
+    top: 55px;
+}
+
+}
+
+
+@media (max-width: 700px) and (min-width: 601px){
+    .heading{
+       width: 170px;
+    }
+    .mainHeading{
+       width: 450px;
+       margin-top: -17px;
+    }
+}
+
+
+@media (max-width: 600px) and (min-width: 424px) {
+    .main{
+        grid-template-areas: 'section1' 'section4' ' section2' 'section3';
+       }
+    .Section{
+        top: 70px;
+    }
+    .heading {
+        width: 100px;
+        height: 40px;
+    }
+    .mainHeading{
+        width: 350px;
+        height: 100px;
+        margin-top: -17px;
+    }
+    
+    
+    .mobileEffort{
+         display: block;  
+         width: 100%;
+         
+       }
+     .mobileAction{
+          display: block;
+          width: 100%;
+          
+          
+       }
+       .effort{
+        display: none;
+        
+       }
+       .action{
+        display: none;
+        
+       }
+       
+       .explore{
+        width: 100px;
+        height: 40px;
+       }
+       .exploreMore{
+        margin-top: 20px;
+       }
+       .Section{
+        top: 45px;
+    }
+}
+
+
+
+@media (max-width: 423px) {
+    .main{
+        grid-template-areas: 'section1' 'section4' ' section2' 'section3';
+        gap: 5px;
+        margin-top: 10px;
+       }
+    .heading {
+        width: 98px;
+        height: 32px;
+    }
+    .mainHeading{
+        width: 250px;
+        height: 72px;
+        margin-top: -17px;
+    }
+    .mobileEffort, .mobileAction{
+         display: block;
+         width: 95%;
+         height: 100%;
+         margin: auto;
+       }
+
+       .stunning, .enhanced{
+        width: 95%;
+        height: 100%;
+       }
+       
+       .effort{
+        display: none;
+       }
+       .action{
+        display: none;
+       }
+       
+       .explore{
+        width: 100px;
+        height: 40px;
+       }
+       .exploreMore{
+        margin-top: 13px;
+       }
+       .Section{
+        top: 40px;
+    }
+}
