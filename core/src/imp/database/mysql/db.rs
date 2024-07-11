@@ -9,7 +9,12 @@ use crate::{
         config::ConnectionConfig,
         data::table::{TableSummaries, TableSummary},
         imp::{
-            db::{AnalysisResult, AnalysisResults, AnalyzeDB, ChronoAnalysisOpts, DBError, DB},
+            analysis::{
+                chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
+                trend::TrendAnalysisOpts,
+                AnalysisResult, AnalysisResults, AnalysisValue, AnalyzeDB,
+            },
+            db::{DBError, DB},
             table::Table,
             ConnectorType, SharedTable,
         },
@@ -212,34 +217,84 @@ impl DB for MySqlDB {
 
 impl AnalyzeDB for MySqlDB {
     fn chrono_analysis(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError> {
+        let ChronoAnalysisOpts {
+            table,
+            chrono_col,
+            basis,
+            range,
+        } = opts;
+
+        let start = range.start();
+        let end = range.end();
+
+        let xcol = "BASABLE_CHRONO_BASIS_VALUE";
+        let ycol = "BASABLE_CHRONO_RESULT";
+
         let query = format!(
             "
             SELECT
-                {basis}({col}) as BASABLE_CHRONO_BASIS_VALUE,
-                COUNT(*) as BASABLE_CHRONO_RESULT
+                {basis}({chrono_col}) as {xcol},
+                COUNT(*) as {ycol}
             FROM
                 {table}
             WHERE
-                {col} BETWEEN '{start}' AND '{end}'
+                {chrono_col} BETWEEN '{start}' AND '{end}'
             GROUP BY
-                {basis}({col})
+                {basis}({chrono_col})
             ORDER BY
                 BASABLE_CHRONO_BASIS_VALUE
 
-        ",
-            col = opts.chrono_col,
-            table = opts.table,
-            start = opts.range.start(),
-            end = opts.range.end(),
-            basis = opts.basis
+        "
         );
 
         let conn = self.connector();
         let rows = conn.exec_query(&query)?;
 
-        let results: Vec<AnalysisResult> = rows.iter().map(|r| {
-            let x: String = r.get("BASABLE_CHRONO_BASIS_VALUE").unwrap();
-            let y: isize = r.get("BASABLE_CHRONO_RESULT").unwrap();
+        let results: AnalysisResults = rows
+            .iter()
+            .map(|r| {
+                let x = match basis {
+                    ChronoAnalysisBasis::Daily => {
+                        let date: Date = r.get(xcol).unwrap();
+                        AnalysisValue::Date(date)
+                    }
+                    _ => AnalysisValue::Int(r.get(xcol).unwrap()),
+                };
+
+                let y = AnalysisValue::Int(r.get(ycol).unwrap());
+
+                AnalysisResult::new(x, y)
+            })
+            .collect();
+
+        Ok(results)
+    }
+
+    fn trend_analysis(&self, opts: TrendAnalysisOpts) -> Result<AnalysisResults, DBError> {
+        let TrendAnalysisOpts {
+            table,
+            analysis_type,
+            xcol,
+            ycol,
+            order,
+            limit,
+        } = opts;
+
+        let query = format!(
+            "
+            SELECT {xcol}, {ycol} 
+            FROM {table} 
+            ORDER BY {ycol} {order} 
+            LIMIT {limit}
+        "
+        );
+
+        let conn = self.connector();
+        let rows = conn.exec_query(&query)?;
+
+        let results: AnalysisResults = rows.iter().map(|r| {
+            let x = AnalysisValue::Text(r.get(xcol.as_str()).unwrap());
+            let y = AnalysisValue::Double(r.get(ycol.as_str()).unwrap());
 
             AnalysisResult::new(x, y)
         }).collect();

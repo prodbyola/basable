@@ -9,6 +9,7 @@ use crate::imp::database::mysql::{connector::MysqlConnector, db::MySqlDB, table:
 pub(crate) mod connector;
 pub(crate) mod db;
 pub(crate) mod table;
+pub(crate) mod analysis;
 
 /// Dynamic [`DB`] type implemented across the app.
 pub(crate) type DbType = dyn DB<
