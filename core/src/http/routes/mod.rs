@@ -1,3 +1,4 @@
+use analysis::analysis_routes;
 use axum::routing::post;
 use axum::Router;
 
@@ -14,6 +15,7 @@ use self::table::table_routes;
 
 pub(super) mod auth;
 pub(super) mod table;
+pub(super) mod analysis;
 
 #[debug_handler]
 /// POST: /core/connect
@@ -50,6 +52,7 @@ pub(super) fn core_routes() -> Router<AppState> {
         .route("/connect", post(connect))
         .nest("/auth", auth_routes())
         .nest("/tables", table_routes())
+        .nest("/analysis", analysis_routes())
 }
 
 #[cfg(test)]

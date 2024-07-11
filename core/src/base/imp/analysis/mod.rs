@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Display};
 
 use chrono::ChronoAnalysisOpts;
+use serde::{ser::SerializeTuple, Serialize};
 use time::Date;
 use trend::TrendAnalysisOpts;
 
@@ -19,6 +20,24 @@ pub(crate) enum AnalysisValue {
     Double(f64)
 }
 
+impl Serialize for AnalysisValue {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer {
+        let mut s = serializer.serialize_tuple(5)?;
+
+        match self {
+            AnalysisValue::Int(int) => s.serialize_element(int)?,
+            AnalysisValue::Text(text) => s.serialize_element(text)?,
+            AnalysisValue::Date(date) => s.serialize_element(&date.to_string())?,
+            AnalysisValue::Float(float) => s.serialize_element(float)?,
+            AnalysisValue::Double(double) => s.serialize_element(double)?,
+        }
+
+        s.end()
+    }
+}
+
 impl Display for AnalysisValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let value = match self {
@@ -34,6 +53,7 @@ impl Display for AnalysisValue {
     }
 }
 
+#[derive(Serialize)]
 pub(crate) struct AnalysisResult(AnalysisValue, AnalysisValue);
 impl AnalysisResult {
     pub fn new(x: AnalysisValue, y: AnalysisValue) -> Self {

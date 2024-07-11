@@ -56,6 +56,7 @@ impl MySqlDB {
                 )
             ",
         )?;
+        
         let mut data = HashMap::new();
 
         for v in vars {
@@ -70,16 +71,13 @@ impl MySqlDB {
     fn size(&self) -> Result<f64, AppError> {
         let db = self.config().db_name.as_ref().unwrap();
 
-        let query = format!(
-            "
-                SELECT table_schema '{}', 
-                ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) 'size' 
-                FROM information_schema.tables 
-                WHERE table_schema = '{}'
-                GROUP BY table_schema
-            ",
-            db, db
-        );
+        let query = format!("
+            SELECT table_schema '{db}', 
+            ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) 'size' 
+            FROM information_schema.tables 
+            WHERE table_schema = '{db}'
+            GROUP BY table_schema
+        ");
 
         let qr = self.exec_query(&query)?;
 

@@ -32,43 +32,41 @@ impl Table for MySqlTable {
         &self.name
     }
 
-    /// Query all columns for the table
     fn query_columns(&self) -> Result<ColumnList, Self::Error> {
-        let query = format!(
-            "
-                SELECT 
-                    cols.column_name,
-                    cols.column_type,
-                    cols.is_nullable,
-                    cols.column_default,
-                    IF(stats.index_name IS NOT NULL, 'YES', 'NO') AS IS_UNIQUE,
-                    IF(kcus.constraint_name IS NOT NULL, 'YES', 'NO') AS IS_PRIMARY
-                FROM 
-                    information_schema.columns AS cols
-                LEFT JOIN 
-                    (SELECT DISTINCT
-                        column_name,
-                        index_name
-                    FROM
-                        information_schema.statistics
-                    WHERE
-                        table_name = '{}'
-                        AND non_unique = 0) AS stats
-                ON 
-                    cols.column_name = stats.column_name
-                    AND cols.table_name = '{}'
-                LEFT JOIN
-                    information_schema.key_column_usage AS kcus
-                ON
-                    cols.table_name = kcus.table_name
-                    AND cols.column_name = kcus.column_name
-                    AND kcus.constraint_name = 'PRIMARY'
-                WHERE
-                    cols.table_name = '{}'
+        let table_name = &self.name;
 
-            ",
-            self.name, self.name, self.name
-        );
+        let query = format!("
+            SELECT 
+                cols.column_name,
+                cols.column_type,
+                cols.is_nullable,
+                cols.column_default,
+                IF(stats.index_name IS NOT NULL, 'YES', 'NO') AS IS_UNIQUE,
+                IF(kcus.constraint_name IS NOT NULL, 'YES', 'NO') AS IS_PRIMARY
+            FROM 
+                information_schema.columns AS cols
+            LEFT JOIN 
+                (SELECT DISTINCT
+                    column_name,
+                    index_name
+                FROM
+                    information_schema.statistics
+                WHERE
+                    table_name = '{table_name}'
+                    AND non_unique = 0) AS stats
+            ON 
+                cols.column_name = stats.column_name
+                AND cols.table_name = '{table_name}'
+            LEFT JOIN
+                information_schema.key_column_usage AS kcus
+            ON
+                cols.table_name = kcus.table_name
+                AND cols.column_name = kcus.column_name
+                AND kcus.constraint_name = 'PRIMARY'
+            WHERE
+                cols.table_name = '{table_name}'
+
+        ");
 
         let conn = self.connector();
         let result = conn.exec_query(&query)?;
