@@ -22,46 +22,13 @@ Basable is an open-source software designed to provide comprehensive data manage
 
 - **Deploy Anyhow**: The flexibility of Basable allows you to choose between installing it on your local device or deploying it to a remote server. This empowers you to access your data wherever you go, giving you the freedom to select the option that best suits your needs.
 
-## Setting Up Development Environment
+## Contributing to Basable
+Basable is currently undergoing development. Thank you for choosing to contribute.
 
-Basable's core is written in [Rust Programming Language](https://www.rust-lang.org/) and [Axum](https://github.com/tokio-rs/axum) for `HttpService`, while the web frontend is powered by [Vue Javascript Framework](https://vuejs.org/). You need to setup your local environment for development in order to be able to run Basable locally and make your contributions.
+### Setting Up Development Environment
 
-#### 1. Install Requirements
-Install the latest versions of Rust and NodeJs. Checkout [Install Rust](https://www.rust-lang.org/tools/install) and [Download Node.js](https://nodejs.org/en/download) for their respective guides.
+In order to contribute to Basable codebase, you need to setup your local environment. Our core API is written in [Rust Programming Language](https://www.rust-lang.org/) and [Axum](https://github.com/tokio-rs/axum) for `HttpService`, while the web frontend is powered by [Vue Javascript Framework](https://vuejs.org/), [Nuxt](https://nuxt.com/) and [Nuxt UI](https://ui.nuxt.com/getting-started).
 
-#### 2. Fork Repository
-Fork the repository and clone your forked version:
-```bash 
-git clone https://github.com/your-username/basable.git
-```
-
-#### 3. Install Core Component
-Ensure you have installed Rust. Then navigate to `core` folder and run the core program:
-```bash
-cd basable/core && cargo run
-```
-This should download all dependecies and run the program in development mode.  
-**NOTE:** If you would like to enable hot-reload, please install [cargo-watch](https://crates.io/crates/cargo-watch) and run `cargo watch -x run` instead. This will automatically reload the program whenever you make a change and save any core file.
-
-#### 4. Install Web Component
-4. Open another terminal. Ensure NodeJs is installed. Then navigate to the `web` and install javascript dependencies:
-
-```bash
-cd basable/web && npm install
-```
-
-**NOTE:** You can use any package manager of your choice e.g, [yarn](https://classic.yarnpkg.com/lang/en/docs/install/), [bun](https://bun.sh/docs/installation)...etc
-
-Then start the development environment:
-```bash
-npm run dev
-```
-
-#### 5. Make Changes and Submit
-Once you make a change you'd want us to merge into Basable, please feel free to submit a Pull Request.
-
-#### 6. Database Setup (Optional)
-You may also need to to setup a MySQL database for testing. But your current setup will do for now.
 
 ## Contact
 For questions or support, please contact [prodbyola@gmail.com](mailto:prodbyola@gmail.com).
