@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
-use crate::base::table::TableSummaries;
+use crate::base::data::table::TableSummaries;
 
 pub(crate) mod mysql;
 

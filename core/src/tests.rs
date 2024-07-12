@@ -7,7 +7,7 @@ pub(crate) mod common {
     };
 
     use crate::base::{
-        config::ConnectionConfig, foundation::Basable, AppError, AppState, SharedDB,
+        config::ConnectionConfig, foundation::Basable, imp::SharedDB, AppError, AppState
     };
 
     /// Get `TEST_USER_ID` from env
@@ -51,7 +51,7 @@ pub(crate) mod common {
         let user_id = get_test_user_id();
         let config = create_test_config();
 
-        let (conn, _) = Basable::create_connection(&config, user_id)?;
+        let conn = Basable::create_connection(&config, user_id)?;
         Ok(conn)
     }
 

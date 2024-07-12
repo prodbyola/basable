@@ -1,17 +1,24 @@
-use std::{
-    cell::RefCell, collections::HashMap, sync::Arc
-};
+use std::{collections::HashMap, sync::Arc};
 
-use mysql::Row;
+use mysql::{DriverError::SetupError, Row};
 use time::Date;
 use uuid::Uuid;
 
 use crate::{
     base::{
         config::ConnectionConfig,
-        db::DB,
-        table::{SharedTable, Table, TableConfigList, TableSummaries, TableSummary},
-        AppError, ConnectorType,
+        data::table::{TableSummaries, TableSummary},
+        imp::{
+            analysis::{
+                chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
+                trend::{TrendAnalysisOpts, TrendAnalysisType},
+                AnalysisResult, AnalysisResults, AnalysisValue, AnalyzeDB,
+            },
+            db::{DBError, DB},
+            table::Table,
+            ConnectorType, SharedTable,
+        },
+        AppError,
     },
     imp::database::{DBVersion, DbConnectionDetails},
 };
@@ -31,7 +38,7 @@ impl MySqlDB {
             connector,
             tables: Vec::new(),
             user_id,
-            id: Uuid::new_v4()
+            id: Uuid::new_v4(),
         }
     }
 
@@ -49,6 +56,7 @@ impl MySqlDB {
                 )
             ",
         )?;
+        
         let mut data = HashMap::new();
 
         for v in vars {
@@ -63,16 +71,13 @@ impl MySqlDB {
     fn size(&self) -> Result<f64, AppError> {
         let db = self.config().db_name.as_ref().unwrap();
 
-        let query = format!(
-            "
-                SELECT table_schema '{}', 
-                ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) 'size' 
-                FROM information_schema.tables 
-                WHERE table_schema = '{}'
-                GROUP BY table_schema
-            ",
-            db, db
-        );
+        let query = format!("
+            SELECT table_schema '{db}', 
+            ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) 'size' 
+            FROM information_schema.tables 
+            WHERE table_schema = '{db}'
+            GROUP BY table_schema
+        ");
 
         let qr = self.exec_query(&query)?;
 
@@ -112,34 +117,24 @@ impl DB for MySqlDB {
         &self.connector
     }
 
-    fn load_tables(
-        &mut self,
-        connector: ConnectorType,
-    ) -> Result<Option<TableConfigList>, AppError> {
+    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError> {
         let tables = self.query_tables()?;
-        let mut configs = Vec::with_capacity(tables.len());
 
         if !tables.is_empty() {
             tables.iter().for_each(|t| {
                 let connector = connector.clone();
                 let name: String = t.get("TABLE_NAME").unwrap();
-                
-                let (table, config) = MySqlTable::new(name, connector);
-                if let Some(config) = config {
-                    configs.push(RefCell::new(config));
-                }
 
+                let table = MySqlTable::new(name, connector);
                 self.tables.push(Arc::new(table));
             })
         }
 
-        let configs = if configs.is_empty() {
-            None
-        } else {
-            Some(configs)
-        };
+        Ok(())
+    }
 
-        Ok(configs)
+    fn tables(&self) -> &Vec<SharedTable> {
+        &self.tables
     }
 
     fn query_tables(&self) -> mysql::Result<Vec<Row>> {
@@ -198,13 +193,8 @@ impl DB for MySqlDB {
         Ok(c)
     }
 
-    fn get_table(
-        &self,
-        name: &str,
-    ) -> Option<&SharedTable> {
-        self.tables
-            .iter()
-            .find(|t| t.name() == name)
+    fn get_table(&self, name: &str) -> Option<&SharedTable> {
+        self.tables.iter().find(|t| t.name() == name)
     }
 
     fn details(&self) -> Result<DbConnectionDetails, AppError> {
@@ -220,5 +210,83 @@ impl DB for MySqlDB {
             version,
             db_size: size,
         })
+    }
+}
+
+impl AnalyzeDB for MySqlDB {
+    fn chrono_analysis(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError> {
+        let ChronoAnalysisOpts {
+            table,
+            chrono_col,
+            basis,
+            range,
+        } = opts;
+
+        let start = range.start();
+        let end = range.end();
+
+        let xcol = "BASABLE_CHRONO_BASIS_VALUE";
+        let ycol = "BASABLE_CHRONO_RESULT";
+
+        let query = format!(
+            "
+            SELECT
+                {basis}({chrono_col}) as {xcol},
+                COUNT(*) as {ycol}
+            FROM
+                {table}
+            WHERE
+                {chrono_col} BETWEEN '{start}' AND '{end}'
+            GROUP BY
+                {basis}({chrono_col})
+            ORDER BY
+                BASABLE_CHRONO_BASIS_VALUE
+
+        "
+        );
+
+        let conn = self.connector();
+        let rows = conn.exec_query(&query)?;
+
+        let results: AnalysisResults = rows
+            .iter()
+            .map(|r| {
+                let x = match basis {
+                    ChronoAnalysisBasis::Daily => {
+                        let date: Date = r.get(xcol).unwrap();
+                        AnalysisValue::Date(date)
+                    }
+                    _ => AnalysisValue::Int(r.get(xcol).unwrap()),
+                };
+
+                let y = AnalysisValue::Int(r.get(ycol).unwrap());
+
+                AnalysisResult::new(x, y)
+            })
+            .collect();
+
+        Ok(results)
+    }
+
+    fn trend_analysis(&self, opts: TrendAnalysisOpts) -> Result<AnalysisResults, DBError> {
+        let query = opts.build_query().map_err(|_| mysql::Error::DriverError(SetupError));
+        let query = query?;
+        
+        let TrendAnalysisOpts {xcol, ycol, analysis_type, ..} = opts;
+        
+        let conn = self.connector();
+        let rows = conn.exec_query(&query)?;
+
+        let results: AnalysisResults = rows.iter().map(|r| {
+            let x = AnalysisValue::Text(r.get(xcol.as_str()).unwrap());
+            let y = match analysis_type {
+                TrendAnalysisType::IntraModel => AnalysisValue::Double(r.get(ycol.as_str()).unwrap()),
+                TrendAnalysisType::CrossModel => AnalysisValue::Int(r.get(ycol.as_str()).unwrap()),
+            };
+
+            AnalysisResult::new(x, y)
+        }).collect();
+
+        Ok(results)
     }
 }

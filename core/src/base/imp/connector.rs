@@ -1,4 +1,4 @@
-use super::{config::ConnectionConfig, AppError};
+use crate::base::{config::ConnectionConfig, AppError};
 
 /// Facilitates connection and run queries between `Basable` instance and a databse server
 pub(crate) trait Connector: Send + Sync {

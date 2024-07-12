@@ -9,61 +9,37 @@ use axum::{
     http::{Response, StatusCode},
     response::IntoResponse,
 };
-use connector::Connector;
-use db::DB;
 use foundation::Basable;
 use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::params;
 use serde::Serialize;
-use table::Table;
-
-use crate::imp::database::mysql::{connector::MysqlConnector, db::MySqlDB, table::MySqlTable};
 
 pub(crate) mod column;
 pub(crate) mod config;
-pub(crate) mod connector;
-pub(crate) mod db;
 pub(crate) mod foundation;
-pub(crate) mod table;
+pub(crate) mod imp;
 pub(crate) mod user;
+pub(crate) mod data;
 
-/// Dynamic [`DB`] type implemented across the app.
-pub(crate) type DbType = dyn DB<
-    Row = <MySqlDB as DB>::Row,
-    Error = <MySqlDB as DB>::Error,
-    ColumnValue = <MySqlDB as DB>::ColumnValue,
->;
+#[derive(Clone)]
+pub(crate) struct LocalDB(pub Pool<SqliteConnectionManager>);
 
-/// Dynamic [`Connector`] type implemented across the app.
-pub(crate) type ConnectorType = Arc<
-    dyn Connector<
-        Row = <MysqlConnector as Connector>::Row,
-        Error = <MysqlConnector as Connector>::Error,
-    >,
->;
-
-/// Dynamic [`Table`] type implemented across the app.
-pub(crate) type TableType = dyn Table<
-    Row = <MySqlTable as Table>::Row,
-    Error = <MySqlTable as Table>::Error,
-    ColumnValue = <MySqlTable as Table>::ColumnValue,
->;
-
-pub(crate) type SharedDB = Arc<DbType>;
+impl LocalDB {
+    fn pool(&self) -> PooledConnection<SqliteConnectionManager> {
+        self.0.get().unwrap()
+    }
+}
 
 #[derive(Clone)]
 pub(crate) struct AppState {
     pub instance: Arc<Mutex<Basable>>,
-    pub local_db: Pool<SqliteConnectionManager>,
+    pub local_db: LocalDB,
 }
 
 impl AppState {
-    fn pool(&self) -> PooledConnection<SqliteConnectionManager> {
-        self.local_db.get().unwrap()
-    }
     pub fn setup_local_db(&self) {
-        let pool = self.pool();
+        let pool = self.local_db.pool();
         pool.execute(
             "CREATE TABLE IF NOT EXISTS table_configs (id INTEGER)",
             params![],
@@ -79,7 +55,7 @@ impl Default for AppState {
 
         Self {
             instance: Default::default(),
-            local_db: pool,
+            local_db: LocalDB(pool),
         }
     }
 }

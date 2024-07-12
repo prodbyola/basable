@@ -8,7 +8,7 @@ use time::format_description::well_known::iso8601::Config;
 
 use crate::{base::AppError, utils::get_env};
 
-use super::table::{TableConfig, TableConfigList};
+use crate::base::data::table::TableConfig;
 
 pub(crate) struct User {
     pub id: String,
@@ -17,7 +17,6 @@ pub(crate) struct User {
 
 impl User {
     pub fn save_connection(&self, config: Config){}
-    pub fn save_table_configs(&self, conn_id: &str, configs: TableConfigList) {}
     pub fn get_table_config(&self, conn_id: &str, table_name: &str) -> Option<TableConfig> {
         None
     }
@@ -99,7 +98,7 @@ fn extract_jwt(header_value: &HeaderValue) -> Result<String, AppError> {
         String::from("Invalid token!"),
     ));
 
-    let bearer = get_env("BASABLE_JWT_BEARER");
+    let bearer = format!("{} ", get_env("BASABLE_JWT_BEARER"));
     let bearer = bearer.as_str();
 
     if let Ok(v) = from_utf8(header_value.as_bytes()) {

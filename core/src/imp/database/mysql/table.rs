@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::base::{
     column::{Column, ColumnList},
-    table::{DataQueryFilter, DataQueryResult, Table, TableConfig, UpdateDataOptions},
-    ConnectorType,
+    data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateDataOptions},
+    imp::{table::{Table, TableColumn, TableError, TableCRUD}, ConnectorType},
 };
 
 use super::MySqlValue;
@@ -18,72 +18,55 @@ impl Table for MySqlTable {
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
-    fn new(name: String, conn: ConnectorType) -> (Self, Option<TableConfig>)
+    fn new(name: String, conn: ConnectorType) -> Self
     where
         Self: Sized,
     {
-        let table = MySqlTable {
+        MySqlTable {
             name,
             connector: conn,
-        };
-
-        let mut config = None;
-
-        if let Ok(cols) = table.query_columns() {
-            let mut iter = cols.iter();
-            let mut pk = iter.find(|c| c.name == "id");
-
-            if let None = pk {
-                pk = iter.find(|c| c.unique);
-            }
-
-            let pk = pk.map(|pk| pk.name.clone());
-            let c = TableConfig {
-                pk,
-                table_id: table.name.clone(),
-                ..TableConfig::default()
-            };
-
-            config = Some(c);
         }
-
-        (table, config)
     }
 
     fn name(&self) -> &str {
         &self.name
     }
 
-    /// Query all columns for the table
     fn query_columns(&self) -> Result<ColumnList, Self::Error> {
-        let query = format!(
-            "
-                SELECT 
-                    cols.column_name,
-                    cols.column_type,
-                    cols.is_nullable,
-                    cols.column_default,
-                    IF(stats.index_name IS NOT NULL, 'YES', 'NO') AS IS_UNIQUE
-                FROM 
-                    information_schema.columns AS cols
-                LEFT JOIN 
-                    (SELECT DISTINCT
-                        column_name,
-                        index_name
-                    FROM
-                        information_schema.statistics
-                    WHERE
-                        table_name = '{}'
-                        AND non_unique = 0) AS stats
-                ON 
-                    cols.column_name = stats.column_name
-                    AND cols.table_name = '{}'
-                WHERE
-                    cols.table_name = '{}'
+        let table_name = &self.name;
 
-            ",
-            self.name, self.name, self.name
-        );
+        let query = format!("
+            SELECT 
+                cols.column_name,
+                cols.column_type,
+                cols.is_nullable,
+                cols.column_default,
+                IF(stats.index_name IS NOT NULL, 'YES', 'NO') AS IS_UNIQUE,
+                IF(kcus.constraint_name IS NOT NULL, 'YES', 'NO') AS IS_PRIMARY
+            FROM 
+                information_schema.columns AS cols
+            LEFT JOIN 
+                (SELECT DISTINCT
+                    column_name,
+                    index_name
+                FROM
+                    information_schema.statistics
+                WHERE
+                    table_name = '{table_name}'
+                    AND non_unique = 0) AS stats
+            ON 
+                cols.column_name = stats.column_name
+                AND cols.table_name = '{table_name}'
+            LEFT JOIN
+                information_schema.key_column_usage AS kcus
+            ON
+                cols.table_name = kcus.table_name
+                AND cols.column_name = kcus.column_name
+                AND kcus.constraint_name = 'PRIMARY'
+            WHERE
+                cols.table_name = '{table_name}'
+
+        ");
 
         let conn = self.connector();
         let result = conn.exec_query(&query)?;
@@ -100,6 +83,9 @@ impl Table for MySqlTable {
 
                 let unique: Option<String> = r.get("IS_UNIQUE");
                 let unique = unique.map(|s| s == "YES".to_owned()).unwrap();
+                
+                let primary: Option<String> = r.get("IS_PRIMARY");
+                let primary = primary.map(|s| s == "YES".to_owned()).unwrap();
 
                 Column {
                     name,
@@ -107,6 +93,7 @@ impl Table for MySqlTable {
                     default_value: default,
                     nullable,
                     unique,
+                    primary
                 }
             })
             .collect();
@@ -114,10 +101,42 @@ impl Table for MySqlTable {
         Ok(cols)
     }
 
+    fn connector(&self) -> &ConnectorType {
+        &self.connector
+    }
+
+    
+    fn init_config(&self) -> Option<TableConfig> {
+        let mut config = None;
+
+        if let Ok(cols) = self.query_columns() {
+            let mut iter = cols.iter();
+            let mut pk = iter.find(|c| c.primary);
+
+            if let None = pk {
+                pk = iter.find(|c| c.unique);
+            }
+
+            let pk = pk.map(|pk| pk.name.clone());
+            
+            let c = TableConfig {
+                pk,
+                table_id: self.name.clone(),
+                ..TableConfig::default()
+            };
+
+            config = Some(c);
+        }
+
+        config
+    }
+}
+
+impl TableCRUD for MySqlTable {
     fn query_data(
         &self,
         filter: DataQueryFilter,
-    ) -> DataQueryResult<Self::ColumnValue, Self::Error> {
+    ) -> DataQueryResult<TableColumn, TableError> {
         let cols = self.query_columns()?;
         let mut excluded_cols: Vec<&Column> = vec![]; // columns to exclude from query
 
@@ -139,10 +158,10 @@ impl Table for MySqlTable {
         let result = conn.exec_query(&query)?;
 
         // std::mem::drop(db);
-        let data: Vec<HashMap<String, Self::ColumnValue>> = result
+        let data: Vec<HashMap<String, TableColumn>> = result
             .iter()
             .map(|r| {
-                let mut map: HashMap<String, Self::ColumnValue> = HashMap::new();
+                let mut map: HashMap<String, TableColumn> = HashMap::new();
 
                 for col in &cols {
                     if let None = excluded_cols.iter().find(|c| c.name == col.name) {
@@ -159,11 +178,7 @@ impl Table for MySqlTable {
         Ok(data)
     }
 
-    fn connector(&self) -> &ConnectorType {
-        &self.connector
-    }
-
-    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), Self::Error> {
+    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), TableError> {
         let len = input.len();
         let mut data = HashMap::new();
 
@@ -189,19 +204,31 @@ impl Table for MySqlTable {
         Ok(())
     }
 
-    fn update_data(
-            &self,
-            options: UpdateDataOptions,
-        ) -> Result<(), Self::Error> {
-            let UpdateDataOptions { key, value, input } = options;
-        
-        let data: Vec<String> = input.iter().map(|(k, v)| format!("{} = '{}'", k, v)).collect();
+    fn update_data(&self, options: UpdateDataOptions) -> Result<(), TableError> {
+        let UpdateDataOptions { key, value, input } = options;
+
+        let data: Vec<String> = input
+            .iter()
+            .map(|(k, v)| format!("{} = '{}'", k, v))
+            .collect();
         let data = data.join(", ");
 
-        let query = format!("UPDATE {} SET {} WHERE {} = '{}'", self.name, data, key, value);
+        let query = format!(
+            "UPDATE {} SET {} WHERE {} = '{}'",
+            self.name, data, key, value
+        );
         let conn = self.connector();
         conn.exec_query(&query)?;
 
         Ok(())
     }
+
+    fn delete_data(&self, col: String, value: String) -> Result<(), TableError> {
+        let query = format!("DELETE FROM {} WHERE {} = '{}'", self.name, col, value);
+        let conn = self.connector();
+        conn.exec_query(&query)?;
+
+        Ok(())
+    }
+
 }
