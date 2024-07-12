@@ -76,7 +76,7 @@ pub(crate) trait AnalyzeDB {
 mod tests {
     use crate::{
         base::{
-            imp::analysis::chrono::{ChronoAnalysisBasis, ChronoAnalysisRange},
+            imp::analysis::{chrono::{ChronoAnalysisBasis, ChronoAnalysisRange}, trend::CrossOptions},
             AppError,
         },
         tests::common::create_test_db,
@@ -103,12 +103,16 @@ mod tests {
     fn test_trend_analysis() -> Result<(), AppError> {
         let db = create_test_db()?;
         let opts = TrendAnalysisOpts {
-            table: "vgchartz".to_string(),
-            analysis_type: TrendAnalysisType::IntraModel,
-            xcol: "title".to_string(),
-            ycol: "total_sales".to_string(),
+            table: "patients".to_string(),
+            analysis_type: TrendAnalysisType::CrossModel,
+            xcol: "FIRST".to_string(),
+            ycol: "PATIENT".to_string(),
             order: TrendAnalysisOrder::ASC,
-            limit: 10,
+            limit: 50,
+            cross: Some(CrossOptions {
+                foreign_table: "encounters".to_string(),
+                target_col: "Id".to_string(),
+            }),
         };
 
         let analyze = db.trend_analysis(opts);

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use mysql::Row;
+use mysql::{DriverError::SetupError, Row};
 use time::Date;
 use uuid::Uuid;
 
@@ -11,7 +11,7 @@ use crate::{
         imp::{
             analysis::{
                 chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
-                trend::TrendAnalysisOpts,
+                trend::{TrendAnalysisOpts, TrendAnalysisType},
                 AnalysisResult, AnalysisResults, AnalysisValue, AnalyzeDB,
             },
             db::{DBError, DB},
@@ -269,30 +269,20 @@ impl AnalyzeDB for MySqlDB {
     }
 
     fn trend_analysis(&self, opts: TrendAnalysisOpts) -> Result<AnalysisResults, DBError> {
-        let TrendAnalysisOpts {
-            table,
-            analysis_type,
-            xcol,
-            ycol,
-            order,
-            limit,
-        } = opts;
-
-        let query = format!(
-            "
-            SELECT {xcol}, {ycol} 
-            FROM {table} 
-            ORDER BY {ycol} {order} 
-            LIMIT {limit}
-        "
-        );
-
+        let query = opts.build_query().map_err(|_| mysql::Error::DriverError(SetupError));
+        let query = query?;
+        
+        let TrendAnalysisOpts {xcol, ycol, analysis_type, ..} = opts;
+        
         let conn = self.connector();
         let rows = conn.exec_query(&query)?;
 
         let results: AnalysisResults = rows.iter().map(|r| {
             let x = AnalysisValue::Text(r.get(xcol.as_str()).unwrap());
-            let y = AnalysisValue::Double(r.get(ycol.as_str()).unwrap());
+            let y = match analysis_type {
+                TrendAnalysisType::IntraModel => AnalysisValue::Double(r.get(ycol.as_str()).unwrap()),
+                TrendAnalysisType::CrossModel => AnalysisValue::Int(r.get(ycol.as_str()).unwrap()),
+            };
 
             AnalysisResult::new(x, y)
         }).collect();
