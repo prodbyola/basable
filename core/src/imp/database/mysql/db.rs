@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use mysql::{DriverError::SetupError, Row};
+use mysql::{DriverError::SetupError, Row, Value};
 use time::Date;
 use uuid::Uuid;
 
@@ -10,9 +10,10 @@ use crate::{
         data::table::{TableSummaries, TableSummary},
         imp::{
             analysis::{
+                category::CategoryGraphOpts,
                 chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
                 trend::{TrendAnalysisOpts, TrendAnalysisType},
-                AnalysisResult, AnalysisResults, AnalysisValue, AnalyzeDB,
+                AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB,
             },
             db::{DBError, DB},
             table::Table,
@@ -56,7 +57,7 @@ impl MySqlDB {
                 )
             ",
         )?;
-        
+
         let mut data = HashMap::new();
 
         for v in vars {
@@ -71,13 +72,15 @@ impl MySqlDB {
     fn size(&self) -> Result<f64, AppError> {
         let db = self.config().db_name.as_ref().unwrap();
 
-        let query = format!("
+        let query = format!(
+            "
             SELECT table_schema '{db}', 
             ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) 'size' 
             FROM information_schema.tables 
             WHERE table_schema = '{db}'
             GROUP BY table_schema
-        ");
+        "
+        );
 
         let qr = self.exec_query(&query)?;
 
@@ -213,8 +216,8 @@ impl DB for MySqlDB {
     }
 }
 
-impl AnalyzeDB for MySqlDB {
-    fn chrono_analysis(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError> {
+impl VisualizeDB for MySqlDB {
+    fn chrono_graph(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError> {
         let ChronoAnalysisOpts {
             table,
             chrono_col,
@@ -256,10 +259,10 @@ impl AnalyzeDB for MySqlDB {
                         let date: Date = r.get(xcol).unwrap();
                         AnalysisValue::Date(date)
                     }
-                    _ => AnalysisValue::Int(r.get(xcol).unwrap()),
+                    _ => AnalysisValue::UInt(r.get(xcol).unwrap()),
                 };
 
-                let y = AnalysisValue::Int(r.get(ycol).unwrap());
+                let y = AnalysisValue::UInt(r.get(ycol).unwrap());
 
                 AnalysisResult::new(x, y)
             })
@@ -268,21 +271,66 @@ impl AnalyzeDB for MySqlDB {
         Ok(results)
     }
 
-    fn trend_analysis(&self, opts: TrendAnalysisOpts) -> Result<AnalysisResults, DBError> {
-        let query = opts.build_query().map_err(|_| mysql::Error::DriverError(SetupError));
+    fn trend_graph(&self, opts: TrendAnalysisOpts) -> Result<AnalysisResults, DBError> {
+        let query = opts
+            .build_query()
+            .map_err(|_| mysql::Error::DriverError(SetupError));
         let query = query?;
-        
-        let TrendAnalysisOpts {xcol, ycol, analysis_type, ..} = opts;
-        
+
+        let TrendAnalysisOpts {
+            xcol,
+            ycol,
+            analysis_type,
+            ..
+        } = opts;
+
         let conn = self.connector();
         let rows = conn.exec_query(&query)?;
 
+        let results: AnalysisResults = rows
+            .iter()
+            .map(|r| {
+                let x = AnalysisValue::Text(r.get(xcol.as_str()).unwrap());
+                let y = match analysis_type {
+                    TrendAnalysisType::IntraModel => {
+                        AnalysisValue::Double(r.get(ycol.as_str()).unwrap())
+                    }
+                    TrendAnalysisType::CrossModel => {
+                        AnalysisValue::UInt(r.get(ycol.as_str()).unwrap())
+                    }
+                };
+
+                AnalysisResult::new(x, y)
+            })
+            .collect();
+
+        Ok(results)
+    }
+
+    fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, AppError> {
+        let CategoryGraphOpts {
+            table,
+            graph_type,
+            target_col,
+            limit,
+        } = opts;
+        let query = format!(
+            "
+                SELECT COUNT(*) as COUNT, {target_col}
+                FROM {table}
+                GROUP BY {target_col}
+                LIMIT {limit}
+            "
+        );
+
+        let conn = self.connector();
+
+        let rows = conn.exec_query(&query)?;
         let results: AnalysisResults = rows.iter().map(|r| {
-            let x = AnalysisValue::Text(r.get(xcol.as_str()).unwrap());
-            let y = match analysis_type {
-                TrendAnalysisType::IntraModel => AnalysisValue::Double(r.get(ycol.as_str()).unwrap()),
-                TrendAnalysisType::CrossModel => AnalysisValue::Int(r.get(ycol.as_str()).unwrap()),
-            };
+            let x = AnalysisValue::UInt(r.get("COUNT").unwrap());
+
+            let y_value: Value = r.get(target_col.as_str()).unwrap();
+            let y = y_value.into();
 
             AnalysisResult::new(x, y)
         }).collect();

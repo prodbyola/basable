@@ -42,7 +42,7 @@ pub async fn chrono_analysis(
                 range: range?,
             };
 
-            let results = db.chrono_analysis(opts)?;
+            let results = db.chrono_graph(opts)?;
 
             Ok(Json(results))
         }

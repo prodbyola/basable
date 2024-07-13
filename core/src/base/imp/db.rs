@@ -4,7 +4,7 @@ use crate::base::{data::table::TableSummaries, AppError};
 use crate::imp::database::mysql::db::MySqlDB;
 use crate::imp::database::DbConnectionDetails;
 
-use super::analysis::AnalyzeDB;
+use super::analysis::VisualizeDB;
 use super::{ConnectorType, SharedTable};
 
 pub(crate) type DBQueryResult<R, E> = Result<Vec<R>, E>;
@@ -12,7 +12,7 @@ pub(crate) type DBQueryResult<R, E> = Result<Vec<R>, E>;
 pub(crate) type DBError = <MySqlDB as DB>::Error;
 
 /// An abstraction of database connection.
-pub(crate) trait DB: AnalyzeDB + Send + Sync {
+pub(crate) trait DB: VisualizeDB + Send + Sync {
     type Row;
     type Error;
     type ColumnValue;
