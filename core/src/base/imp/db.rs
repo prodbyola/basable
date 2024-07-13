@@ -4,7 +4,7 @@ use crate::base::{data::table::TableSummaries, AppError};
 use crate::imp::database::mysql::db::MySqlDB;
 use crate::imp::database::DbConnectionDetails;
 
-use super::analysis::VisualizeDB;
+use super::graphs::VisualizeDB;
 use super::{ConnectorType, SharedTable};
 
 pub(crate) type DBQueryResult<R, E> = Result<Vec<R>, E>;

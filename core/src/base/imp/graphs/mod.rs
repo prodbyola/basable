@@ -102,7 +102,7 @@ pub(crate) trait VisualizeDB {
 mod tests {
     use crate::{
         base::{
-            imp::analysis::{
+            imp::graphs::{
                 category::{CategoryGraphOpts, CategoryGraphType},
                 chrono::{ChronoAnalysisBasis, ChronoAnalysisRange},
                 trend::CrossOptions,

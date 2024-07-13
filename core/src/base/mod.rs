@@ -21,6 +21,7 @@ pub(crate) mod foundation;
 pub(crate) mod imp;
 pub(crate) mod user;
 pub(crate) mod data;
+pub(crate) mod query;
 
 #[derive(Clone)]
 pub(crate) struct LocalDB(pub Pool<SqliteConnectionManager>);

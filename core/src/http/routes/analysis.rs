@@ -7,7 +7,7 @@ use axum_macros::debug_handler;
 
 use crate::{
     base::{
-        imp::analysis::{chrono::ChronoAnalysisOpts, AnalysisResults},
+        imp::graphs::{chrono::ChronoAnalysisOpts, AnalysisResults},
         AppError, AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor},

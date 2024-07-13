@@ -9,7 +9,7 @@ use crate::{
         config::ConnectionConfig,
         data::table::{TableSummaries, TableSummary},
         imp::{
-            analysis::{
+            graphs::{
                 category::CategoryGraphOpts,
                 chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
                 trend::{TrendAnalysisOpts, TrendAnalysisType},
