@@ -5,7 +5,7 @@ import FooterSection from "./LandingContactFooterComponents/FooterSection";
 function App() {
   return (
     <>
-      <ContactSection />
+      {/* <ContactSection /> */}
       <FooterSection />
     </>
   );
