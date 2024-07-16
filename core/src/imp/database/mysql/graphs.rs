@@ -1,6 +1,6 @@
 use time::Date;
 
-use crate::base::{imp::{db::{DBError, QuerySqlParser, DB}, graphs::{category::CategoryGraphOpts, chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts}, trend::{TrendAnalysisOpts, TrendAnalysisType}, AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB}}, AppError};
+use crate::{base::{imp::{db::{DBError, QuerySqlParser, DB}, graphs::{category::CategoryGraphOpts, chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts}, trend::{TrendAnalysisOpts, TrendAnalysisType}, AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB}}, AppError}, globals::{BASABLE_CHRONO_XCOL, BASABLE_CHRONO_YCOL}};
 
 use super::db::MySqlDB;
 use mysql::{DriverError::SetupError, Value};
@@ -9,13 +9,8 @@ impl VisualizeDB for MySqlDB {
     fn chrono_graph(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError> {
         let basis = opts.basis.clone();
 
-        let xcol = "BASABLE_CHRONO_BASIS_VALUE";
-        let ycol = "BASABLE_CHRONO_RESULT";
-
         let query = opts.into();
         let sql = self.generate_sql(query)?;
-
-        println!("sql: {sql}");
 
         let conn = self.connector();
         let rows = conn.exec_query(&sql)?;
@@ -25,13 +20,13 @@ impl VisualizeDB for MySqlDB {
             .map(|r| {
                 let x = match basis {
                     ChronoAnalysisBasis::Daily => {
-                        let date: Date = r.get(xcol).unwrap();
+                        let date: Date = r.get(BASABLE_CHRONO_XCOL).unwrap();
                         AnalysisValue::Date(date)
                     }
-                    _ => AnalysisValue::UInt(r.get(xcol).unwrap()),
+                    _ => AnalysisValue::UInt(r.get(BASABLE_CHRONO_XCOL).unwrap()),
                 };
 
-                let y = AnalysisValue::UInt(r.get(ycol).unwrap());
+                let y = AnalysisValue::UInt(r.get(BASABLE_CHRONO_YCOL).unwrap());
 
                 AnalysisResult::new(x, y)
             })

@@ -148,6 +148,12 @@ pub trait QuerySqlParser {
             sql.push_str(format!(" WHERE {filter_chain}").as_str())
         }
 
+        // Parse GROUP BY
+        if let Some(group_by) = group_by {
+            let cols = group_by.join(", ");
+            sql.push_str(format!(" GROUP BY {cols}").as_str());
+        }
+
         // Parse ORDER BY
         if let Some(order) = order_by {
             sql.push_str(format!(" ORDER BY {order}").as_str());
@@ -156,12 +162,6 @@ pub trait QuerySqlParser {
         // Parse LIMIT
         if let Some(limit) = limit {
             sql.push_str(format!(" LIMIT {limit}").as_str());
-        }
-
-        // Parse GROUP BY
-        if let Some(group_by) = group_by {
-            let cols = group_by.join(", ");
-            sql.push_str(format!(" GROUP BY {cols}").as_str());
         }
 
         Ok(sql)

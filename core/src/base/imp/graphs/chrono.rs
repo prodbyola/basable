@@ -3,10 +3,10 @@ use std::fmt::Display;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::base::query::{
+use crate::{base::query::{
     filter::{Filter, FilterChain, FilterCondition, FilterOperator},
     BasableQuery, QueryOperation, QueryOrder,
-};
+}, globals::{BASABLE_CHRONO_XCOL, BASABLE_CHRONO_YCOL}};
 
 #[derive(Clone, EnumIter)]
 pub(crate) enum ChronoAnalysisBasis {
@@ -93,13 +93,11 @@ impl Into<BasableQuery> for ChronoAnalysisOpts {
             range,
         } = self;
 
-        let xcol = "BASABLE_CHRONO_BASIS_VALUE";
-        let ycol = "BASABLE_CHRONO_RESULT";
 
         // create query operation type
         let selection_columns = Some(vec![
-            format!("{basis}({chrono_col}) as {xcol}"),
-            format!("COUNT(*) as {ycol}"),
+            format!("{basis}({chrono_col}) as {BASABLE_CHRONO_XCOL}"),
+            format!("COUNT(*) as {BASABLE_CHRONO_YCOL}"),
         ]);
 
         let operation = QueryOperation::SelectData(selection_columns);
@@ -117,7 +115,7 @@ impl Into<BasableQuery> for ChronoAnalysisOpts {
         let group_columns = vec![format!("{basis}({chrono_col})")];
         let group_by = Some(group_columns);
 
-        let order_by = Some(QueryOrder::DESC(xcol.to_string()));
+        let order_by = Some(QueryOrder::DESC(BASABLE_CHRONO_XCOL.to_string()));
 
         BasableQuery {
             table,
