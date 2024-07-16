@@ -6,6 +6,7 @@ use mysql::Value;
 pub(crate) mod db;
 pub(crate) mod connector;
 pub(crate) mod table;
+pub(crate) mod graphs;
 
 /// Implements conversion of `mysql::Error` to AppError. At the moment, all variations
 /// of `mysql::Error` resolves to `StatusCode::INTERNAL_SERVER_ERROR`.

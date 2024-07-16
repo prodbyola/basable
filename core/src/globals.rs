@@ -1,0 +1,1 @@
+pub static QUERY_FILTER_PREFIX: &str = "basable_filter:";

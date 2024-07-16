@@ -1,28 +1,38 @@
 use std::fmt::Display;
 
-#[derive(Clone)]
-pub enum FilterOperator<V: Display + Clone> {
-    Eq(V),
-    NotEq(V),
-    Gt(V),
-    Lt(V),
-    Gte(V),
-    Lte(V),
-    Like(V),
-    NotLike(V),
-    LikeSingle(V),
-    NotLikeSingle(V),
-    Regex(V),
-    NotRegex(V),
-    Btw(V, V),
-    NotBtw(V, V),
-    Contains(Vec<V>),
-    NotContains(Vec<V>),
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+
+use crate::globals::QUERY_FILTER_PREFIX;
+
+pub trait FilterValue: Display + Clone + Default {}
+
+#[derive(Clone, Default)]
+pub enum FilterOperator {
+    Eq(String),
+    NotEq(String),
+    Gt(String),
+    Lt(String),
+    Gte(String),
+    Lte(String),
+    Like(String),
+    NotLike(String),
+    LikeSingle(String),
+    NotLikeSingle(String),
+    Regex(String),
+    NotRegex(String),
+    Btw(String, String),
+    NotBtw(String, String),
+    Contains(Vec<String>),
+    NotContains(Vec<String>),
+
+    #[default]
     Null,
+
     NotNull,
 }
 
-impl<V: Display + Clone> Display for FilterOperator<V> {
+impl Display for FilterOperator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let op = match self {
             FilterOperator::Eq(v) => format!("= '{v}'"),
@@ -59,26 +69,26 @@ impl<V: Display + Clone> Display for FilterOperator<V> {
     }
 }
 
-#[derive(Clone)]
-pub struct FilterCondition<V: Display + Clone> {
+#[derive(Clone, Default)]
+pub struct FilterCondition {
     pub column: String,
-    pub operator: FilterOperator<V>,
+    pub operator: FilterOperator,
 }
 
-impl<V: Display + Clone> Display for FilterCondition<V> {
+impl Display for FilterCondition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.column, self.operator)
     }
 }
 
-#[derive(Clone)]
-pub enum Filter<V: Display + Clone> {
-    BASE(FilterCondition<V>),
-    AND(FilterCondition<V>),
-    OR(FilterCondition<V>),
+#[derive(Clone, EnumIter)]
+pub enum Filter {
+    BASE(FilterCondition),
+    AND(FilterCondition),
+    OR(FilterCondition),
 }
 
-impl<V: Display + Clone> Display for Filter<V> {
+impl Display for Filter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let filter = match self {
             Filter::BASE(c) => c.to_string(),
@@ -86,26 +96,53 @@ impl<V: Display + Clone> Display for Filter<V> {
             Filter::OR(c) => format!("OR {c}"),
         };
 
-        write!(f, "{}", filter)
+        write!(f, "{QUERY_FILTER_PREFIX}{filter}")
     }
 }
 
-pub struct FilterChain<V: Display + Clone>(Vec<Filter<V>>);
-impl<V: Display + Clone> FilterChain<V> {
+impl TryFrom<String> for Filter {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        for filter in Filter::iter() {
+            if filter.to_string() == value {
+                return Ok(filter);
+            }
+        }
+
+        Err("Error converting type to Filter".to_string())
+    }
+}
+
+#[derive(Default)]
+pub struct FilterChain(Vec<Filter>);
+impl FilterChain {
     pub fn new() -> Self {
         FilterChain(Vec::new())
     }
 
-    pub fn add_filter(&mut self, filter: Filter<V>) {
+    pub fn add_one(&mut self, filter: Filter) {
         self.0.push(filter);
     }
 
-    pub fn add_filters(&mut self, filters: Vec<Filter<V>>) {
+    pub fn add_multiple(&mut self, filters: Vec<Filter>) {
         filters.iter().for_each(|f| self.0.push(f.clone()));
+    }
+
+    pub fn all(&self) -> &Vec<Filter> {
+        &self.0
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn not_empty(&self) -> bool {
+        !self.is_empty()
     }
 }
 
-impl<V: Display + Clone> Display for FilterChain<V> {
+impl Display for FilterChain {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let values = &self.0;
 
@@ -118,7 +155,7 @@ impl<V: Display + Clone> Display for FilterChain<V> {
         }
 
         let values: Vec<String> = values.iter().map(|f| f.to_string()).collect();
-        let values = values.join(" ");
+        let values = values.join(",");
 
         write!(f, "{values}")
     }
