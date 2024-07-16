@@ -22,8 +22,8 @@ pub enum QueryOrder {
 impl Display for QueryOrder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let order = match self {
-            QueryOrder::ASC(col) => format!("ASC {col}"),
-            QueryOrder::DESC(col) => format!("DESC {col}"),
+            QueryOrder::ASC(col) => format!("{col} ASC"),
+            QueryOrder::DESC(col) => format!("{col} DESC"),
         };
 
         write!(f, "{order}")
