@@ -1,44 +1,24 @@
 use time::Date;
 
-use crate::base::{imp::{db::{DBError, DB}, graphs::{category::CategoryGraphOpts, chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts}, trend::{TrendAnalysisOpts, TrendAnalysisType}, AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB}}, AppError};
+use crate::base::{imp::{db::{DBError, QuerySqlParser, DB}, graphs::{category::CategoryGraphOpts, chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts}, trend::{TrendAnalysisOpts, TrendAnalysisType}, AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB}}, AppError};
 
 use super::db::MySqlDB;
 use mysql::{DriverError::SetupError, Value};
 
 impl VisualizeDB for MySqlDB {
     fn chrono_graph(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError> {
-        let ChronoAnalysisOpts {
-            table,
-            chrono_col,
-            basis,
-            range,
-        } = opts;
-
-        let start = range.start();
-        let end = range.end();
+        let basis = opts.basis.clone();
 
         let xcol = "BASABLE_CHRONO_BASIS_VALUE";
         let ycol = "BASABLE_CHRONO_RESULT";
 
-        let query = format!(
-            "
-            SELECT
-                {basis}({chrono_col}) as {xcol},
-                COUNT(*) as {ycol}
-            FROM
-                {table}
-            WHERE
-                {chrono_col} BETWEEN '{start}' AND '{end}'
-            GROUP BY
-                {basis}({chrono_col})
-            ORDER BY
-                BASABLE_CHRONO_BASIS_VALUE
+        let query = opts.into();
+        let sql = self.generate_sql(query)?;
 
-        "
-        );
+        println!("sql: {sql}");
 
         let conn = self.connector();
-        let rows = conn.exec_query(&query)?;
+        let rows = conn.exec_query(&sql)?;
 
         let results: AnalysisResults = rows
             .iter()

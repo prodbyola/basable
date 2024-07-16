@@ -135,7 +135,7 @@ pub trait QuerySqlParser {
             QueryOperation::SelectData(cols) => {
                 let mut select_cols = String::from("*");
                 if let Some(col_list) = cols {
-                    select_cols = col_list.join(",");
+                    select_cols = col_list.join(", ");
                 };
 
                 format!("SELECT {select_cols} FROM {table}")
@@ -161,7 +161,7 @@ pub trait QuerySqlParser {
         // Parse GROUP BY
         if let Some(group_by) = group_by {
             let cols = group_by.join(", ");
-            sql.push_str(format!("GROUP BY {cols}").as_str());
+            sql.push_str(format!(" GROUP BY {cols}").as_str());
         }
 
         Ok(sql)

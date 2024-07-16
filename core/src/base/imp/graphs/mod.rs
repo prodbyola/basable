@@ -127,6 +127,10 @@ mod tests {
             range: ChronoAnalysisRange("2010-09-01".to_string(), "2010-11-30".to_string()),
         });
 
+        if let Err(err) = &graph  {
+            println!("err: {}", err.to_string());
+        }
+
         assert!(graph.is_ok());
 
         Ok(())
