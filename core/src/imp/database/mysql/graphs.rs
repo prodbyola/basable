@@ -36,20 +36,20 @@ impl VisualizeDB for MySqlDB {
     }
 
     fn trend_graph(&self, opts: TrendAnalysisOpts) -> Result<AnalysisResults, DBError> {
+        
+        let xcol = opts.xcol.clone();
+        let ycol = opts.ycol.clone();
+        let analysis_type = opts.analysis_type.clone();
+        
         let query = opts
-            .build_query()
+            .try_into()
             .map_err(|_| mysql::Error::DriverError(SetupError));
-        let query = query?;
 
-        let TrendAnalysisOpts {
-            xcol,
-            ycol,
-            analysis_type,
-            ..
-        } = opts;
+        let query = query?;
+        let sql = self.generate_sql(query)?;
 
         let conn = self.connector();
-        let rows = conn.exec_query(&query)?;
+        let rows = conn.exec_query(&sql)?;
 
         let results: AnalysisResults = rows
             .iter()

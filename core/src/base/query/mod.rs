@@ -37,5 +37,7 @@ pub struct BasableQuery {
     pub filters: FilterChain,
     pub limit: Option<usize>,
     pub order_by: Option<QueryOrder>,
-    pub group_by: Option<Vec<String>>
+    pub group_by: Option<Vec<String>>,
+    pub left_join: Option<String>,
+    pub having: FilterChain,
 }

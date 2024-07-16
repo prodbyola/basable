@@ -84,20 +84,20 @@ pub(crate) struct ChronoAnalysisOpts {
     pub range: ChronoAnalysisRange,
 }
 
-impl Into<BasableQuery> for ChronoAnalysisOpts {
-    fn into(self) -> BasableQuery {
+impl From<ChronoAnalysisOpts> for BasableQuery {
+    fn from(value: ChronoAnalysisOpts) -> Self {
         let ChronoAnalysisOpts {
             table,
             chrono_col,
             basis,
             range,
-        } = self;
+        } = value;
 
 
         // create query operation type
         let selection_columns = Some(vec![
-            format!("{basis}({chrono_col}) as {BASABLE_CHRONO_XCOL}"),
-            format!("COUNT(*) as {BASABLE_CHRONO_YCOL}"),
+            format!("{basis}({chrono_col}) AS {BASABLE_CHRONO_XCOL}"),
+            format!("COUNT(*) AS {BASABLE_CHRONO_YCOL}"),
         ]);
 
         let operation = QueryOperation::SelectData(selection_columns);
@@ -115,7 +115,7 @@ impl Into<BasableQuery> for ChronoAnalysisOpts {
         let group_columns = vec![format!("{basis}({chrono_col})")];
         let group_by = Some(group_columns);
 
-        let order_by = Some(QueryOrder::DESC(BASABLE_CHRONO_XCOL.to_string()));
+        let order_by = Some(QueryOrder::ASC(BASABLE_CHRONO_XCOL.to_string()));
 
         BasableQuery {
             table,

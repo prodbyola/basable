@@ -127,7 +127,9 @@ pub trait QuerySqlParser {
             filters,
             limit,
             order_by,
-            group_by
+            group_by,
+            left_join,
+            having,
         } = query;
 
         // Parse query operation type
@@ -142,6 +144,11 @@ pub trait QuerySqlParser {
             }
         };
 
+        // Parse left join
+        if let Some(left_join) = left_join {
+            sql.push_str(format!(" LEFT JOIN {left_join}").as_str())
+        }
+
         // Parse query filters
         if filters.not_empty() {
             let filter_chain = <MySqlDB as QuerySqlParser>::parse_filter_chain(&filters);
@@ -152,6 +159,12 @@ pub trait QuerySqlParser {
         if let Some(group_by) = group_by {
             let cols = group_by.join(", ");
             sql.push_str(format!(" GROUP BY {cols}").as_str());
+        }
+
+        // Parse HAVING
+        if having.not_empty() {
+            let filter_chain = <MySqlDB as QuerySqlParser>::parse_filter_chain(&having);
+            sql.push_str(format!(" HAVING {filter_chain}").as_str())
         }
 
         // Parse ORDER BY
