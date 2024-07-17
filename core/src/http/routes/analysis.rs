@@ -53,7 +53,26 @@ pub async fn chrono_analysis(
     }
 }
 
-pub(super) fn analysis_routes() -> Router<AppState> {
+#[debug_handler]
+pub async fn trend_analysis(
+    Query(params): Query<HashMap<String, String>>,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(db): DbExtractor,
+    State(_): State<AppState>,
+) {
+    let table = params.get("table");
+    let analysis_type = params.get("analysis_type");
+    let xcol = params.get("xcol");
+    let ycol = params.get("ycol");
+    let order = params.get("order");
+    let limit = params.get("limit");
+    let foreign_table = params.get("foreign_table");
+    let target_column = params.get("target_column");
+
+    
+}
+
+pub(super) fn graphs_routes() -> Router<AppState> {
     Router::new()
         .route("/chrono", get(chrono_analysis))
 }

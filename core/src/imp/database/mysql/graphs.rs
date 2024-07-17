@@ -1,6 +1,20 @@
 use time::Date;
 
-use crate::{base::{imp::{db::{DBError, QuerySqlParser, DB}, graphs::{category::CategoryGraphOpts, chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts}, trend::{TrendAnalysisOpts, TrendAnalysisType}, AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB}}, AppError}, globals::{BASABLE_CHRONO_XCOL, BASABLE_CHRONO_YCOL}};
+use crate::{
+    base::{
+        imp::{
+            db::{DBError, QuerySqlParser, DB},
+            graphs::{
+                category::CategoryGraphOpts,
+                chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
+                trend::{TrendAnalysisOpts, TrendAnalysisType},
+                AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB,
+            },
+        },
+        AppError,
+    },
+    globals::{BASABLE_CHRONO_XCOL, BASABLE_CHRONO_YCOL},
+};
 
 use super::db::MySqlDB;
 use mysql::{DriverError::SetupError, Value};
@@ -36,11 +50,10 @@ impl VisualizeDB for MySqlDB {
     }
 
     fn trend_graph(&self, opts: TrendAnalysisOpts) -> Result<AnalysisResults, DBError> {
-        
         let xcol = opts.xcol.clone();
         let ycol = opts.ycol.clone();
         let analysis_type = opts.analysis_type.clone();
-        
+
         let query = opts
             .try_into()
             .map_err(|_| mysql::Error::DriverError(SetupError));
@@ -72,32 +85,27 @@ impl VisualizeDB for MySqlDB {
     }
 
     fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, AppError> {
-        let CategoryGraphOpts {
-            table,
-            graph_type,
-            target_col,
-            limit,
-        } = opts;
-        let query = format!(
-            "
-                SELECT COUNT(*) as COUNT, {target_col}
-                FROM {table}
-                GROUP BY {target_col}
-                LIMIT {limit}
-            "
-        );
+        let target_col = opts.target_col.clone();
+        let query = opts.into();
+        
+        let sql = self
+            .generate_sql(query)
+            .map_err(|_| mysql::Error::DriverError(SetupError))?;
 
         let conn = self.connector();
 
-        let rows = conn.exec_query(&query)?;
-        let results: AnalysisResults = rows.iter().map(|r| {
-            let x = AnalysisValue::UInt(r.get("COUNT").unwrap());
+        let rows = conn.exec_query(&sql)?;
+        let results: AnalysisResults = rows
+            .iter()
+            .map(|r| {
+                let x = AnalysisValue::UInt(r.get("COUNT").unwrap());
 
-            let y_value: Value = r.get(target_col.as_str()).unwrap();
-            let y = y_value.into();
+                let y_value: Value = r.get(target_col.as_str()).unwrap();
+                let y = y_value.into();
 
-            AnalysisResult::new(x, y)
-        }).collect();
+                AnalysisResult::new(x, y)
+            })
+            .collect();
 
         Ok(results)
     }

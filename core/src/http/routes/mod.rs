@@ -1,4 +1,4 @@
-use analysis::analysis_routes;
+use analysis::graphs_routes;
 use axum::routing::post;
 use axum::Router;
 
@@ -52,7 +52,7 @@ pub(super) fn core_routes() -> Router<AppState> {
         .route("/connect", post(connect))
         .nest("/auth", auth_routes())
         .nest("/tables", table_routes())
-        .nest("/analysis", analysis_routes())
+        .nest("/graphs", graphs_routes())
 }
 
 #[cfg(test)]

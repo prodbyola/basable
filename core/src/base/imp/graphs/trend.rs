@@ -15,6 +15,7 @@ pub enum TrendAnalysisType {
     IntraModel,
     CrossModel,
 }
+
 pub enum TrendAnalysisOrder {
     DESC,
     ASC,
@@ -63,63 +64,6 @@ pub struct TrendAnalysisOpts {
     pub cross: Option<CrossOptions>,
 }
 
-impl TrendAnalysisOpts {
-    pub fn build_query(&self) -> Result<String, AppError> {
-        let TrendAnalysisOpts {
-            table,
-            analysis_type,
-            xcol,
-            ycol,
-            order,
-            limit,
-            cross,
-        } = self;
-
-        match analysis_type {
-            TrendAnalysisType::IntraModel => {
-                let q = format!(
-                    "
-                        SELECT {xcol}, {ycol} 
-                        FROM {table} 
-                        ORDER BY {ycol} {order} 
-                        LIMIT {limit}
-                    "
-                );
-
-                Ok(q)
-            }
-            TrendAnalysisType::CrossModel => match cross {
-                Some(cross) => {
-                    let CrossOptions {
-                        foreign_table,
-                        target_col,
-                    } = cross;
-                    let q = format!(
-                        "
-                            SELECT x.{xcol} AS {xcol}, COUNT(y.{ycol}) AS {ycol} 
-                            FROM {table} x 
-                            LEFT JOIN {foreign_table} y ON x.{target_col} = y.{ycol} 
-                            GROUP BY {xcol} 
-                            HAVING {ycol} > 0
-                            ORDER BY {ycol} {order}
-                            LIMIT {limit} 
-                        "
-                    );
-
-                    Ok(q)
-                }
-                None => {
-                    let err = AppError::new(
-                        StatusCode::EXPECTATION_FAILED,
-                        "You must provide cross model options.",
-                    );
-                    Err(err)
-                }
-            },
-        }
-    }
-}
-
 impl TryFrom<TrendAnalysisOpts> for BasableQuery {
     type Error = AppError;
 
@@ -137,6 +81,7 @@ impl TryFrom<TrendAnalysisOpts> for BasableQuery {
         match analysis_type {
             TrendAnalysisType::IntraModel => {
                 let operation = QueryOperation::SelectData(Some(vec![xcol, ycol.clone()]));
+                
                 let order = match order {
                     TrendAnalysisOrder::DESC => QueryOrder::DESC(ycol),
                     TrendAnalysisOrder::ASC => QueryOrder::ASC(ycol),
@@ -152,6 +97,7 @@ impl TryFrom<TrendAnalysisOpts> for BasableQuery {
 
                 Ok(q)
             }
+
             TrendAnalysisType::CrossModel => match cross {
                 Some(cross) => {
                     let CrossOptions {
@@ -163,10 +109,13 @@ impl TryFrom<TrendAnalysisOpts> for BasableQuery {
                         format!("x.{xcol} AS {xcol}"),
                         format!("COUNT(y.{ycol}) AS {ycol}"),
                     ];
+
                     let operation = QueryOperation::SelectData(Some(select_columns));
                     let left_join = format!("{foreign_table} y ON x.{target_col} = y.{ycol}");
+                    
                     let mut having = FilterChain::new();
-                    having.add_one(Filter::BASE(FilterCondition {
+                    having.add_one(Filter::BASE(
+                        FilterCondition {
                         column: ycol.clone(),
                         operator: FilterOperator::Gt("0".to_string()),
                     }));
@@ -177,9 +126,9 @@ impl TryFrom<TrendAnalysisOpts> for BasableQuery {
                     };
 
                     let q = BasableQuery {
-                        table: format!("{table} x"),
                         operation,
                         having,
+                        table: format!("{table} x"),
                         left_join: Some(left_join),
                         group_by: Some(vec![xcol]),
                         order_by: Some(order),
@@ -194,6 +143,7 @@ impl TryFrom<TrendAnalysisOpts> for BasableQuery {
                         StatusCode::EXPECTATION_FAILED,
                         "You must provide cross model options.",
                     );
+                    
                     Err(err)
                 }
             },

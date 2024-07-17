@@ -64,7 +64,7 @@ impl TryFrom<String> for ChronoAnalysisRange {
     type Error = String;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let spl: Vec<&str> = value.split("-").collect();
+        let spl: Vec<&str> = value.split("range").collect();
         if spl.len() == 2 {
             let start = spl.get(0).unwrap();
             let end = spl.get(1).unwrap();
