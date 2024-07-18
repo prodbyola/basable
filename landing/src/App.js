@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import './App.css';
 import Footer from './components/footer/Footer';
+import Contact from './components/contact/Contact';
 
 
 const App = () => {
@@ -10,6 +11,7 @@ const App = () => {
     <div className="App">
       <Header />
       <Hero />
+      <Contact />
       <Footer  />
     </div>
   );
