@@ -162,7 +162,7 @@
 	}
 }
 
-@media (min-width: 640px) and (max-width: 1024px) {
+@media (min-width: 426px) and (max-width: 1024px) {
 
 	.line-group,
 	.symbol-container {
@@ -170,7 +170,7 @@
 	}
 
 	.benefit {
-		padding: 100px 32px;
+		padding: 100px 0;
 	}
 
 	.benefit-content {
@@ -203,13 +203,14 @@
 	}
 
 	.benefit-content-tablet {
-		display: inline-block;
-		width: 770px;
+		display: flex;
+		width: 100%;
+		max-width: 770px;
 		height: 292px;
-		position: relative;
 		margin: 55px auto;
 		overflow-x: auto;
 		overflow-y: hidden;
+		scroll-snap-type: x mandatory;
 
 
 		&::-webkit-scrollbar {
@@ -223,20 +224,7 @@
 
 	}
 
-	.card-1 {
-		left: 0;
-		top: 0;
-	}
 
-	.card-2 {
-		left: 388px;
-		top: 0;
-	}
-
-	.card-3 {
-		left: 775px;
-		top: 0;
-	}
 
 	.benefit-title {
 		.benefit-icon {
@@ -253,10 +241,12 @@
 	}
 
 	.benefit-card {
-		width: 380px;
+		flex: 0 0 380px;
 		height: 288px;
 		padding: 40px 15px 40px 15px;
-		position: absolute;
+		scroll-snap-align: center;
+		display: inline-block;
+		margin-inline: 15px;
 
 		.card-title {
 			font-size: 24px;
@@ -266,7 +256,7 @@
 	}
 }
 
-@media (max-width: 640px) {
+@media (max-width: 425px) {
 
 	.line-group,
 	.symbol-container {
@@ -285,7 +275,6 @@
 		margin: auto;
 		display: block;
 
-
 		div {
 			display: inline-block;
 			width: 12px;
@@ -307,13 +296,14 @@
 	}
 
 	.benefit-content-tablet {
-		display: inline-block;
+		display: flex;
 		width: 100%;
+		max-width: 360px;
 		height: 272px;
-		position: relative;
 		margin: 55px auto;
 		overflow-x: auto;
 		overflow-y: hidden;
+		scroll-snap-type: x mandatory;
 
 
 		&::-webkit-scrollbar {
@@ -325,21 +315,6 @@
 			border-radius: 6px;
 		}
 
-	}
-
-	.card-1 {
-		left: 0;
-		top: 0;
-	}
-
-	.card-2 {
-		left: 332px;
-		top: 0;
-	}
-
-	.card-3 {
-		left: 664px;
-		top: 0;
 	}
 
 	.benefit-title {
@@ -359,9 +334,11 @@
 
 	.benefit-card {
 		padding: 40px 15px 40px 15px;
-		position: absolute;
-		width: 312px;
+		flex: 0 0 312px;
 		height: 268px;
+		scroll-snap-align: center;
+		display: inline-block;
+		margin-inline: 20px;
 
 
 		.card-title {

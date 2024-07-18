@@ -45,6 +45,7 @@ const Benefit = () => {
       const scrollWidth = tabletContentRef.current.scrollWidth;
       const clientWidth = tabletContentRef.current.clientWidth;
       const totalScrollableWidth = scrollWidth - clientWidth;
+      if (index === 3) index += 1;
       const newScrollLeft = (totalScrollableWidth / 3) * (index - 1);
       tabletContentRef.current.scrollTo({
         left: newScrollLeft,
