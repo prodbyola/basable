@@ -1,0 +1,90 @@
+.container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+.exploreLink {
+    text-decoration: none;
+    color: white;
+    font-size: 20px;
+    padding: 5px 5px;
+}
+
+.explore {
+    width: 178px;
+    height: 56px;
+    gap: 10px;
+    border-radius: 8px 8px 8px 8px;
+    background: #4451CA;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Lexend;
+    margin-top: 45px;
+    
+}
+
+.explore:hover {
+    opacity: 0.8;
+}
+.explore:active {
+    background: #E6F5FA;   
+}
+
+
+/* Media Query For Large screen Size */
+@media (min-width: 1650px) {
+    .explore {
+        width: 300px;
+        height: 80px;
+        margin-top: 50px;
+   }
+   .exploreLink {
+       font-size: 40px;
+   }
+}
+
+
+/* Media Query For Tablet */
+
+@media (max-width: 999px) {
+    .explore {
+        width: 164px;
+        height: 48px;
+        margin-top: 35px;
+    }
+}
+
+@media (max-width: 580px) {
+    .explore {
+         width: 120px;
+         height: 40px;
+         margin-top: 30px;
+    }
+    .exploreLink {
+        font-size: 15px;
+    }
+}
+
+/* Media Query For Mobile Phone */
+@media (max-width: 485px) {
+    .explore {
+        width: 110px;
+        height: 35px;
+        margin-top: 30px;
+   }
+   .exploreLink {
+       font-size: 13px;
+   }
+}
+ 
+@media (max-width: 400px) {
+    .explore {
+        width: 90px;
+        height: 25px;
+        margin-top: 20px;
+   }
+   .exploreLink {
+       font-size: 10px;
+   }
+}

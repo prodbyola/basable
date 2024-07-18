@@ -1,0 +1,192 @@
+
+.head {
+    width: 170px;
+    height: 40px;
+    padding: 9px 16px 9px 16px;
+    gap: 16px;
+    border-radius: 24px 24px;
+    background-color: #ECEEFA;
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 100px;
+}
+#features{
+    width: 99px;
+    height: 30px;  
+    color: #4451CA;
+    font: Lexend;
+    font-size: 28px;
+    line-height: 30px;
+}
+
+#open {
+    width: 400px;
+    height: 90px;
+    padding: 8px 16px 8px 16px;
+    gap: 10px;
+    border-radius: 8px 8px 8px 8px;
+    background: #4451CA;
+    color: white;
+}
+
+#power {
+    display: block;
+    margin-top: 18px;
+}
+#source {
+    width: 800px;
+    text-align: center;
+    font-size: 40px;
+    font-family: exo;
+}
+.mainHeading {
+    display: grid;
+    justify-content: center;
+    
+}
+
+
+/* Media Query For Large Sreen Size */
+
+@media (min-width: 1870px) {
+    .head {
+        width: 210px;
+        height: 45px;
+        padding: 18px 18px 18px 18px;
+        border-radius: 35px 35px;
+    }
+    #source {
+        width: 800px;
+        font-size: 60px;
+    }
+    .logo {
+        width: 60px;
+        height: 60px;
+    }
+    #features {
+        font-size: 35px;
+    }   
+}
+
+@media (min-width: 1650px) and (max-width: 1869px) {
+    .head {
+        width: 200px;
+        height: 40px;
+        padding: 14px 14px 14px 14px;
+        border-radius: 30px 30px;
+    }
+    #source {
+        width: 700px;
+        font-size: 50px;
+    }
+    .logo {
+        width: 55px;
+        height: 55px;
+    }
+    #features {
+        font-size: 30px;
+    }   
+}
+
+
+/* Media Query For Tablet */
+
+@media (max-width: 999px) {
+    #source{
+        width: 500px;
+        font-size: 30px;
+    }
+    .head {
+        width: 150px;
+        height: 30px;
+        margin-bottom: 5px;
+    }
+    #features {
+        font-size: 23px;
+    }
+    .logo {
+        width: 38px;
+        height: 38px;
+        padding: 10px 4px 10px 4px;
+    }
+}
+
+
+/* Media Query For Mobile Phone */
+
+@media (max-width: 590px) {
+    #source {
+        width: 350px;
+        font-size: 27px;
+    }
+    .logo {
+        width: 35px;
+        height: 35px;
+    }
+    #features {
+        font-size: 20px;
+    }
+    .head {
+        width: 135px;
+        height: 30px;
+        padding: 10px 10px 10px 8px;
+    }
+   
+}
+
+@media (max-width: 485px) {
+    #source {
+        width: 300px;
+        font-size: 22px;
+    }
+    .logo {
+        width: 45px;
+        height: 35px;
+    }
+    #features {
+        font-size: 18px;
+        margin-left: -8px;
+    }
+    .head {
+        width: 120px;
+        height: 20px;
+        padding: 10px 10px 10px 8px;
+        margin-top: 35px;
+    }
+    #open {
+        height: 70px;
+        padding: 8px 16px 8px 16px;
+    }
+   
+}
+@media (max-width: 400px) {
+    #source {
+        width: 200px;
+        font-size: 14px;
+    }
+    .logo {
+        width: 20px;
+        height: 20px;
+    }
+    #features {
+        font-size: 13px;
+        margin-left: -22px;
+    }
+    .head {
+        width: 85px;
+        height: 15px;
+        padding: 6px 6px 6px 6px;
+        margin-bottom: 8px;
+        margin-top: 20px;
+    }
+    #open {
+        height: 70px;
+        padding: 8px 16px 8px 16px;
+    }
+    #power{
+        margin-top: 9px;
+    }
+   
+}
