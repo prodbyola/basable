@@ -1,6 +1,6 @@
 use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 
-use crate::base::{config::ConnectionConfig, connector::Connector, AppError};
+use crate::base::{config::ConnectionConfig, imp::connector::Connector, AppError};
 
 /// MySQL implementation of `BasableConnection`
 #[derive(Clone, Default)]
