@@ -3,8 +3,8 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import Benefit from './components/Benefit';
 import Features from './components/Features/Features';
-import Footer from './components/Footer/AppFooter';
-import Contact from './components/Contact/AppContact';
+// import Footer from './components/Footer/Footer';
+// import Contact from './components/Contact/Contact';
 
 import './App.css';
 
@@ -16,8 +16,8 @@ const App = () => {
       <Hero />
       <Features />    
       <Benefit />
-      <Contact />
-      <Footer  />
+      {/* <Contact />
+      <Footer  /> */}
     </div>
   );
 }
