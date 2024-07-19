@@ -1,29 +1,29 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import "./Contact.css";
 import contactpic from "./images/contactpic.svg";
 import starticon from "./images/icon.svg";
 
 function Contact() {
-    const [form, setForm] = useState({
-        fullname: "",
-        email: "",
-        message: "",
+  const [form, setForm] = useState({
+    fullname: "",
+    email: "",
+    message: "",
+  });
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    console.log("Form Data:", form);
+    setForm({
+      fullname: "",
+      email: "",
+      message: "",
     });
-
-    const handleChange = (event) => {
-        const { name, value } = event.target.value;
-        setForm({ ...form, [name]: value });
-    };
-
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        console.log("Form Data:", form);
-        setForm({
-            fullname: "",
-            email: "",
-            message: "",
-        })
-    }
+  };
 
   return (
     <div>
@@ -48,27 +48,29 @@ function Contact() {
             </div>
             <div className="contact-bottom-part">
               <form onSubmit={handleSubmit}>
-                <div className="input-label">
+                <div className="input-label input-fullname input">
                   <p className="full-name">Full Name</p>
                   <input
                     type="text"
-                    name="name"
+                    name="fullname"
                     value={form.fullname}
                     onChange={handleChange}
+                    placeholder="Enter Full Name"
                   ></input>
                 </div>
 
-                <div className="input-label">
+                <div className="input-label input-email input">
                   <p className="email">Email</p>
                   <input
                     type="email"
                     name="email"
                     value={form.email}
                     onChange={handleChange}
+                    placeholder="Enter your email"
                   ></input>
                 </div>
 
-                <div className="message-label">
+                <div className="message-label input-message textarea">
                   <p className="message">Your Message</p>
                   <textarea
                     name="message"
@@ -77,11 +79,7 @@ function Contact() {
                   ></textarea>
                 </div>
               </form>
-              <button
-                className="submit-btn"
-                type="submit"
-                onClick={handleSubmit}
-              >
+              <button className="submit-btn" type="submit">
                 Submit
               </button>
             </div>
