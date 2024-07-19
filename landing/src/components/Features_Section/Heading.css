@@ -1,0 +1,49 @@
+
+.head {
+    width: 170px;
+    height: 40px;
+    padding: 9px 16px 9px 16px;
+    gap: 16px;
+    border-radius: 24px 24px;
+    background-color: #ECEEFA;
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 100px;
+}
+
+#features{
+    width: 99px;
+    height: 30px;  
+    color: #4451CA;
+    font: Lexend;
+    font-size: 28px;
+    line-height: 30px;
+}
+
+#open {
+    width: 400px;
+    height: 90px;
+    padding: 8px 16px 8px 16px;
+    gap: 10px;
+    border-radius: 8px 8px 8px 8px;
+    background: #4451CA;
+    color: white;
+}
+
+#power {
+    display: block;
+    margin-top: 18px;
+}
+#source {
+    width: 800px;
+    text-align: center;
+    font-size: 48px;
+    font-family: exo;
+}
+.mainHeading {
+    display: grid;
+    justify-content: center;
+    
+}

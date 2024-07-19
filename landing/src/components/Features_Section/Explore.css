@@ -1,0 +1,32 @@
+.container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+.exploreLink {
+    text-decoration: none;
+    color: white;
+    font-size: 16px;
+    padding: 5px 5px;
+}
+
+.explore {
+    width: 178px;
+    height: 56px;
+    gap: 10px;
+    border-radius: 8px 8px 8px 8px;
+    background: #4451CA;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Lexend;
+    margin-top: 45px;
+    
+}
+
+.explore:hover {
+    opacity: 0.8;
+}
+.explore:active {
+    background: #E6F5FA;   
+}
