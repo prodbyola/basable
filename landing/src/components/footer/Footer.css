@@ -18,7 +18,7 @@ footer {
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    margin-top: 2rem;
+    /* margin-top: 1rem; */
     background-color: rgba(255, 255, 255, 1);
     font-family: Lexend;
 }

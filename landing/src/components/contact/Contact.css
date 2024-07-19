@@ -22,10 +22,10 @@ section {
 .contact-container {
     /* width: 1440px; */
     width: 100%;
-    height: 789px;
+    height: 49.3rem;
     display: flex;
-    gap: 116px;
-    padding: 16px 0 0 96px;
+    gap: 7.25rem;
+    padding: 1rem 0 0 6rem;
     font-family: Lexend;
     background-color: rgba(255, 255, 255, 1);
 }
@@ -33,7 +33,7 @@ section {
 .contact-left-side {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: .5rem;
 }
 
 .top-contact-part {
