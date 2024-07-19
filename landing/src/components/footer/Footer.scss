@@ -190,67 +190,66 @@ ul li {
 
 @media only screen and (max-width:639px) {
     footer {
-        /* width: 360px; */
         width: 100%;
-        height: 100vh;
         padding: 40px 24px 40px 24px;
-        gap: 10px;
-        /* background-color: rgba(255, 255, 255, 1); */
     }
 
     .main-footer-container {
-        width: 90%;
-        height: 100%;
+        width: 100%;
         gap: 0rem;
+        height: auto;
     }
 
     .footer-top-container {
         flex-direction: column;
         align-items: flex-start;
         width: 100%;
-        height: 100%;
-        gap: 4rem;
+        padding: 12px;
+        height: auto;
     }
 
     .footer-left-side {
-        width: 28rem;
-        gap: 0rem;
+        width: 100%;
+        height: auto;
     }
 
     .footer-logo {
-        width: 180px;
-        height: 180px;
+        width: 150px;
+        height: 30px;
     }
 
     .footer-left-text {
-        width: 28rem;
-        height: 60px;
+        width: 100%;
         font-size: 1.6rem;
         line-height: 30px;
+        height: auto;
+        margin-bottom: 62px;
     }
 
     .footer-right-side {
         width: 100%;
-        gap: 4rem;
         flex-wrap: wrap;
+        height: auto;
+        gap: 0;
+        column-gap: 12px;
     }
 
     .footer-right-tabs1 {
-        width: 40%;
-        height: 119px;
-        gap: 16px;
+        width: 48%;
+
+        h2 {
+            margin-bottom: 16px;
+        }
     }
 
     .footer-right-tabs2 {
-        width: 40%;
-        height: 147px;
-        gap: 16px;
+        width: 48%;
     }
 
     .footer-right-tabs3 {
         width: 40%;
-        height: 80px;
         gap: 32px;
+        height: auto;
     }
 
     .footer-right-tabs1 h2 {
@@ -276,7 +275,6 @@ ul li {
 
     .footer-listed-items-text-sm1 {
         width: 100%;
-        /* height: 76px; */
         display: flex;
         flex-direction: column;
         gap: 16px;
@@ -284,7 +282,6 @@ ul li {
 
     .footer-listed-items-text-sm2 {
         width: 100%;
-        /* height: 104px; */
         display: flex;
         flex-direction: column;
         gap: 16px;
@@ -292,10 +289,14 @@ ul li {
 
     .footer-listed-items-text-sm3 {
         width: 100%;
-        /* height: 24px; */
         display: flex;
         flex-direction: row;
         gap: 0;
+    }
+
+    .footer-listed-items2 {
+        height: auto;
+        margin-bottom: 24px;
     }
 
 
@@ -348,12 +349,11 @@ ul li {
 
 @media only screen and (min-width:640px) and  (max-width: 1024px){
     footer {
-        /* width: 360px; */
         width: 100%;
-        height: 100vh;
-        padding: 40px 24px 40px 24px;
+        padding: 40px 24px 0 24px;
         gap: 10px;
-        /* background-color: rgba(255, 255, 255, 1); */
+        align-items: start;
+        justify-content: start;
     }
 
     .main-footer-container {

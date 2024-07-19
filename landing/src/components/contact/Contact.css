@@ -52,13 +52,6 @@ section.contactSection {
     background-color: rgba(236, 238, 250, 1);
 }
 
-/* .icon-container{
-    width: 40px;
-    height: 40px;
-    border-radius: 32px;
-    background-color: rgba(255, 255, 255, 1);
-} */
-
 .logo-icon {
     /* width: 24px;
     height: 18.49px;
@@ -71,10 +64,11 @@ section.contactSection {
 .started-text {
     width: 137px;
     height: 30px;
-    font-weight: 400;
     font-size: 24px;
     line-height: 30px;
     color: rgba(68, 81, 202, 1);
+    font-family: "Lexend", sans-serif;
+    font-weight: 300;
 
 }
 
@@ -191,7 +185,7 @@ textarea {
 .input-fullname input,
 .input-email input,
 .input-message textarea {
-    padding-right: 32px;
+    padding: 0px 32px;
 }
 
 .submit-btn {
@@ -229,18 +223,18 @@ textarea {
 /* MEDIA QUERY FOR MOBILE */
 
 @media only screen and (max-width:639px) {
-    /* section {
-            margin: auto;
-        } */
-
+    section.contactSection {
+        margin-bottom: 44px;
+    }
 
     .contact-container {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 8px 16px 8px 16px;
+        padding: 32px 16px;
         border: 1px solid rgba(176, 176, 176, 1);
         width: 90%;
+        height: auto;
         border-radius: 16px;
         background-color: rgba(255, 255, 255, 1);
         margin-top: 2rem;
@@ -286,13 +280,11 @@ textarea {
     }
 
     .contact-head-text {
-        justify-content: center;
-        align-items: center;
-        width: 464px;
-        height: 50%;
-        justify-content: center;
-        align-items: center;
-        /* gap: 1rem; */
+        width: 100%;
+    }
+
+    .contact-head-text p {
+        width: 100%;
     }
 
     .contact-head-text h1 {
@@ -305,8 +297,6 @@ textarea {
     }
 
     .contact-head-text p {
-        width: 464px;
-        height: 30px;
         font-weight: 400;
         font-size: 21px;
         line-height: 30px;
@@ -314,15 +304,13 @@ textarea {
     }
 
     .contact-bottom-part {
-        width: 464px;
-        height: 477px;
+        width: 100%;
+        height: auto;
         gap: 8px;
     }
 
     form {
         width: 100%;
-        height: 547px;
-        gap: 0px;
     }
 
     .input-label {
@@ -411,10 +399,9 @@ textarea {
         justify-content: center;
         align-items: center;
         gap: 0px;
-        padding: 8px 32px 8px 32px;
+        padding: 32px;
         border: 1px solid rgba(176, 176, 176, 1);
         width: 770px;
-        height: 697px;
         border-radius: 16px;
         background-color: rgba(255, 255, 255, 1);
         margin: 1rem auto;

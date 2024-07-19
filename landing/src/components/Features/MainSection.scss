@@ -173,7 +173,7 @@
 
             .section2,
             .section3 {
-                width: 44%;
+                width: 48.4%;
             }
         }
 
@@ -203,6 +203,7 @@
                 font-size: 12px;
             }
         }
+
         .openSource {
             #source {
                 font-size: 24px;
@@ -225,7 +226,8 @@
             flex-direction: column;
             row-gap: 24px;
 
-            .section2, .section3 {
+            .section2,
+            .section3 {
                 width: 100%;
                 padding: 0;
             }
@@ -251,11 +253,15 @@
             }
         }
 
-        #effortless1, #enhanced1, #stunning1 {
+        #effortless1,
+        #enhanced1,
+        #stunning1 {
             font-size: 20px;
         }
 
-        #effortless2, #enhanced2, #stunning2 {
+        #effortless2,
+        #enhanced2,
+        #stunning2 {
             font-size: 16px;
         }
     }
