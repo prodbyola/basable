@@ -3,8 +3,8 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import Benefit from './components/Benefit';
 import Features from './components/Features/Features';
-import Footer from './components/Footer/Footer';
-import Contact from './components/Contact/Contact';
+import Footer from './components/Footer';
+import Contact from './components/Contact';
 
 import './App.css';
 
