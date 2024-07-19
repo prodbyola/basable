@@ -45,17 +45,17 @@ function Footer() {
               <h2>Follow Us</h2>
               <div className="">
                 <ul className="footer-listed-items2 footer-listed-items-text-sm3">
-                  <a href="#">
+                  <a href="/#">
                     <img
                       className="social-icon"
                       src={linkedin}
                       alt="linkedin"
                     />
                   </a>
-                  <a href="#">
+                  <a href="/#">
                     <img className="social-icon" src={twitter} alt="linkedin" />
                   </a>
-                  <a href="#">
+                  <a href="/#">
                     <img className="social-icon" src={github} alt="linkedin" />
                   </a>
                 </ul>
