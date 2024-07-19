@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./Contact.css";
-import contactpic from "./images/contactpic.svg";
+// import contactpic from "./images/contactpic.svg";
 import starticon from "./images/icon.svg";
 
 function Contact() {
@@ -84,7 +84,7 @@ function Contact() {
           </div>
         </div>
         <div className="contact-right-side">
-          <img className="contact-photo" src={contactpic} alt="call" />
+          {/* <img className="contact-photo" src={contactpic} alt="call" /> */}
         </div>
       </div>
     </section>
