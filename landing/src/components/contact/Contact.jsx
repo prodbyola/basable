@@ -83,9 +83,9 @@ function Contact() {
             </button>
           </div>
         </div>
-        <div className="contact-right-side">
-          {/* <img className="contact-photo" src={contactpic} alt="call" /> */}
-        </div>
+        {/* <div className="contact-right-side">
+          <img className="contact-photo" src={contactpic} alt="call" />
+        </div> */}
       </div>
     </section>
   );
