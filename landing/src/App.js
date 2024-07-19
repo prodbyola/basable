@@ -3,8 +3,8 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import Benefit from './components/Benefit';
 import Features from './components/Features/Features';
-import Footer from './components/Footer';
-import Contact from './components/Contact';
+import Footer from './components/footer';
+import Contact from './components/contact';
 
 import './App.css';
 
@@ -17,7 +17,7 @@ const App = () => {
       <Features />    
       <Benefit />
       <Contact />
-      <Footer  />
+      <Footer />
     </div>
   );
 }
