@@ -11,21 +11,35 @@ use crate::base::{
 };
 
 #[derive(Clone)]
-pub enum TrendAnalysisType {
+pub enum TrendGraphType {
     IntraModel,
     CrossModel,
 }
 
-pub enum TrendAnalysisOrder {
+impl TryFrom<String> for TrendGraphType {
+    type Error = AppError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value == "intra".to_string() {
+            Ok(Self::IntraModel)
+        } else if value == "cross".to_string() {
+            Ok(Self::CrossModel)
+        } else {
+            Err(AppError::new(StatusCode::EXPECTATION_FAILED, "Invalid TrendGraphType"))
+        }
+    }
+}
+
+pub enum TrendGraphOrder {
     DESC,
     ASC,
 }
 
-impl Display for TrendAnalysisOrder {
+impl Display for TrendGraphOrder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let order = match self {
-            TrendAnalysisOrder::DESC => "DESC",
-            TrendAnalysisOrder::ASC => "ASC",
+            TrendGraphOrder::DESC => "DESC",
+            TrendGraphOrder::ASC => "ASC",
         };
 
         write!(f, "{}", order)
@@ -40,35 +54,35 @@ pub struct CrossOptions {
     pub target_col: String,
 }
 
-pub struct TrendAnalysisOpts {
+pub struct TrendGraphOpts {
     /// The primary table you want to analyze
     pub table: String,
 
     /// The type of trend analysis you want want to perform
-    pub analysis_type: TrendAnalysisType,
+    pub analysis_type: TrendGraphType,
 
     /// The column you want to use for independent variables.
     pub xcol: String,
 
-    /// The column you want to use for dependent variable. For [`TrendAnalysisType::CrossModel`],
+    /// The column you want to use for dependent variable. For [`TrendGraphType::CrossModel`],
     /// this should be set to the column name used as foreignKey from [`CrossOptions::foreign_table`].
     pub ycol: String,
 
     /// Order of the analysis
-    pub order: TrendAnalysisOrder,
+    pub order: Option<TrendGraphOrder>,
 
     /// Limit of returned analysis
-    pub limit: usize,
+    pub limit: Option<usize>,
 
     /// Configure this option if you're using [`TrendAnalysisType::CrossModel`].
     pub cross: Option<CrossOptions>,
 }
 
-impl TryFrom<TrendAnalysisOpts> for BasableQuery {
+impl TryFrom<TrendGraphOpts> for BasableQuery {
     type Error = AppError;
 
-    fn try_from(value: TrendAnalysisOpts) -> Result<Self, Self::Error> {
-        let TrendAnalysisOpts {
+    fn try_from(value: TrendGraphOpts) -> Result<Self, Self::Error> {
+        let TrendGraphOpts {
             table,
             analysis_type,
             xcol,
@@ -79,26 +93,33 @@ impl TryFrom<TrendAnalysisOpts> for BasableQuery {
         } = value;
 
         match analysis_type {
-            TrendAnalysisType::IntraModel => {
+            TrendGraphType::IntraModel => {
                 let operation = QueryOperation::SelectData(Some(vec![xcol, ycol.clone()]));
                 
                 let order = match order {
-                    TrendAnalysisOrder::DESC => QueryOrder::DESC(ycol),
-                    TrendAnalysisOrder::ASC => QueryOrder::ASC(ycol),
+                    Some(order) => {
+                        match order {
+                            TrendGraphOrder::DESC => QueryOrder::DESC(ycol),
+                            TrendGraphOrder::ASC => QueryOrder::ASC(ycol)
+                        }
+                    }
+                    None => QueryOrder::DESC(ycol)
                 };
+
+                let order_by = Some(order);
 
                 let q = BasableQuery {
                     table,
                     operation,
-                    order_by: Some(order),
-                    limit: Some(limit),
+                    order_by,
+                    limit,
                     ..Default::default()
                 };
 
                 Ok(q)
             }
 
-            TrendAnalysisType::CrossModel => match cross {
+            TrendGraphType::CrossModel => match cross {
                 Some(cross) => {
                     let CrossOptions {
                         foreign_table,
@@ -121,9 +142,16 @@ impl TryFrom<TrendAnalysisOpts> for BasableQuery {
                     }));
 
                     let order = match order {
-                        TrendAnalysisOrder::DESC => QueryOrder::DESC(ycol),
-                        TrendAnalysisOrder::ASC => QueryOrder::ASC(ycol),
+                        Some(order) => {
+                            match order {
+                                TrendGraphOrder::DESC => QueryOrder::DESC(ycol),
+                                TrendGraphOrder::ASC => QueryOrder::ASC(ycol)
+                            }
+                        }
+                        None => QueryOrder::DESC(ycol)
                     };
+    
+                    let order_by = Some(order);
 
                     let q = BasableQuery {
                         operation,
@@ -131,8 +159,8 @@ impl TryFrom<TrendAnalysisOpts> for BasableQuery {
                         table: format!("{table} x"),
                         left_join: Some(left_join),
                         group_by: Some(vec![xcol]),
-                        order_by: Some(order),
-                        limit: Some(limit),
+                        order_by,
+                        limit,
                         ..Default::default()
                     };
 

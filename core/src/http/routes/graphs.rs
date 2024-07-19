@@ -1,13 +1,16 @@
 use std::collections::HashMap;
 
 use axum::{
-    extract::{Query, State}, http::StatusCode, routing::get, Json, Router
+    extract::{Query, State},
+    http::StatusCode,
+    routing::get,
+    Json, Router,
 };
 use axum_macros::debug_handler;
 
 use crate::{
     base::{
-        imp::graphs::{chrono::ChronoAnalysisOpts, AnalysisResults},
+        imp::graphs::{chrono::ChronoAnalysisOpts, trend::TrendGraphOpts, AnalysisResults},
         AppError, AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor},
@@ -54,12 +57,12 @@ pub async fn chrono_analysis(
 }
 
 #[debug_handler]
-pub async fn trend_analysis(
+pub async fn trend_graph(
     Query(params): Query<HashMap<String, String>>,
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) {
+) -> Result<(), AppError> {
     let table = params.get("table");
     let analysis_type = params.get("analysis_type");
     let xcol = params.get("xcol");
@@ -69,10 +72,30 @@ pub async fn trend_analysis(
     let foreign_table = params.get("foreign_table");
     let target_column = params.get("target_column");
 
-    
+    match (table, analysis_type, xcol, ycol) {
+        (Some(table), Some(analysis_type), Some(xcol), Some(ycol)) => {
+            let gt = analysis_type.clone();
+            let analysis_type = gt.try_into()?;
+
+            let opts = TrendGraphOpts {
+                table: String::from(table),
+                analysis_type,
+                xcol: String::from(xcol),
+                ycol: String::from(ycol),
+                order: todo!(),
+                limit: todo!(),
+                cross: todo!(),
+            };
+
+            Ok(())
+        }
+        _ => {
+            let err = AppError::new(StatusCode::EXPECTATION_FAILED, "Missing query parameters");
+            Err(err)
+        }
+    }
 }
 
 pub(super) fn graphs_routes() -> Router<AppState> {
-    Router::new()
-        .route("/chrono", get(chrono_analysis))
+    Router::new().route("/chrono", get(chrono_analysis))
 }

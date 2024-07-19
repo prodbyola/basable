@@ -7,7 +7,7 @@ use crate::{
             graphs::{
                 category::CategoryGraphOpts,
                 chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
-                trend::{TrendAnalysisOpts, TrendAnalysisType},
+                trend::{TrendGraphOpts, TrendGraphType},
                 AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB,
             },
         },
@@ -49,7 +49,7 @@ impl VisualizeDB for MySqlDB {
         Ok(results)
     }
 
-    fn trend_graph(&self, opts: TrendAnalysisOpts) -> Result<AnalysisResults, DBError> {
+    fn trend_graph(&self, opts: TrendGraphOpts) -> Result<AnalysisResults, DBError> {
         let xcol = opts.xcol.clone();
         let ycol = opts.ycol.clone();
         let analysis_type = opts.analysis_type.clone();
@@ -69,10 +69,10 @@ impl VisualizeDB for MySqlDB {
             .map(|r| {
                 let x = AnalysisValue::Text(r.get(xcol.as_str()).unwrap());
                 let y = match analysis_type {
-                    TrendAnalysisType::IntraModel => {
+                    TrendGraphType::IntraModel => {
                         AnalysisValue::Double(r.get(ycol.as_str()).unwrap())
                     }
-                    TrendAnalysisType::CrossModel => {
+                    TrendGraphType::CrossModel => {
                         AnalysisValue::UInt(r.get(ycol.as_str()).unwrap())
                     }
                 };

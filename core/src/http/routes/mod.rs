@@ -1,4 +1,4 @@
-use analysis::graphs_routes;
+use graphs::graphs_routes;
 use axum::routing::post;
 use axum::Router;
 
@@ -15,7 +15,7 @@ use self::table::table_routes;
 
 pub(super) mod auth;
 pub(super) mod table;
-pub(super) mod analysis;
+pub(super) mod graphs;
 
 #[debug_handler]
 /// POST: /core/connect
