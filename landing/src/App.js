@@ -5,6 +5,7 @@ import Benefit from './components/Benefit';
 import Features from './components/Features/Features';
 import Footer from './components/footer';
 import Contact from './components/contact';
+import { Analytics } from "@vercel/analytics/react"
 
 import './App.css';
 
@@ -18,6 +19,7 @@ const App = () => {
       <Benefit />
       <Contact />
       <Footer />
+      <Analytics />
     </div>
   );
 }
