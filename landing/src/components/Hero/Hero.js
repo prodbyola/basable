@@ -10,14 +10,23 @@ import colorBar from './assets/Vector.svg';
 
 const Hero = () => {
   return (
-    <section id="hero" className="hero">
-      <div className="grid-pattern" style={{ backgroundImage: `url(${backgroundPattern})` }}></div>
+    <section id="about" className="hero">
+      <div
+        className="grid-pattern"
+        style={{ backgroundImage: `url(${backgroundPattern})` }}
+      ></div>
       <img src={colorBar} alt="Color Bar" className="color-bar-image" />
       <div className="hero-content">
         <h1>
-          <span className="highlight">Unleash</span> <span>the Power <br/> of Your Data</span>
+          <span className="highlight">Unleash</span>{' '}
+          <span>
+            the Power <br /> of Your Data
+          </span>
         </h1>
-        <p>Open-source data management, visualization, and business insights for everyone.</p>
+        <p>
+          Open-source data management, visualization, and business insights for
+          everyone.
+        </p>
         <button className="btn primary-btn">Join Waiting List</button>
       </div>
       <div className="hero-image">
@@ -26,7 +35,6 @@ const Hero = () => {
         <img src={profileBar} alt="Profile Bar" className="profile-bar-image" />
         <img src={vDown} alt="Visualize Bar Down" className="v-down-image" />
         <img src={vUp} alt="Visualize Bar Up" className="v-up-image" />
-        
       </div>
     </section>
   );
