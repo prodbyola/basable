@@ -153,12 +153,13 @@ ul li {
 }
 
 .bottom-footer-inner {
-    width: 1296px;
+    width: 100%;
+    justify-content: space-between;
     height: 32px;
     display: flex;
     align-items: center;
-    gap: 994px;
     margin-bottom: 1rem;
+    padding: 0 16px;
 }
 
 .copyright-copy {
@@ -332,13 +333,12 @@ ul li {
     }
 
     .bottom-footer-inner {
-        /* width: 312px; */
         width: 100%;
         height: 32px;
         justify-content: space-between;
         gap: 0;
+        padding: 0;
         padding-top: 1.6rem;
-
     }
 
 }

@@ -4,6 +4,7 @@
 	justify-content: center;
 	align-items: center;
 	position: relative;
+	margin-top: 104px;
 
 
 	.grid-pattern {
@@ -26,7 +27,6 @@
 		top: 56%;
 		left: 0px;
 		gap: 0px;
-		// opacity: 0px;
 	}
 
 	.hero-content {
@@ -149,6 +149,7 @@
 /* Media Query: TABLET */
 @media (min-width: 640px) and (max-width: 1024px) {
 	.hero {
+		margin-top: 0;
 
 		.color-bar-image {
 			position: absolute;
@@ -217,7 +218,7 @@
 /*Media Query: Mobile view */
 @media (max-width: 639px) {
 	.hero {
-		padding: auto;
+		margin-top: 0;
 
 		.color-bar-image {
 			position: absolute;
@@ -269,6 +270,8 @@
 				height: 27px;
 				top: 18%;
 				right: 6%;
+				padding: 0;
+				border-radius: 8px;
 			}
 
 			//slope down img
