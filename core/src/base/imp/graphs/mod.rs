@@ -1,4 +1,4 @@
-use std::fmt::{Debug, Display};
+use std::{collections::HashMap, fmt::{Debug, Display}};
 
 use category::CategoryGraphOpts;
 use chrono::ChronoAnalysisOpts;
@@ -98,6 +98,10 @@ pub(crate) trait VisualizeDB {
     fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, AppError>;
 }
 
+pub trait FromQueryParams {
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError> where Self: Sized;
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -161,8 +165,8 @@ mod tests {
         let opts = CategoryGraphOpts {
             table: "vgchartz".to_string(),
             graph_type: CategoryGraphType::Simple,
-            target_col: "publisher".to_string(),
-            limit: 20,
+            target_column: "publisher".to_string(),
+            limit: Some(20),
         };
 
         let graph = db.category_graph(opts);

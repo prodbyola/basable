@@ -85,7 +85,7 @@ impl VisualizeDB for MySqlDB {
     }
 
     fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, AppError> {
-        let target_col = opts.target_col.clone();
+        let target_col = opts.target_column.clone();
         let query = opts.into();
         
         let sql = self
