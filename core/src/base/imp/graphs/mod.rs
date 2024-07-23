@@ -137,7 +137,7 @@ mod tests {
         let db = create_test_db()?;
         let opts = TrendGraphOpts {
             table: "patients".to_string(),
-            analysis_type: TrendGraphType::CrossModel,
+            graph_type: TrendGraphType::CrossModel,
             xcol: "FIRST".to_string(),
             ycol: "PATIENT".to_string(),
             order: Some(TrendGraphOrder::ASC),

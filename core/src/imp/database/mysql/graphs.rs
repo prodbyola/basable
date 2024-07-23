@@ -52,7 +52,7 @@ impl VisualizeDB for MySqlDB {
     fn trend_graph(&self, opts: TrendGraphOpts) -> Result<AnalysisResults, DBError> {
         let xcol = opts.xcol.clone();
         let ycol = opts.ycol.clone();
-        let analysis_type = opts.analysis_type.clone();
+        let analysis_type = opts.graph_type.clone();
 
         let query = opts
             .try_into()

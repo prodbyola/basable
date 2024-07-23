@@ -10,14 +10,18 @@ use axum_macros::debug_handler;
 
 use crate::{
     base::{
-        imp::graphs::{chrono::ChronoAnalysisOpts, trend::TrendGraphOpts, AnalysisResults},
+        imp::graphs::{
+            chrono::ChronoAnalysisOpts,
+            trend::{CrossOptions, TrendGraphOpts},
+            AnalysisResults,
+        },
         AppError, AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor},
 };
 
 #[debug_handler]
-pub async fn chrono_analysis(
+pub async fn chrono_graph(
     Query(params): Query<HashMap<String, String>>,
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
@@ -62,40 +66,15 @@ pub async fn trend_graph(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) -> Result<(), AppError> {
-    let table = params.get("table");
-    let analysis_type = params.get("analysis_type");
-    let xcol = params.get("xcol");
-    let ycol = params.get("ycol");
-    let order = params.get("order");
-    let limit = params.get("limit");
-    let foreign_table = params.get("foreign_table");
-    let target_column = params.get("target_column");
+) -> Result<Json<AnalysisResults>, AppError> {
+    let opts = TrendGraphOpts::from_query_params(params)?;
+    let graph = db.trend_graph(opts)?;
 
-    match (table, analysis_type, xcol, ycol) {
-        (Some(table), Some(analysis_type), Some(xcol), Some(ycol)) => {
-            let gt = analysis_type.clone();
-            let analysis_type = gt.try_into()?;
-
-            let opts = TrendGraphOpts {
-                table: String::from(table),
-                analysis_type,
-                xcol: String::from(xcol),
-                ycol: String::from(ycol),
-                order: todo!(),
-                limit: todo!(),
-                cross: todo!(),
-            };
-
-            Ok(())
-        }
-        _ => {
-            let err = AppError::new(StatusCode::EXPECTATION_FAILED, "Missing query parameters");
-            Err(err)
-        }
-    }
+    Ok(Json(graph))
 }
 
 pub(super) fn graphs_routes() -> Router<AppState> {
-    Router::new().route("/chrono", get(chrono_analysis))
+    Router::new()
+        .route("/chrono", get(chrono_graph))
+        .route("/trend", get(trend_graph))
 }
