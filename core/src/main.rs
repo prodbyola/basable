@@ -9,6 +9,7 @@ mod http;
 mod imp;
 mod utils;
 mod tests;
+mod globals;
 
 #[tokio::main]
 async fn main() {
