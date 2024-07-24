@@ -32,7 +32,6 @@ const theme = createTheme({
       textAlign: 'center'
     },
     field_text1: {
-      fontFamily: 'Inter',
       fontSize: '16px',
       fontWeight: '400',
       lineHeight: '24px',
@@ -103,7 +102,6 @@ function CreateGuest() {
                 <span className="title">Connect your database</span>
                 <span className="description">
                   Connect your database today and start your data exploration
-                  <br />
                   journey with Basable.
                 </span>
               </div>
