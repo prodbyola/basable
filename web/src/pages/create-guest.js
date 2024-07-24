@@ -1,84 +1,84 @@
-import '../styles/create-guest.scss';
-import * as React from 'react';
-import Button from '@mui/material/Button';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
-import logo from '../assets/images/basable-logo.svg';
-import illustration from '../assets/images/connection-illustration.svg';
-import gradient1 from '../assets/images/gradient-1.svg';
-import gradient2 from '../assets/images/gradient-2.svg';
-import gradient3 from '../assets/images/gradient-3.svg';
-import IconButton from '@mui/material/IconButton';
-import OutlinedInput from '@mui/material/OutlinedInput';
-import InputAdornment from '@mui/material/InputAdornment';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
+import "../styles/create-guest.scss";
+import * as React from "react";
+import Button from "@mui/material/Button";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Typography from "@mui/material/Typography";
+import logo from "../assets/images/basable-logo.svg";
+import illustration from "../assets/images/connection-illustration.svg";
+import gradient1 from "../assets/images/gradient-1.svg";
+import gradient2 from "../assets/images/gradient-2.svg";
+import gradient3 from "../assets/images/gradient-3.svg";
+import IconButton from "@mui/material/IconButton";
+import OutlinedInput from "@mui/material/OutlinedInput";
+import InputAdornment from "@mui/material/InputAdornment";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 
 const theme = createTheme({
   typography: {
     button_medium: {
-      fontSize: '16px',
-      fontWeight: '400',
-      lineHeight: '20px',
-      textAlign: 'center'
+      fontSize: "16px",
+      fontWeight: "400",
+      lineHeight: "20px",
+      textAlign: "center",
     },
 
     button_normal: {
-      fontSize: '18px',
-      fontWeight: '400',
-      lineHeight: '24px',
-      textAlign: 'center'
+      fontSize: "18px",
+      fontWeight: "400",
+      lineHeight: "24px",
+      textAlign: "center",
     },
     field_text1: {
-      fontFamily: 'Inter',
-      fontSize: '16px',
-      fontWeight: '400',
-      lineHeight: '24px',
-      textAlign: 'left'
-    }
+      fontFamily: "Inter",
+      fontSize: "16px",
+      fontWeight: "400",
+      lineHeight: "24px",
+      textAlign: "left",
+    },
   },
   palette: {
     primary: {
-      primary100: '#eceefa',
-      primary200: '#d2d5f2',
-      primary300: '#afb4e8',
-      primary400: '#8991de',
-      primary500: '#6670d4',
-      main: '#4451ca',
-      primary700: '#3a45ac',
-      primary800: '#303a8f'
-    }
+      primary100: "#eceefa",
+      primary200: "#d2d5f2",
+      primary300: "#afb4e8",
+      primary400: "#8991de",
+      primary500: "#6670d4",
+      main: "#4451ca",
+      primary700: "#3a45ac",
+      primary800: "#303a8f",
+    },
   },
   components: {
     MuiButton: {
       styleOverrides: {
         sizeSmall: {
-          padding: '8px 24px'
+          padding: "8px 24px",
         },
         sizeMedium: {
-          width: '111px',
-          height: '48px',
-          padding: '14px 32px'
+          width: "111px",
+          height: "48px",
+          padding: "14px 32px",
         },
         sizeNormal: {
-          width: '111px',
-          height: '56px',
-          padding: '16px 32px'
+          width: "111px",
+          height: "56px",
+          padding: "16px 32px",
         },
         root: {
-          textTransform: 'initial'
-        }
-      }
-    }
-  }
+          textTransform: "initial",
+        },
+      },
+    },
+  },
 });
 
 function CreateGuest() {
   const [showPassword, setShowPassword] = React.useState(false);
-  const [dbType, setDbType] = React.useState('0');
-  const [srcType, setSrcType] = React.useState('1');
+  const [dbType, setDbType] = React.useState("0");
+  const [srcType, setSrcType] = React.useState("1");
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
   const handleMouseDownPassword = (event) => {
@@ -124,7 +124,7 @@ function CreateGuest() {
                     <OutlinedInput
                       sx={{
                         width: 1,
-                        typography: 'field_text1'
+                        typography: "field_text1",
                       }}
                       placeholder="Enter username"
                       type="text"
@@ -137,11 +137,11 @@ function CreateGuest() {
                     <OutlinedInput
                       sx={{
                         width: 1,
-                        typography: 'field_text1'
+                        typography: "field_text1",
                       }}
                       placeholder="Enter password"
                       id="outlined-adornment-password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       endAdornment={
                         <InputAdornment position="end">
                           <IconButton
@@ -165,7 +165,7 @@ function CreateGuest() {
                 <OutlinedInput
                   sx={{
                     width: 1,
-                    typography: 'field_text1'
+                    typography: "field_text1",
                   }}
                   placeholder="Enter database name"
                   type="text"
@@ -179,7 +179,7 @@ function CreateGuest() {
                   <Select
                     sx={{
                       width: 1,
-                      typography: 'field_text1'
+                      typography: "field_text1",
                     }}
                     value={dbType}
                     onChange={handleDbChange}
@@ -199,7 +199,7 @@ function CreateGuest() {
                   <OutlinedInput
                     sx={{
                       width: 1,
-                      typography: 'field_text1'
+                      typography: "field_text1",
                     }}
                     placeholder="Enter Host name"
                     type="text"
@@ -214,7 +214,7 @@ function CreateGuest() {
                   <OutlinedInput
                     sx={{
                       width: 1,
-                      typography: 'field_text1'
+                      typography: "field_text1",
                     }}
                     placeholder="Enter port type"
                     type="text"
@@ -228,7 +228,7 @@ function CreateGuest() {
                   <Select
                     sx={{
                       width: 1,
-                      typography: 'field_text1'
+                      typography: "field_text1",
                     }}
                     value={srcType}
                     onChange={handleSrcChange}
