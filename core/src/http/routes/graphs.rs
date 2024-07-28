@@ -1,20 +1,27 @@
 use std::collections::HashMap;
 
 use axum::{
-    extract::{Query, State}, http::StatusCode, routing::get, Json, Router
+    extract::{Query, State},
+    http::StatusCode,
+    routing::get,
+    Json, Router,
 };
 use axum_macros::debug_handler;
 
 use crate::{
     base::{
-        imp::analysis::{chrono::ChronoAnalysisOpts, AnalysisResults},
+        imp::graphs::{
+            chrono::ChronoAnalysisOpts,
+            trend::{CrossOptions, TrendGraphOpts},
+            AnalysisResults,
+        },
         AppError, AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor},
 };
 
 #[debug_handler]
-pub async fn chrono_analysis(
+pub async fn chrono_graph(
     Query(params): Query<HashMap<String, String>>,
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
@@ -53,7 +60,21 @@ pub async fn chrono_analysis(
     }
 }
 
-pub(super) fn analysis_routes() -> Router<AppState> {
+#[debug_handler]
+pub async fn trend_graph(
+    Query(params): Query<HashMap<String, String>>,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(db): DbExtractor,
+    State(_): State<AppState>,
+) -> Result<Json<AnalysisResults>, AppError> {
+    let opts = TrendGraphOpts::from_query_params(params)?;
+    let graph = db.trend_graph(opts)?;
+
+    Ok(Json(graph))
+}
+
+pub(super) fn graphs_routes() -> Router<AppState> {
     Router::new()
-        .route("/chrono", get(chrono_analysis))
+        .route("/chrono", get(chrono_graph))
+        .route("/trend", get(trend_graph))
 }

@@ -5,7 +5,7 @@ use chrono::ChronoAnalysisOpts;
 use mysql::Value as MysqlValue;
 use serde::{ser::SerializeTuple, Serialize};
 use time::Date;
-use trend::TrendAnalysisOpts;
+use trend::TrendGraphOpts;
 
 use crate::base::AppError;
 
@@ -94,7 +94,7 @@ impl Debug for AnalysisResult {
 
 pub(crate) trait VisualizeDB {
     fn chrono_graph(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError>;
-    fn trend_graph(&self, opts: TrendAnalysisOpts) -> Result<AnalysisResults, DBError>;
+    fn trend_graph(&self, opts: TrendGraphOpts) -> Result<AnalysisResults, DBError>;
     fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, AppError>;
 }
 
@@ -102,7 +102,7 @@ pub(crate) trait VisualizeDB {
 mod tests {
     use crate::{
         base::{
-            imp::analysis::{
+            imp::graphs::{
                 category::{CategoryGraphOpts, CategoryGraphType},
                 chrono::{ChronoAnalysisBasis, ChronoAnalysisRange},
                 trend::CrossOptions,
@@ -113,7 +113,7 @@ mod tests {
     };
 
     use super::{
-        trend::{TrendAnalysisOpts, TrendAnalysisOrder, TrendAnalysisType},
+        trend::{TrendGraphOpts, TrendGraphOrder, TrendGraphType},
         ChronoAnalysisOpts,
     };
 
@@ -135,13 +135,13 @@ mod tests {
     #[test]
     fn test_trend_graph() -> Result<(), AppError> {
         let db = create_test_db()?;
-        let opts = TrendAnalysisOpts {
+        let opts = TrendGraphOpts {
             table: "patients".to_string(),
-            analysis_type: TrendAnalysisType::CrossModel,
+            graph_type: TrendGraphType::CrossModel,
             xcol: "FIRST".to_string(),
             ycol: "PATIENT".to_string(),
-            order: TrendAnalysisOrder::ASC,
-            limit: 50,
+            order: Some(TrendGraphOrder::ASC),
+            limit: Some(50),
             cross: Some(CrossOptions {
                 foreign_table: "encounters".to_string(),
                 target_col: "Id".to_string(),
