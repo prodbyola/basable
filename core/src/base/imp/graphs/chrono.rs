@@ -145,12 +145,12 @@ impl From<ChronoAnalysisOpts> for BasableQuery {
         } = value;
 
         // create query operation type
-        let selection_columns = Some(vec![
+        let selections = Some(vec![
             format!("{basis}({chrono_col}) AS {BASABLE_CHRONO_XCOL}"),
             format!("COUNT(*) AS {BASABLE_CHRONO_YCOL}"),
         ]);
 
-        let operation = QueryOperation::SelectData(selection_columns);
+        let operation = QueryOperation::SelectData(selections);
 
         // create query filters
         let filter = Filter::BASE(FilterCondition {
