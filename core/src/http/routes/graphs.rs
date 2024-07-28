@@ -10,7 +10,8 @@ use axum_macros::debug_handler;
 use crate::{
     base::{
         imp::graphs::{
-            category::CategoryGraphOpts, chrono::ChronoAnalysisOpts, trend::TrendGraphOpts, AnalysisResults, FromQueryParams
+            category::CategoryGraphOpts, chrono::ChronoAnalysisOpts, geo::GeoGraphOpts,
+            trend::TrendGraphOpts, AnalysisResults, FromQueryParams,
         },
         AppError, AppState,
     },
@@ -56,10 +57,24 @@ pub async fn category_graph(
     Ok(Json(graph))
 }
 
+#[debug_handler]
+pub async fn geo_graph(
+    Query(params): Query<HashMap<String, String>>,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(db): DbExtractor,
+    State(_): State<AppState>,
+) -> Result<Json<AnalysisResults>, AppError> {
+    let opts = GeoGraphOpts::from_query_params(params)?;
+    let graph = db.geo_graph(opts)?;
+
+    Ok(Json(graph))
+}
+
 /// A collection of routes for Graph construction
 pub(super) fn graphs_routes() -> Router<AppState> {
     Router::new()
         .route("/chrono", get(chrono_graph))
         .route("/trend", get(trend_graph))
         .route("/category", get(category_graph))
+        .route("/geo", get(geo_graph))
 }

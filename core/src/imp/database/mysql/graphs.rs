@@ -1,17 +1,15 @@
 use time::Date;
 
 use crate::{
-    base::{
-        imp::{
-            db::{DBError, QuerySqlParser, DB},
-            graphs::{
-                category::CategoryGraphOpts,
-                chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
-                trend::{TrendGraphOpts, TrendGraphType},
-                AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB,
-            },
+    base::imp::{
+        db::{DBError, QuerySqlParser, DB},
+        graphs::{
+            category::CategoryGraphOpts,
+            chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
+            geo::GeoGraphOpts,
+            trend::{TrendGraphOpts, TrendGraphType},
+            AnalysisResult, AnalysisResults, AnalysisValue, VisualizeDB,
         },
-        AppError,
     },
     globals::{BASABLE_CHRONO_XCOL, BASABLE_CHRONO_YCOL},
 };
@@ -84,10 +82,10 @@ impl VisualizeDB for MySqlDB {
         Ok(results)
     }
 
-    fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, AppError> {
+    fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, DBError> {
         let target_col = opts.target_column.clone();
         let query = opts.into();
-        
+
         let sql = self
             .generate_sql(query)
             .map_err(|_| mysql::Error::DriverError(SetupError))?;
@@ -98,10 +96,36 @@ impl VisualizeDB for MySqlDB {
         let results: AnalysisResults = rows
             .iter()
             .map(|r| {
-                let x = AnalysisValue::UInt(r.get("COUNT").unwrap());
+                let x_value: Value = r.get(target_col.as_str()).unwrap();
+                let x = x_value.into();
 
-                let y_value: Value = r.get(target_col.as_str()).unwrap();
-                let y = y_value.into();
+                let y = AnalysisValue::UInt(r.get("COUNT").unwrap());
+
+                AnalysisResult::new(x, y)
+            })
+            .collect();
+
+        Ok(results)
+    }
+
+    fn geo_graph(&self, opts: GeoGraphOpts) -> Result<AnalysisResults, DBError> {
+        let target_col = opts.target_column.clone();
+        let query = opts.into();
+
+        let sql = self
+            .generate_sql(query)
+            .map_err(|_| mysql::Error::DriverError(SetupError))?;
+
+        let conn = self.connector();
+
+        let rows = conn.exec_query(&sql)?;
+        let results: AnalysisResults = rows
+            .iter()
+            .map(|r| {
+                let x_value: Value = r.get(target_col.as_str()).unwrap();
+                let x = x_value.into();
+
+                let y = AnalysisValue::UInt(r.get("COUNT").unwrap());
 
                 AnalysisResult::new(x, y)
             })
