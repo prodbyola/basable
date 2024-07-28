@@ -12,6 +12,8 @@ use crate::base::{
     AppError,
 };
 
+use super::FromQueryParams;
+
 #[derive(Clone)]
 pub enum TrendGraphType {
     IntraModel,
@@ -101,10 +103,10 @@ pub struct TrendGraphOpts {
     pub cross: Option<CrossOptions>,
 }
 
-impl TrendGraphOpts {
-    pub fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError> {
+impl FromQueryParams for TrendGraphOpts {
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError> {
         let table = params.get("table");
-        let graph_type = params.get("analysis_type");
+        let graph_type = params.get("graph_type");
         let xcol = params.get("xcol");
         let ycol = params.get("ycol");
         let trend_order = params.get("order");
@@ -124,8 +126,8 @@ impl TrendGraphOpts {
 
                 // parse query limit
                 let mut limit = None;
-                if let Some(l) = trend_limit {
-                    let parse_limit = l.parse::<usize>();
+                if let Some(lmt) = trend_limit {
+                    let parse_limit = lmt.parse::<usize>();
 
                     if let Err(err) = parse_limit {
                         return Err(AppError::new(
@@ -134,6 +136,7 @@ impl TrendGraphOpts {
                         ));
                     }
 
+                    // it's safe to unwrap since we checked and returned error earlier
                     limit = Some(parse_limit.unwrap())
                 }
 
