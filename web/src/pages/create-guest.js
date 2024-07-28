@@ -32,7 +32,6 @@ const theme = createTheme({
       textAlign: "center",
     },
     field_text1: {
-      fontFamily: "Inter",
       fontSize: "16px",
       fontWeight: "400",
       lineHeight: "24px",
@@ -103,7 +102,6 @@ function CreateGuest() {
                 <span className="title">Connect your database</span>
                 <span className="description">
                   Connect your database today and start your data exploration
-                  <br />
                   journey with Basable.
                 </span>
               </div>
@@ -115,6 +113,47 @@ function CreateGuest() {
                   <span className="note-text">
                     Enter username and password used when creating your database
                   </span>
+                </div>
+                <div className="databasetype-host-div">
+                  <div className="source-div">
+                    <label>
+                      Source Type<span>*</span>
+                    </label>
+
+                    <Select
+                      sx={{
+                        width: 1,
+                        typography: "field_text1",
+                      }}
+                      value={srcType}
+                      onChange={handleSrcChange}
+                    >
+                      <MenuItem disabled value="1"> Select Source Type</MenuItem>
+                      <MenuItem value={2}>Database</MenuItem>
+                      <MenuItem value={3}>File</MenuItem>
+                      <MenuItem value={4}>Cloud</MenuItem>
+                    </Select>
+                  </div>
+                  <div className="database-type-div">
+                    <label>
+                      Database Type <span>*</span>
+                    </label>
+                    <Select
+                      sx={{
+                        width: 1,
+                        typography: "field_text1",
+                      }}
+                      value={dbType}
+                      onChange={handleDbChange}
+                    >
+                      <MenuItem disabled value="0">
+                        Select Database Type
+                      </MenuItem>
+                      <MenuItem value={10}>MongoDB</MenuItem>
+                      <MenuItem value={20}>MySQL</MenuItem>
+                      <MenuItem value={30}>PostgreSQL</MenuItem>
+                    </Select>
+                  </div>
                 </div>
                 <div className="user-pass-input">
                   <div className="user-input">
@@ -171,26 +210,20 @@ function CreateGuest() {
                   type="text"
                 />
               </div>
-              <div className="databasetype-host-div">
-                <div className="database-type-div">
+
+              <div className="port-source-div">
+                <div className="port-div">
                   <label>
-                    Database Type <span>*</span>
+                    Port <span>*</span>
                   </label>
-                  <Select
+                  <OutlinedInput
                     sx={{
                       width: 1,
                       typography: "field_text1",
                     }}
-                    value={dbType}
-                    onChange={handleDbChange}
-                  >
-                    <MenuItem disabled value="0">
-                      <em>Select database type</em>
-                    </MenuItem>
-                    <MenuItem value={10}>MongoDB</MenuItem>
-                    <MenuItem value={20}>MySQL</MenuItem>
-                    <MenuItem value={30}>PostgreSQL</MenuItem>
-                  </Select>
+                    placeholder="Enter port type"
+                    type="text"
+                  />
                 </div>
                 <div className="host-div">
                   <label>
@@ -206,42 +239,6 @@ function CreateGuest() {
                   />
                 </div>
               </div>
-              <div className="port-source-div">
-                <div className="port-div">
-                  <label>
-                    Port <span>*</span>
-                  </label>
-                  <OutlinedInput
-                    sx={{
-                      width: 1,
-                      typography: "field_text1",
-                    }}
-                    placeholder="Enter port type"
-                    type="text"
-                  />
-                </div>
-                <div className="source-div">
-                  <label>
-                    Source Type <span>*</span>
-                  </label>
-
-                  <Select
-                    sx={{
-                      width: 1,
-                      typography: "field_text1",
-                    }}
-                    value={srcType}
-                    onChange={handleSrcChange}
-                  >
-                    <MenuItem disabled value="1">
-                      <em>Select source type</em>
-                    </MenuItem>
-                    <MenuItem value={2}>Type1</MenuItem>
-                    <MenuItem value={3}>Type2</MenuItem>
-                    <MenuItem value={4}>Type3</MenuItem>
-                  </Select>
-                </div>
-              </div>
               <div className="submit-div">
                 <Button
                   color="primary"
@@ -250,12 +247,12 @@ function CreateGuest() {
                   variant="contained"
                 >
                   <Typography variant="button_normal">
-                    Create guest connection
+                    Create Guest Connection
                   </Typography>
                 </Button>
                 <div className="submit-text">
                   Are you willing to access more features?
-                  <a> Login/Sign up</a>
+                  <a href="/#"> Login/Sign up</a>
                 </div>
               </div>
             </div>
