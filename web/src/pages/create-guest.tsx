@@ -3,11 +3,11 @@ import * as React from "react";
 import Button from "@mui/material/Button";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import logo from "../assets/images/basable-logo.svg";
-import illustration from "../assets/images/connection-illustration.svg";
-import gradient1 from "../assets/images/gradient-1.svg";
-import gradient2 from "../assets/images/gradient-2.svg";
-import gradient3 from "../assets/images/gradient-3.svg";
+import { ReactComponent as Logo } from "../assets/images/basable-logo.svg";
+import { ReactComponent as Illustration } from "../assets/images/connection-illustration.svg";
+import { ReactComponent as Gradient1 } from "../assets/images/gradient-1.svg";
+import { ReactComponent as Gradient2 } from "../assets/images/gradient-2.svg";
+import { ReactComponent as Gradient3 } from "../assets/images/gradient-3.svg";
 import IconButton from "@mui/material/IconButton";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -18,20 +18,13 @@ import MenuItem from "@mui/material/MenuItem";
 
 const theme = createTheme({
   typography: {
-    button_medium: {
+    button: {
       fontSize: "16px",
       fontWeight: "400",
       lineHeight: "20px",
       textAlign: "center",
     },
-
-    button_normal: {
-      fontSize: "18px",
-      fontWeight: "400",
-      lineHeight: "24px",
-      textAlign: "center",
-    },
-    field_text1: {
+    body1: {
       fontSize: "16px",
       fontWeight: "400",
       lineHeight: "24px",
@@ -40,14 +33,9 @@ const theme = createTheme({
   },
   palette: {
     primary: {
-      primary100: "#eceefa",
-      primary200: "#d2d5f2",
-      primary300: "#afb4e8",
-      primary400: "#8991de",
-      primary500: "#6670d4",
-      main: "#4451ca",
-      primary700: "#3a45ac",
-      primary800: "#303a8f",
+      light: "#8991DE",
+      dark: "#303A8F",
+      main: "#4451CA"
     },
   },
   components: {
@@ -60,11 +48,6 @@ const theme = createTheme({
           width: "111px",
           height: "48px",
           padding: "14px 32px",
-        },
-        sizeNormal: {
-          width: "111px",
-          height: "56px",
-          padding: "16px 32px",
         },
         root: {
           textTransform: "initial",
@@ -97,7 +80,7 @@ function CreateGuest() {
         <ThemeProvider theme={theme}>
           <div className="left-frame">
             <div className="left-header">
-              <img src={logo} alt="basable-logo" />
+              <Logo />
               <div className="basable-text">
                 <span className="title">Connect your database</span>
                 <span className="description">
@@ -242,11 +225,10 @@ function CreateGuest() {
               <div className="submit-div">
                 <Button
                   color="primary"
-                  size="normal"
                   sx={{ width: 1 }}
                   variant="contained"
                 >
-                  <Typography variant="button_normal">
+                  <Typography>
                     Create Guest Connection
                   </Typography>
                 </Button>
@@ -261,7 +243,7 @@ function CreateGuest() {
             <div className="right-container">
               <div className="btn-container">
                 <Button color="primary" size="medium" variant="outlined">
-                  <Typography variant="button_medium">Signup</Typography>
+                  <Typography>Signup</Typography>
                 </Button>
                 <Button
                   color="primary"
@@ -269,14 +251,10 @@ function CreateGuest() {
                   variant="contained"
                   sx={{ ml: 3 }}
                 >
-                  <Typography variant="button_medium">Login</Typography>
+                  <Typography>Login</Typography>
                 </Button>
               </div>
-              <img
-                src={illustration}
-                alt="illustration"
-                className="right-img"
-              />
+              <Illustration className="right-img" />
               <div className="right-text">
                 <div className="right-title">
                   <span>Connect your database</span>
@@ -291,9 +269,9 @@ function CreateGuest() {
               </div>
             </div>
             <div>
-              <img src={gradient1} alt="" className="back-gradient-1 back" />
-              <img src={gradient2} alt="" className="back-gradient-2 back" />
-              <img src={gradient3} alt="" className="back-gradient-3 back" />
+              <Gradient1 className="back-gradient-1 back" />
+              <Gradient2 className="back-gradient-2 back" />
+              <Gradient3 className="back-gradient-3 back" />
             </div>
           </div>
         </ThemeProvider>
