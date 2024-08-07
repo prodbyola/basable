@@ -1,7 +1,7 @@
 import "../styles/create-guest.scss";
 import * as React from "react";
 import Button from "@mui/material/Button";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { ReactComponent as Logo } from "../assets/images/basable-logo.svg";
 import { ReactComponent as Illustration } from "../assets/images/connection-illustration.svg";
@@ -14,50 +14,14 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
+import MenuItem from "@mui/material/MenuItem";          
+import theme from "../theme";
+import { useNavigate } from "react-router-dom";
 
-const theme = createTheme({
-  typography: {
-    button: {
-      fontSize: "16px",
-      fontWeight: "400",
-      lineHeight: "20px",
-      textAlign: "center",
-    },
-    body1: {
-      fontSize: "16px",
-      fontWeight: "400",
-      lineHeight: "24px",
-      textAlign: "left",
-    },
-  },
-  palette: {
-    primary: {
-      light: "#8991DE",
-      dark: "#303A8F",
-      main: "#4451CA"
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        sizeSmall: {
-          padding: "8px 24px",
-        },
-        sizeMedium: {
-          width: "111px",
-          height: "48px",
-          padding: "14px 32px",
-        },
-        root: {
-          textTransform: "initial",
-        },
-      },
-    },
-  },
-});
 
-function CreateGuest() {
+const CreateGuest = () => {
+  const navigate = useNavigate()
+
   const [showPassword, setShowPassword] = React.useState(false);
   const [dbType, setDbType] = React.useState("0");
   const [srcType, setSrcType] = React.useState("1");
@@ -227,6 +191,7 @@ function CreateGuest() {
                   color="primary"
                   sx={{ width: 1 }}
                   variant="contained"
+                  onClick={() => navigate("/overview")}
                 >
                   <Typography>
                     Create Guest Connection
