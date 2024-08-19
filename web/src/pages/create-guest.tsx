@@ -14,7 +14,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";          
+import MenuItem from "@mui/material/MenuItem";
 import theme from "../theme";
 import { useNavigate } from "react-router-dom";
 

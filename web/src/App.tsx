@@ -3,6 +3,7 @@ import './App.scss';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CreateGuest from './pages/create-guest';
 import ConnectionOverview from './pages/ConnectionOverview';
+import DashboardLayout from './layouts/DashboardLayout';
 
 function App() {
   return (
@@ -10,7 +11,8 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<CreateGuest />} />
-          <Route path='/overview' element={<ConnectionOverview />} />
+          <Route path="/overview" element={<ConnectionOverview />} />
+          <Route path="/dashboard" element={<DashboardLayout />} />
         </Routes>
       </div>
     </Router>

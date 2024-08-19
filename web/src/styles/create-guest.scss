@@ -21,6 +21,17 @@
 	background-color: white;
 }
 
+.content-container_s {
+	max-width: 1280px;
+	width: 100%;
+	height: 720px;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	background-color: white;
+}
+
 .left-frame {
 	width: 50%;
 	height: 609px;
@@ -30,8 +41,6 @@
 	padding: 0;
 
 }
-
-
 
 .left-header {
 	width: 100%;
@@ -432,7 +441,6 @@ label {
 		position: absolute;
 		Padding: 0px 16px 24px 16px;
 		background-color: rgba(255, 255, 255, 0.7);
-
 	}
 
 	.form-container {
