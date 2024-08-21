@@ -8,7 +8,9 @@ import AppBar from '@mui/material/AppBar';
 import ListItem from '@mui/material/ListItem';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import Typography from '@mui/material/Typography';
-
+import { ListSubheader } from '@mui/material';
+import { ThemeProvider } from "@mui/material/styles";
+import theme from "../../theme";
 import Logo from '../../assets/images/Basale-logo-white.svg';
 import SearchBar from '../bar/SearchBar';
 import useStyles from '../../styles/styles.js';
@@ -21,7 +23,7 @@ const headerHeight = 80;
 function DashboardHeader() {
   const classes = useStyles();
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <AppBar
         position="fixed"
@@ -88,7 +90,7 @@ function DashboardHeader() {
           </div>
         </ToolBar>
       </AppBar>
-    </>
+    </ThemeProvider>
   );
 }
 
