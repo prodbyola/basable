@@ -16,7 +16,8 @@ import LogOutIcon from '@mui/icons-material/LogoutOutlined';
 import MenuItem from '@mui/material/MenuItem';
 import Collapse from '@mui/material/Collapse';
 import { ListSubheader } from '@mui/material';
-
+import { ThemeProvider } from "@mui/material/styles";
+import theme from "../../theme";
 import useStyles from '../../styles/styles.js';
 import Avatar from '../../assets/images/Avater.png';
 import database1 from '../../assets/images/database1.svg';
@@ -55,6 +56,7 @@ function DashboardNav() {
   };
 
   return (
+    <ThemeProvider theme={theme}>
     <Drawer
       variant="permanent"
       sx={{
@@ -216,6 +218,7 @@ function DashboardNav() {
         </div>
       </Box>
     </Drawer>
+    </ThemeProvider>
   );
 }
 
