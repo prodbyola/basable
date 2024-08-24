@@ -5,7 +5,7 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import SearchIcon from '@mui/icons-material/Search';
 
-const SearchBar: React.FC = () => {
+const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,7 +29,8 @@ const SearchBar: React.FC = () => {
         '& .MuiOutlinedInput-root': {
           borderRadius: '10px', // Set the border radius here
           marginLeft: '80px',
-          width: '200px'
+          width: '403px',
+          height: '40px'
         }
       }}
     />

@@ -45,7 +45,8 @@ function DashboardHeader() {
                 padding: '8px',
                 borderRadius: '10px',
                 marginRight: '50px',
-                display: { sm: 'flex', xs: 'none' }
+                display: { sm: 'flex', xs: 'none' },
+                width: 'auto'
               }}
             >
               <AddCircleIcon color="primary" />
