@@ -220,7 +220,7 @@ const CreateGuest = () => {
                 </Button>
               </div>
               <Illustration className="right-img" />
-              <div className="right-text">
+              <div className="right-text basable-text">
                 <div className="right-title">
                   <span>Connect your database</span>
                 </div>
