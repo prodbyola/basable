@@ -12,7 +12,6 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: '100px'
   },
   headerright: {
-    marginLeft: '200px',
     display: 'flex',
     justifyContent: 'flex-end',
     alignItems: 'center'
@@ -34,7 +33,6 @@ const useStyles = makeStyles((theme) => ({
   imageGrid: {
     padding: '20px 0',
     margin: '0px',
-    padding: 0
   },
   card: {
     height: '100%',

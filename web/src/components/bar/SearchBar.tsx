@@ -26,6 +26,10 @@ const SearchBar = () => {
         )
       }}
       sx={{
+        display: {
+          sm: 'none',
+          xs: 'none'
+        },
         '& .MuiOutlinedInput-root': {
           borderRadius: '10px', // Set the border radius here
           marginLeft: '80px',

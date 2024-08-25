@@ -1,8 +1,19 @@
-.App{
+.App {
   text-align: center;
   font-family: "Inter", sans-serif;
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: "Exo", sans-serif;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .dashboardLogo {
+    display: none;
   }
 }

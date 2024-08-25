@@ -14,12 +14,13 @@ import Logo from "../../assets/images/Basale-logo-white.svg";
 import SearchBar from "../bar/SearchBar";
 import useStyles from "../../styles/styles.js";
 import Avatar from "../../assets/images/Avater.png";
-import { Box } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import { AppNotification } from "../bar/Notification";
+import MenuIcon from "@mui/icons-material/Menu";
 
 const headerHeight = 80;
 
-function DashboardHeader() {
+function DashboardHeader({onShowSidebar}: { onShowSidebar: React.MouseEventHandler }) {
   const classes = useStyles();
   return (
     <ThemeProvider theme={theme}>
@@ -34,8 +35,23 @@ function DashboardHeader() {
           height: headerHeight,
         }}
       >
-        <ToolBar className={classes.toolbar}>
-          <img src={Logo} alt="Logo" style={{ height: 30, marginRight: 16 }} />
+        <ToolBar
+          className={classes.toolbar}
+          sx={{
+            paddingRight: {
+              xs: "0px",
+            },
+          }}
+        >
+          <IconButton aria-label="menu" onClick={onShowSidebar}>
+            <MenuIcon sx={{ display: { xs: "flex", md: "none" } }} />
+          </IconButton>
+          <img
+            src={Logo}
+            className="dashboardLogo"
+            alt="Logo"
+            style={{ height: 30, marginRight: 16 }}
+          />
           <SearchBar />
           <div className={classes.headerright}>
             <Button
@@ -64,8 +80,8 @@ function DashboardHeader() {
             </Button>
             <Box
               sx={{
-                display: { sm: "flex", xs: "none" },
-                alignItems: 'center'
+                display: "flex",
+                alignItems: "center",
               }}
             >
               <AppNotification />
@@ -87,14 +103,20 @@ function DashboardHeader() {
                     primary="Stefania Asuqo"
                     secondary="stefaniaas@gmail.com"
                     sx={{
-                      display: { sm: "none", md: "block" },
+                      display: { md: "block" },
 
                       "& .MuiTypography-root": {
                         fontFamily: '"Exo", sans-serif',
+                        display: {
+                          xs: "none",
+                        },
                       },
 
                       "& .MuiTypography-body1": {
                         fontWeight: "700",
+                        display: {
+                          xs: "none",
+                        },
                       },
                     }}
                   />

@@ -39,7 +39,7 @@ const tableitems: Item[] = [
   { id: 5, title: "Table 5" },
 ];
 
-function DashboardNav() {
+function DashboardNav({ showMobileSidebar = false }) {
   const [openTables, setOpenTables] = React.useState(false);
 
   const handleTablesClick = () => {
@@ -53,10 +53,18 @@ function DashboardNav() {
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
-            width: drawerWidth,
-            boxSizing: "border-box",
+          display: {
+            xs: showMobileSidebar ? 'flex' : 'none'
           },
+          // [`& .MuiDrawer-paper`]: {
+          //   width: drawerWidth,
+          //   boxSizing: "border-box",
+          // },
+          "&.MuiDrawer-docked": {
+            width: {
+              xs: "100%"
+            }
+          }
         }}
       >
         <ToolBar sx={{ height: "100px" }}></ToolBar>
