@@ -69,7 +69,6 @@ function DashboardHeader() {
               }}
             >
               <AppNotification />
-              {/* <img src={Alarm} alt="alarm" style={{cursor: 'pointer' }} /> */}
               <List>
                 <ListItem>
                   <ListItemAvatar
@@ -98,7 +97,7 @@ function DashboardHeader() {
                         fontWeight: "700",
                       },
                     }}
-                  ></ListItemText>
+                  />
                 </ListItem>
               </List>
             </Box>
