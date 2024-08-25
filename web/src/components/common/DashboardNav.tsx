@@ -1,15 +1,11 @@
 import * as React from "react";
-import { List, ListItemText } from "@material-ui/core";
+import { ListItemText } from "@material-ui/core";
 import ToolBar from "@mui/material/Toolbar";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import Divider from "@mui/material/Divider";
 import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import MenuItem from "@mui/material/MenuItem";
-import Collapse from "@mui/material/Collapse";
 import { ListSubheader } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "../../theme";
@@ -22,13 +18,12 @@ import database4 from "../../assets/images/database4.svg";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 
-import ExpandLess from "@mui/icons-material/ExpandLess";
-import ExpandMore from "@mui/icons-material/ExpandMore";
 import { DashboardIcon } from "./icons/DashboardIcon";
 import { TablesIcon } from "./icons/TablesIcon";
 import { VisualizationIcon } from "./icons/VisualizationIcon";
 import { HelpIcon } from "./icons/HelpIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
+import { NavItem } from "./NavItem";
 
 const drawerWidth = 240;
 
@@ -43,18 +38,6 @@ const tableitems: Item[] = [
   { id: 4, title: "Table 4" },
   { id: 5, title: "Table 5" },
 ];
-
-const navItemStyle = {
-  mt: "10px",
-  color: "#363636",
-  fontFamily: '"Exo", sans-serif',
-  "&.Mui-selected": {
-    border: `1px solid`,
-    borderColor: "#4451CA",
-    borderRadius: "10px",
-    color: "#4451CA",
-  },
-};
 
 function DashboardNav() {
   const [openTables, setOpenTables] = React.useState(false);
@@ -187,63 +170,25 @@ function DashboardNav() {
               </Box>
             </ListItem>
             <Divider />
-            <ListItemButton sx={navItemStyle} selected>
-              <ListItemIcon
-                sx={{
-                  minWidth: "32px",
-                }}
-              >
-                <DashboardIcon color="#4451CA" />
-              </ListItemIcon>
-              <ListItemText primary="Dashboard" />
-            </ListItemButton>
-            <ListItemButton sx={navItemStyle} onClick={handleTablesClick}>
-              <ListItemIcon>
-                <TablesIcon />
-              </ListItemIcon>
-              <ListItemText primary="Tables" />
-              {openTables ? <ExpandLess /> : <ExpandMore />}
-            </ListItemButton>
-            <Collapse in={openTables} timeout="auto" unmountOnExit>
-              <List component="div">
-                {tableitems.map((item) => (
-                  <ListItemButton
-                    key={item.id}
-                    sx={{
-                      fontFamily: '"Exo", sans-serif',
-                      pl: 4,
-                      pt: 0,
-                      pb: 0,
-                    }}
-                  >
-                    <ListItemIcon>
-                      <FiberManualRecordIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary={item.title} />
-                  </ListItemButton>
-                ))}
-              </List>
-            </Collapse>
-            <ListItemButton sx={navItemStyle}>
-              <ListItemIcon>
-                <VisualizationIcon />
-              </ListItemIcon>
-              <ListItemText primary="Visualization" />
-            </ListItemButton>
+            <NavItem
+              label="Dashboard"
+              icon={<DashboardIcon color="#4451CA" />}
+              selected
+            />
+            <NavItem
+              label="Tables"
+              icon={<TablesIcon />}
+              expandable
+              expanded={openTables}
+              onClick={handleTablesClick}
+              innerItems={tableitems}
+            />
+
+            <NavItem label="Visualization" icon={<VisualizationIcon />} />
           </div>
           <div className="bottom-container">
-            <ListItemButton sx={navItemStyle}>
-              <ListItemIcon>
-                <HelpIcon />
-              </ListItemIcon>
-              <ListItemText primary="Help" />
-            </ListItemButton>
-            <ListItemButton sx={navItemStyle}>
-              <ListItemIcon>
-                <LogoutIcon />
-              </ListItemIcon>
-              <ListItemText primary="LogOut" />
-            </ListItemButton>
+            <NavItem label="LogOut" icon={<LogoutIcon />} />
+            <NavItem label="Help" icon={<HelpIcon />} />
           </div>
         </Box>
       </Drawer>
