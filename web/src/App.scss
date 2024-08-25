@@ -1,5 +1,4 @@
 .App {
-  text-align: center;
   font-family: "Inter", sans-serif;
 
   h1,
@@ -16,4 +15,8 @@
   .dashboardLogo {
     display: none;
   }
+}
+
+body {
+  background-color: #F7F7F7 !important;
 }

@@ -54,17 +54,9 @@ function DashboardNav({ showMobileSidebar = false }) {
           width: drawerWidth,
           flexShrink: 0,
           display: {
-            xs: showMobileSidebar ? 'flex' : 'none'
+            xs: showMobileSidebar ? 'flex' : 'none',
+            md: 'flex'
           },
-          // [`& .MuiDrawer-paper`]: {
-          //   width: drawerWidth,
-          //   boxSizing: "border-box",
-          // },
-          "&.MuiDrawer-docked": {
-            width: {
-              xs: "100%"
-            }
-          }
         }}
       >
         <ToolBar sx={{ height: "100px" }}></ToolBar>

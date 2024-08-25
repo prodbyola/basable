@@ -2,5 +2,5 @@
   "compilerOptions": {
     "jsx": "react"
   },
-  "include": ["src/components", "src/custom.d.ts"]
+  "include": ["src/components", "src/custom.d.ts", "src/pages/dashboard/DashboardMain.tsx"]
 }
