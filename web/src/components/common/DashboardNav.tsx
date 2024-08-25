@@ -18,7 +18,6 @@ import Collapse from '@mui/material/Collapse';
 import { ListSubheader } from '@mui/material';
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "../../theme";
-import useStyles from '../../styles/styles.js';
 import Avatar from '../../assets/images/Avater.png';
 import database1 from '../../assets/images/database1.svg';
 import database2 from '../../assets/images/database2.svg';
@@ -46,10 +45,7 @@ const tableitems: Item[] = [
 ];
 
 function DashboardNav() {
-  const classes = useStyles();
-
   const [openTables, setOpenTables] = React.useState(false);
-  const [openDatabase, setOpenDatabase] = React.useState(false);
 
   const handleTablesClick = () => {
     setOpenTables(!openTables);
