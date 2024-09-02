@@ -40,7 +40,7 @@ const tableitems: Item[] = [
 ];
 
 function DashboardNav({ showMobileSidebar = false }) {
-  const [openTables, setOpenTables] = React.useState(false);
+  const [openTables, setOpenTables] = React.useState(true);
 
   const handleTablesClick = () => {
     setOpenTables(!openTables);

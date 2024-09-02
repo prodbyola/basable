@@ -27,7 +27,7 @@ Basable is currently undergoing development. Thank you for choosing to contribut
 
 ### Setting Up Development Environment
 
-In order to contribute to Basable codebase, you need to setup your local environment. Our core API is written in [Rust Programming Language](https://www.rust-lang.org/) and [Axum](https://github.com/tokio-rs/axum) for `HttpService`, while the web frontend is powered by [Vue Javascript Framework](https://vuejs.org/), [Nuxt](https://nuxt.com/) and [Nuxt UI](https://ui.nuxt.com/getting-started).
+In order to contribute to Basable codebase, you need to setup your local environment. Our core API is written in [Rust Programming Language](https://www.rust-lang.org/) and [Axum](https://github.com/tokio-rs/axum) for `HttpService`, while the web frontend is powered by [React Javascript Framework](https://react.dev/) and [MUI Library](https://mui.com/material-ui/getting-started/).
 
 If you need some sample data, please check [Maven Analytics Free Dataset](https://mavenanalytics.io/data-playground).
 

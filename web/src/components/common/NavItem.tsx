@@ -79,16 +79,17 @@ export const NavItem = ({
                   pb: 0,
                 }}
               >
-                <ListItemIcon>
+                <ListItemIcon sx={{
+                   "&.MuiListItemIcon-root": {
+                    minWidth: "18px",
+                  },
+                }}>
                   <FiberManualRecordIcon
                     sx={{
                       "&.MuiSvgIcon-root": {
                         width: "4px",
                         height: "4px",
                         fill: "#363636",
-                      },
-                      "MuiListItemIcon-root": {
-                        minWidth: "18px",
                       },
                     }}
                   />

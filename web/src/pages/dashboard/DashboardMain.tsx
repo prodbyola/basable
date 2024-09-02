@@ -1,5 +1,7 @@
 import "../../styles/dashboard-main.scss";
+
 import * as React from "react";
+import * as d3 from "d3"
 import Box from "@mui/material/Box";
 import { CardDetails, DashboardCard } from "../../components/DashboardCard";
 
