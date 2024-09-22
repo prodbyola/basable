@@ -43,8 +43,8 @@ function DashboardHeader({onShowSidebar}: { onShowSidebar: React.MouseEventHandl
             },
           }}
         >
-          <IconButton aria-label="menu" onClick={onShowSidebar}>
-            <MenuIcon sx={{ display: { xs: "flex", md: "none" } }} />
+          <IconButton sx={{ display: { xs: "flex", md: "none" } }} aria-label="menu" onClick={onShowSidebar}>
+            <MenuIcon />
           </IconButton>
           <img
             src={Logo}

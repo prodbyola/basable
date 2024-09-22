@@ -1,0 +1,57 @@
+$main_page_padding: 32px;
+
+.dashboardMainPage {
+    padding-left: calc(18px + $main_page_padding);
+    padding-right: $main_page_padding;
+    padding-top: calc(80px + $main_page_padding);
+
+    font-family: "Exo", sans-serif;
+
+    .dashCardList {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        row-gap: 12px;
+
+        .dashCard {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background-color: white;
+
+            .dashCardUpperPart {
+                display: inline-flex;
+                width: 100%;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 12px;
+
+                .dashCardLabel {
+                    width: 50%;
+                    font-weight: 500;
+                    color: #656565;
+                }
+
+                .dashCardAction {
+                    display: inline-flex;
+                    align-items: center;
+                    column-gap: 4px;
+                    cursor: pointer;
+
+                    .dashCardActionLabel {
+                        font-size: 12.33px;
+                        font-weight: 600;
+                        color: #4451CA;
+                    }
+                }
+            }
+
+            .dashCardValue {
+                font-weight: bold;
+                font-size: 27.7px;
+                margin: 0;
+                text-align: left;
+            }
+        }
+    }
+}
