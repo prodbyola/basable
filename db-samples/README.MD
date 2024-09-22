@@ -1,0 +1,1 @@
+If you need some more sample data, please check [Maven Analytics Free Dataset](https://mavenanalytics.io/data-playground).
