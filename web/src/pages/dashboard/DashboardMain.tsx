@@ -3,7 +3,7 @@ import "../../styles/dashboard-main.scss";
 import * as React from "react";
 import Box from "@mui/material/Box";
 import { CardDetails, DashboardCard } from "../../components/DashboardCard";
-import { BarChart } from "@mui/icons-material";
+import BasableBarChart from "../../components/BarChart";
 
 const dashboardCards: CardDetails[] = [
   { label: "Total Items", value: "142", action: "Show All" },
@@ -21,10 +21,11 @@ function DashboardMain() {
             label={card.label}
             value={card.value}
             action={card.action}
+            key={card.label}
           />
         ))}
       </div>
-      <BarChart />
+      <BasableBarChart />
     </Box>
   );
 }

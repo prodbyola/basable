@@ -1,7 +1,7 @@
 <svg width="498" height="299" viewBox="0 0 498 299" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<path d="M122 41.5H201.5C210.337 41.5 217.5 48.6634 217.5 57.5V134C217.5 142.837 224.663 150 233.5 150H282.5" stroke="url(#paint0_linear_742_788)" stroke-width="20"/>
-<path d="M62 149H283" stroke="url(#paint1_linear_742_788)" stroke-width="20"/>
-<path d="M122 257.5H201.5C210.337 257.5 217.5 250.337 217.5 241.5V165C217.5 156.163 224.663 149 233.5 149H282.5" stroke="url(#paint2_linear_742_788)" stroke-width="20"/>
+<path d="M122 41.5H201.5C210.337 41.5 217.5 48.6634 217.5 57.5V134C217.5 142.837 224.663 150 233.5 150H282.5" stroke="url(#paint0_linear_742_788)" strokeWidth="20"/>
+<path d="M62 149H283" stroke="url(#paint1_linear_742_788)" strokeWidth="20"/>
+<path d="M122 257.5H201.5C210.337 257.5 217.5 250.337 217.5 241.5V165C217.5 156.163 224.663 149 233.5 149H282.5" stroke="url(#paint2_linear_742_788)" strokeWidth="20"/>
 <rect x="49" width="77" height="77" rx="38.5" fill="#ECEEFA"/>
 <rect x="57" y="8" width="61" height="61" rx="30.5" fill="url(#pattern0_742_788)"/>
 <rect y="114" width="77" height="77" rx="38.5" fill="#ECEEFA"/>
