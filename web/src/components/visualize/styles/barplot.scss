@@ -1,0 +1,10 @@
+.visualSection {
+    display: flex;
+    
+    #barplot {
+        .barplot_x, .barplot_y {
+            color: grey;
+        }
+    }
+}
+

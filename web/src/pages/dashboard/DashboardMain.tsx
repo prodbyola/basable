@@ -3,7 +3,7 @@ import "../../styles/dashboard-main.scss";
 import * as React from "react";
 import Box from "@mui/material/Box";
 import { CardDetails, DashboardCard } from "../../components/DashboardCard";
-import BasableBarChart from "../../components/BarChart";
+import { VisualSection } from "../../components/visualize/VisualSection";
 
 const dashboardCards: CardDetails[] = [
   { label: "Total Items", value: "142", action: "Show All" },
@@ -25,7 +25,7 @@ function DashboardMain() {
           />
         ))}
       </div>
-      <BasableBarChart />
+      <VisualSection />
     </Box>
   );
 }

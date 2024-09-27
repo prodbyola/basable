@@ -87,7 +87,7 @@ function DashboardNav({ showMobileSidebar = false }) {
                   </strong>
                 }
                 secondary={
-                  <div
+                  <span
                     style={{
                       display: "inline-flex",
                       paddingLeft: "5px",
@@ -99,7 +99,7 @@ function DashboardNav({ showMobileSidebar = false }) {
                     }}
                   >
                     Developer
-                  </div>
+                  </span>
                 }
               />
             </ListItem>
