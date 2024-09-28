@@ -70,7 +70,7 @@ export const VisualSection = () => {
             observer.disconnect()
         }
     }
-  })
+  }, [])
   
   return (
     <section ref={sectionEl} className="visualSection">

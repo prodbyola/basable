@@ -3,15 +3,17 @@ import { useEffect } from "react";
 import * as React from "react";
 import { GraphDataType } from "../../";
 
-import "./styles/barplot.scss";
-
 type BarProps = {
   data: GraphDataType[];
   width?: number;
   color?: string;
 };
 
-const BarPlot: React.FC<BarProps> = ({ color = "rgb(68, 81, 202)", width = 460, data }) => {
+const BarPlot: React.FC<BarProps> = ({
+  color = "rgb(68, 81, 202)",
+  width = 460,
+  data,
+}) => {
   const max = data.reduce(
     (max, obj) => (obj.value > max.value ? obj : max),
     data[0]
@@ -53,10 +55,7 @@ const BarPlot: React.FC<BarProps> = ({ color = "rgb(68, 81, 202)", width = 460, 
       .style("text-anchor", "end");
 
     // Add Y axis
-    var y = d3
-      .scaleLinear()
-      .domain([0, max.value + 50])
-      .range([h, 0]);
+    var y = d3.scaleLinear().domain([0, max.value]).range([h, 0]);
 
     svg.append("g").attr("class", "barplot_y").call(d3.axisLeft(y));
 
@@ -69,17 +68,27 @@ const BarPlot: React.FC<BarProps> = ({ color = "rgb(68, 81, 202)", width = 460, 
       .data(data)
       .enter()
       .append("path")
-      .attr(
-        "d",
-        (item) => `
-        M${x(item.label)},${y(item.value) + ry}
-        a${rx},${ry} 0 0 1 ${rx},${-ry}
-        h${x.bandwidth() - 2 * rx}
-        a${rx},${ry} 0 0 1 ${rx},${ry}
-        v${h - y(item.value) - ry}
-        h${-x.bandwidth()}Z
-      `
-      )
+      .attr("d", (item: GraphDataType) => {
+
+        if(item.value) {
+          const offset = h - y(item.value)
+
+          let my = y(item.value)
+          if(offset > ry) my += ry
+
+          let vy = h - y(item.value)
+          if(offset > ry) vy -= ry
+          
+          return `
+            M${x(item.label)},${my}
+            a${rx},${ry} 0 0 1 ${rx},${-ry}
+            h${x.bandwidth() - 2 * rx}
+            a${rx},${ry} 0 0 1 ${rx},${ry}
+            v${vy}
+            h${-x.bandwidth()}Z
+          `
+        }
+      })
       .attr("fill", color);
 
     // Clean-up function to remove the SVG on component unmount or re-render

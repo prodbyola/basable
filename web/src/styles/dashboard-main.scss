@@ -1,10 +1,11 @@
+@import url('./visualize.scss');
+
 $main_page_padding: 32px;
 
 .dashboardMainPage {
     padding-left: calc(18px + $main_page_padding);
     padding-right: $main_page_padding;
     padding-top: calc(80px + $main_page_padding);
-
     font-family: "Exo", sans-serif;
 
     .dashCardList {

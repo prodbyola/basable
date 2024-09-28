@@ -41,6 +41,7 @@ function DashboardHeader({onShowSidebar}: { onShowSidebar: React.MouseEventHandl
             paddingRight: {
               xs: "0px",
             },
+            justifyContent: 'normal'
           }}
         >
           <IconButton sx={{ display: { xs: "flex", md: "none" } }} aria-label="menu" onClick={onShowSidebar}>
@@ -50,7 +51,7 @@ function DashboardHeader({onShowSidebar}: { onShowSidebar: React.MouseEventHandl
             src={Logo}
             className="dashboardLogo"
             alt="Logo"
-            style={{ height: 30, marginRight: 16 }}
+            style={{ height: 30, marginRight: 'auto' }}
           />
           <SearchBar />
           <div className={classes.headerright}>
