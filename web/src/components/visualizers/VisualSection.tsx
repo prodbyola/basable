@@ -1,6 +1,6 @@
 import * as React from "react";
 import BarPlot from "./BarPlot";
-import { GraphDataType } from "../../data";
+import { GraphDataType } from "../../data_desc";
 
 const tables = [
     {

@@ -1,3 +1,4 @@
+@use './variables';
 @import url('./visualize.scss');
 
 $main_page_padding: 32px;
@@ -7,6 +8,12 @@ $main_page_padding: 32px;
     padding-right: $main_page_padding;
     padding-top: calc(80px + $main_page_padding);
     font-family: "Exo", sans-serif;
+
+    .sectionHeader {
+        font-weight: 600;
+        font-size: 1.2rem;
+        color: variables.$primary;
+    }
 
     .dashCardList {
         width: 100%;
@@ -52,6 +59,56 @@ $main_page_padding: 32px;
                 font-size: 27.7px;
                 margin: 0;
                 text-align: left;
+            }
+        }
+    }
+
+    .dashboardDisplay {
+        background-color: white;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 44px;
+    }
+
+    .tableRowCount {
+        flex-wrap: wrap;
+    }
+
+    .displayTable {
+        table {
+            width: 100%;
+            border: variables.$grey_200 solid 1px;
+            border-radius: 8px;
+
+            thead {
+                background-color: variables.$primary_100;
+
+                tr {
+                    
+                    th {
+                        border: none;
+                        outline: none;
+                        text-align: left;
+                        color: variables.$grey_400;
+                        padding: 12px 4px;
+                    }
+                }
+            }
+
+            tbody {
+                tr {
+                    transition: all .2s;
+                    td {
+                        font-size: 0.833rem;
+                        padding: 12px 4px;
+                    }
+                }
+                
+                tr:hover {
+                    cursor: pointer;
+                    background-color: variables.$primary_100;
+                    transform: scale(1.05);
+                }
             }
         }
     }

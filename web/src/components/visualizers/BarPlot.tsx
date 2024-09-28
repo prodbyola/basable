@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import { useEffect } from "react";
 import * as React from "react";
-import { GraphDataType } from "../../";
+import { GraphDataType } from "../..";
 
 type BarProps = {
   data: GraphDataType[];
