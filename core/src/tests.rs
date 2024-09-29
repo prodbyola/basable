@@ -7,7 +7,7 @@ pub(crate) mod common {
     };
 
     use crate::base::{
-        config::ConnectionConfig, foundation::Basable, imp::SharedDB, AppError, AppState
+        config::ConfigRaw, foundation::Basable, imp::SharedDB, AppError, AppState
     };
 
     /// Get `TEST_USER_ID` from env
@@ -23,7 +23,7 @@ pub(crate) mod common {
     }
 
     /// Creates a test `Config`.
-    pub fn create_test_config() -> ConnectionConfig {
+    pub fn create_test_config() -> ConfigRaw {
         dotenv().ok();
 
         let db_name = env::var("TEST_DB_NAME").unwrap();
@@ -34,7 +34,7 @@ pub(crate) mod common {
         let source = env::var("TEST_DB_SOURCE").unwrap();
         let source_type = env::var("TEST_DB_SOURCE_TYPE").unwrap();
 
-        ConnectionConfig {
+        ConfigRaw {
             db_name: Some(db_name),
             username: Some(db_username),
             password: Some(db_password),

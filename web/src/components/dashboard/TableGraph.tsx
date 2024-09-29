@@ -1,5 +1,5 @@
 import * as React from "react";
-import { GraphDataType } from "../../data_desc"
+import { GraphDataType } from "../../utils/data_types"
 import BarPlot from "../visualizers/BarPlot";
 
 type TableGraphProps = {

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { TableSummaryType } from "../../data_desc";
+import { TableSummaryType } from "../../utils/data_types";
 
 type DisplayTableProps = {
   tables: TableSummaryType[];

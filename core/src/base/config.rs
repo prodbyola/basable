@@ -1,30 +1,28 @@
+use axum::http::StatusCode;
 use serde::Deserialize;
 use urlencoding::encode;
 
+use super::AppError;
+
 #[derive(Deserialize, Clone, Debug)]
-pub(crate) enum Database {
+pub(crate) enum DatabaseType {
     Mysql,
     Postgres,
-    Oracle
+    Oracle,
+    Mongo
 }
 
-impl Database {
-    fn to_str(self) -> &'static str {
-        match self {
-            Database::Mysql => "mysql",
-            Database::Postgres => "postgres",
-            Database::Oracle => "oracle",
-        }
-    }
-}
-
-impl From<&str> for Database {
-    fn from(value: &str) -> Self {
+impl TryFrom<&str> for DatabaseType {
+    
+    type Error = AppError;
+    
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            "postgres" => Self::Postgres,
-            "oracle" => Self::Oracle,
-            "mysql" => Self::Mysql,
-            &_ => Self::Mysql,
+            "postgres" => Ok(Self::Postgres),
+            "oracle" => Ok(Self::Oracle),
+            "mysql" => Ok(Self::Mysql),
+            "mongo" => Ok(Self::Mongo),
+            &_ => Err(AppError::new(StatusCode::EXPECTATION_FAILED, "Invalid database source type")),
         }
     }
 }
@@ -34,23 +32,23 @@ pub(crate) enum Cloud { Firebase }
 
 #[derive(Deserialize, Clone, Debug)]
 pub(crate) enum SourceType {
-    Database(Database), Cloud, File
+    Database(DatabaseType), Cloud, File
 }
 
 impl SourceType {
-    fn from_str(src_type: &str, src_val: &str) -> SourceType {
+    fn from_str(src_type: &str, src: &str) -> Result<SourceType, AppError> {
         match src_type {
-            "database" => Self::Database(src_val.into()),
-            "cloud" => Self::Cloud,
-            "file" => Self::File,
-            &_ => Self::File
+            "database" => Ok(Self::Database(src.try_into()?)),
+            "cloud" => Ok(Self::Cloud),
+            "file" => Ok(Self::File),
+            &_ => Err(AppError::new(StatusCode::EXPECTATION_FAILED, "Invalid source type"))
         }
     }
 }
 
 /// Configuration options for a new `BasableConnection`.
 #[derive(Deserialize, Clone, Debug)]
-pub(crate) struct ConnectionConfig {
+pub(crate) struct ConfigRaw {
     pub source_type: String,
     pub source: String,
     pub username: Option<String>,
@@ -60,7 +58,7 @@ pub(crate) struct ConnectionConfig {
     pub db_name: Option<String>,
 }
 
-impl Default for ConnectionConfig {
+impl Default for ConfigRaw {
     fn default() -> Self {
         Self {
             username: None,
@@ -74,13 +72,13 @@ impl Default for ConnectionConfig {
     }
 }
 
-impl ConnectionConfig {
-    pub fn build_url(&self) -> String {
-        let src_type = SourceType::from_str(&self.source_type, &self.source);
+impl ConfigRaw {
+    pub fn build_url(&self) -> Result<String, AppError> {
+        let src_type = SourceType::from_str(&self.source_type, &self.source)?;
 
         match src_type {
-            SourceType::Database(src) => {
-                let src = src.to_str();
+            SourceType::Database(_) => {
+                let dbtype = &self.source;
 
                 let username = self.username.clone().unwrap_or("root".to_string());
                 let password = self.password.clone().unwrap_or_default();
@@ -88,23 +86,25 @@ impl ConnectionConfig {
                 let port = self.port.unwrap_or(3306);
                 let db = self.db_name.clone().unwrap_or_default();
 
-                format!(
+                let url = format!(
                     "{}://{}:{}@{}:{}/{}",
-                    src,
+                    dbtype,
                     encode(&username),
                     encode(&password),
                     host,
                     port,
                     db
-                )
+                );
+
+                Ok(url)
             }
 
-            _ => String::new()
+            _ => todo!()
         }
         
     }
 
-    pub fn source_type(&self) -> SourceType {
+    pub fn get_source(&self) -> Result<SourceType, AppError> {
         SourceType::from_str(&self.source_type, &self.source)
     }
 }

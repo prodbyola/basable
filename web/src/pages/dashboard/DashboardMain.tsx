@@ -3,7 +3,7 @@ import "../../styles/dashboard-main.scss";
 import * as React from "react";
 import Box from "@mui/material/Box";
 import { CardDetails, DashboardCard } from "../../components/DashboardCard";
-import { GraphDataType, TableSummaryType } from "../../data_desc";
+import { GraphDataType, TableSummaryType } from "../../utils/data_types";
 import { TableGraph } from "../../components/dashboard/TableGraph";
 import { DisplayTable } from "../../components/dashboard/DisplayTable";
 

@@ -2,7 +2,7 @@ use graphs::graphs_routes;
 use axum::routing::post;
 use axum::Router;
 
-use crate::base::config::ConnectionConfig;
+use crate::base::config::ConfigRaw;
 use crate::base::foundation::Basable;
 use crate::base::{AppError, AppState};
 use crate::http::middlewares::AuthExtractor;
@@ -24,7 +24,7 @@ pub(super) mod graphs;
 async fn connect(
     State(state): State<AppState>,
     AuthExtractor(user): AuthExtractor,
-    Json(config): Json<ConnectionConfig>,
+    Json(config): Json<ConfigRaw>,
 ) -> Result<Json<DbConnectionDetails>, AppError> {
     let mut bsbl = state.instance.lock().unwrap();
 

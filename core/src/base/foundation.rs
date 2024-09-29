@@ -11,7 +11,7 @@ use super::imp::connector::Connector;
 use super::imp::db::DB;
 use super::imp::SharedDB;
 use super::{
-    config::{ConnectionConfig, Database, SourceType},
+    config::{ConfigRaw, DatabaseType, SourceType},
     user::{create_jwt, JwtSession},
     AppError,
 };
@@ -26,12 +26,13 @@ impl Basable {
     ///
     /// The `auth_session` param should be set to `true` if current app [`User`] is logged.
     pub(crate) fn create_connection(
-        config: &ConnectionConfig,
+        config: &ConfigRaw,
         user_id: String,
     ) -> Result<SharedDB, AppError> {
-        let mut db = match config.source_type() {
+
+        let mut db = match config.get_source()? {
             SourceType::Database(db) => match db {
-                Database::Mysql => {
+                DatabaseType::Mysql => {
                     let conn = MysqlConnector::new(config.clone())?;
                     MySqlDB::new(Arc::new(conn), user_id)
                 }

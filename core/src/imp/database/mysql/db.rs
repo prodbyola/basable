@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     base::{
-        config::ConnectionConfig,
+        config::ConfigRaw,
         data::table::{TableSummaries, TableSummary},
         imp::{
             db::{QuerySqlParser, DB},
@@ -88,7 +88,7 @@ impl MySqlDB {
         Ok(size)
     }
 
-    fn config(&self) -> &ConnectionConfig {
+    fn config(&self) -> &ConfigRaw {
         &self.connector.config()
     }
 

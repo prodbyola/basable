@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 
 use axum::extract::connect_info::IntoMakeServiceWithConnectInfo;
+use axum::http::HeaderName;
 use axum::{
     async_trait,
     extract::{FromRef, FromRequestParts, MatchedPath, Request},
@@ -33,14 +34,19 @@ where
 }
 
 pub fn app() -> IntoMakeServiceWithConnectInfo<Router<()>, std::net::SocketAddr> {
-    // We add CORS middleware to enable connection from Vue Development server
+    // We add CORS middleware to enable connection from Vue/React Development client
     let cors = CorsLayer::new()
-        .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
-        .allow_headers([ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE]);
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_headers([
+            ACCEPT,
+            ACCESS_CONTROL_ALLOW_HEADERS,
+            CONTENT_TYPE,
+            HeaderName::from_static("b-session-id"),
+        ]);
 
     let state = AppState::default();
     state.setup_local_db();
-    
+
     let routes = core_routes();
 
     Router::new()
