@@ -1,6 +1,7 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
+use axum::http::StatusCode;
 use uuid::Uuid;
 
 use crate::imp::database::mysql::connector::MysqlConnector;
@@ -34,12 +35,13 @@ impl Basable {
             SourceType::Database(db) => match db {
                 DatabaseType::Mysql => {
                     let conn = MysqlConnector::new(config.clone())?;
-                    MySqlDB::new(Arc::new(conn), user_id)
+                    let db = MySqlDB::new(Arc::new(conn), user_id);
+                    Ok(db)
                 }
-                _ => todo!(),
+                _ => Err(AppError::not_implemented()),
             },
-            _ => todo!(),
-        };
+            _ => Err(AppError::not_implemented()),
+        }?;
 
         let conn = db.connector().clone();
         db.load_tables(conn)?;

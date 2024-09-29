@@ -65,8 +65,12 @@ impl Default for AppState {
 pub struct AppError(pub StatusCode, pub String);
 
 impl AppError {
-    pub(crate) fn new(code: StatusCode, msg: &str) -> Self {
+    pub fn new(code: StatusCode, msg: &str) -> Self {
         AppError(code, String::from(msg))
+    }
+
+    pub fn not_implemented() -> Self {
+        Self::new(StatusCode::NOT_IMPLEMENTED, "feature not implemented")
     }
 }
 
