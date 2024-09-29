@@ -10,9 +10,6 @@ use axum_macros::debug_handler;
 use crate::base::{foundation::Basable, user::JwtSession, AppError, AppState};
 
 #[debug_handler]
-/// POST: /core/auth/guest
-///
-/// Creates a Basable guest `User` and returns a `JwtSession`.
 async fn create_guest_user(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(_): State<AppState>,

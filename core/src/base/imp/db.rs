@@ -5,7 +5,7 @@ use crate::base::query::filter::{Filter, FilterChain, FilterCondition, FilterOpe
 use crate::base::query::{BasableQuery, QueryOperation};
 use crate::base::{data::table::TableSummaries, AppError};
 use crate::imp::database::mysql::db::MySqlDB;
-use crate::imp::database::DbConnectionDetails;
+use crate::imp::database::DbServerDetails;
 
 use super::graphs::VisualizeDB;
 use super::{ConnectorType, SharedTable};
@@ -47,7 +47,7 @@ pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
     fn query_table_summaries(&self) -> Result<TableSummaries, AppError>;
 
     /// Details about the connection
-    fn details(&self) -> Result<DbConnectionDetails, AppError>;
+    fn details(&self) -> Result<DbServerDetails, AppError>;
 
     /// Get total number of columns
     fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;

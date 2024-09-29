@@ -29,7 +29,7 @@ where
 
         // If Authorization header does not exist, use session-id to retrieve guest user.
         if let None = auth_header {
-            auth_header = parts.headers.get("B-Session-Id");
+            auth_header = parts.headers.get("session-id");
         }
 
         match auth_header {
@@ -63,7 +63,7 @@ where
 
         let state = extract_app_state(parts, state).await;
 
-        let conn_id = match parts.headers.get("Connection-Id") {
+        let conn_id = match parts.headers.get("connection-id") {
             Some(h) => Some(h.to_str().unwrap()),
             None => None,
         };

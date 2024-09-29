@@ -15,7 +15,7 @@ use crate::{
         },
         AppError,
     },
-    imp::database::{DBVersion, DbConnectionDetails},
+    imp::database::{DBVersion, DbServerDetails},
 };
 
 use super::{table::MySqlTable, MySqlValue};
@@ -38,7 +38,7 @@ impl MySqlDB {
     }
 
     /// Get MySQL server version and host OS version
-    fn show_version(&self) -> Result<DBVersion, AppError> {
+    fn show_version_variables(&self) -> Result<DBVersion, AppError> {
         let vars = self.exec_query(
             "
                 SHOW VARIABLES 
@@ -194,17 +194,18 @@ impl DB for MySqlDB {
         self.tables.iter().find(|t| t.name() == name)
     }
 
-    fn details(&self) -> Result<DbConnectionDetails, AppError> {
-        let version = self.show_version()?;
-        let tables = self.query_table_summaries()?;
-        let size = self.size()?;
-        let id = self.id.clone();
-        let id = id.to_string();
+    fn details(&self) -> Result<DbServerDetails, AppError> {
+        let vrbs = self.show_version_variables()?;
+        let version = vrbs.get("version").map(|v| v.to_string());
+        let os = vrbs.get("version_compile_os").map(|v| v.to_string());
+        let comment = vrbs.get("version_comment").map(|v| v.to_string());
 
-        Ok(DbConnectionDetails {
-            id,
-            tables,
-            version,
+        let size = self.size()?;
+
+        Ok(DbServerDetails {
+            version: version.unwrap_or_default(),
+            os: os.unwrap_or_default(),
+            comment,
             db_size: size,
         })
     }

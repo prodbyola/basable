@@ -14,7 +14,7 @@ import Typography from "@mui/material/Typography";
 
 import { BASABLE_COOKIE_NAME, BASE_URL } from "../../env";
 import axios from "axios";
-import { AuthTokenType } from "../../utils/data_types";
+import { AuthTokenType, SessionCookie } from "../../utils/data_types";
 import { setCookie } from "../../utils";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert/Alert";
@@ -42,10 +42,11 @@ export const ConnectForm = () => {
     port: 3306,
   });
 
-  const [alertState, updateAlertState] = React.useState({
-    opened: false,
+  const [networkState, updateNetworkState] = React.useState({
+    showAlert: false,
     message: "",
-    color: "success" as "success" | "error" | "info" | "warning",
+    alertColor: "success" as "success" | "error" | "info" | "warning",
+    loading: false,
   });
 
   const closeAlert = (
@@ -56,50 +57,58 @@ export const ConnectForm = () => {
       return;
     }
 
-    updateAlertState((prevData) => ({
+    updateNetworkState((prevData) => ({
       ...prevData,
-      opened: false,
+      showAlert: false,
     }));
   };
 
   const connect = async () => {
-    updateAlertState((prevData) => ({
+    updateNetworkState((prevData) => ({
       ...prevData,
-      opened: false,
+      showAlert: false,
+      loading: true
     }));
 
     try {
       const access: AuthTokenType = await axios
         .post(BASE_URL + "auth/guest")
         .then((resp) => resp.data);
+      
+      const connID = await axios
+      .post(BASE_URL + "connect", connInfo, {
+        headers: {
+          "session-id": "Bearer " + access.token,
+        },
+      })
+      .then((resp) => resp.data);
+      
+      const cookie: SessionCookie = {
+        token: access.token,
+        connID
+      }
 
+      console.log(cookie)
       const exp = access.exp / 86_400;
+      setCookie(BASABLE_COOKIE_NAME, JSON.stringify(cookie), exp);
 
-      setCookie(BASABLE_COOKIE_NAME, access.token, exp);
-      console.log(connInfo)
-
-      const conn = await axios
-        .post(BASE_URL + "connect", connInfo, {
-          headers: {
-            "b-session-id": "Bearer " + access.token,
-          },
-        })
-        .then((resp) => resp.data);
-
-      updateAlertState((prevData) => ({
+      updateNetworkState((prevData) => ({
         ...prevData,
-        opened: true,
-        color: "success",
+        showAlert: true,
+        loading: false,
+        alertColor: "success",
         message: "Connection successful! Redirecting to dashboard...",
       }));
 
-      console.log(conn);
+      navigate('/dashboard')
+
     } catch (err: any) {
       const message = err.response.data;
-      updateAlertState((prevData) => ({
+      updateNetworkState((prevData) => ({
         ...prevData,
-        opened: true,
-        color: "error",
+        showAlert: true,
+        loading: false,
+        alertColor: "error",
         message,
       }));
     }
@@ -289,6 +298,7 @@ export const ConnectForm = () => {
             sx={{ width: 1 }}
             variant="contained"
             onClick={() => connect()}
+            disabled={networkState.loading}
           >
             <Typography>Create Guest Connection</Typography>
           </Button>
@@ -299,17 +309,17 @@ export const ConnectForm = () => {
         </div>
         <Snackbar
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          open={alertState.opened}
+          open={networkState.showAlert}
           autoHideDuration={5000}
           onClose={closeAlert}
         >
           <Alert
             onClose={closeAlert}
-            severity={alertState.color}
+            severity={networkState.alertColor}
             variant="filled"
             sx={{ width: "100%" }}
           >
-            {alertState.message}
+            {networkState.message}
           </Alert>
         </Snackbar>
       </div>

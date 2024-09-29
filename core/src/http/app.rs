@@ -41,7 +41,8 @@ pub fn app() -> IntoMakeServiceWithConnectInfo<Router<()>, std::net::SocketAddr>
             ACCEPT,
             ACCESS_CONTROL_ALLOW_HEADERS,
             CONTENT_TYPE,
-            HeaderName::from_static("b-session-id"),
+            HeaderName::from_static("session-id"),
+            HeaderName::from_static("connection-id"),
         ]);
 
     let state = AppState::default();
