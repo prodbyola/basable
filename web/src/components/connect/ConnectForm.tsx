@@ -106,8 +106,12 @@ export const ConnectForm = () => {
 
       navigate("/dashboard");
     } catch (err: any) {
+      console.log('err', err)
       // display error
-      const message = err.response.data
+      let message = ''
+      if(err.response) message = err.response.data
+      else message = err.message
+      
       updateNetworkState((prevData) => ({
         ...prevData,
         showAlert: true,

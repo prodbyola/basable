@@ -6,6 +6,9 @@ import { CardDetails, DashboardCard } from "../../components/DashboardCard";
 import { GraphDataType, TableSummaryType } from "../../utils/data_types";
 import { TableGraph } from "../../components/dashboard/TableGraph";
 import { DisplayTable } from "../../components/dashboard/DisplayTable";
+import { deleteCookie, getCookie, useNetworkRequest } from "../../utils";
+import { BASABLE_COOKIE_NAME } from "../../env";
+import { useNavigate } from "react-router-dom";
 
 const dashboardCards: CardDetails[] = [
   { label: "Total Items", value: "142", action: "Show All" },
@@ -61,6 +64,29 @@ const tables: TableSummaryType[] = [
 
 function DashboardMain() {
   const graphData: GraphDataType[] = tables.map((t) => ({ label: t.name, value: t.row_count }))
+  
+  const navigate = useNavigate()
+  const request = useNetworkRequest()
+
+  React.useEffect(() => {
+    const cookie = getCookie(BASABLE_COOKIE_NAME)
+    if(!cookie) {
+      deleteCookie(BASABLE_COOKIE_NAME)
+      navigate('')
+      return
+    }
+
+    const getTables = async () => {
+      const tables = await request({
+        method: 'get',
+        path: 'table-summaries'
+      })
+  
+      console.log(tables)
+    }
+
+    getTables()
+  }, [request, navigate])
  
   return (
     <Box className="dashboardMainPage" sx={{ width: "100%" }}>

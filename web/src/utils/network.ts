@@ -96,5 +96,5 @@ export const useNetworkRequest = () => {
     }
   }, [navigate])
 
-  return { makeRequest }
+  return makeRequest
 }
