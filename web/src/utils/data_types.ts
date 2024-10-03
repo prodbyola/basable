@@ -18,5 +18,6 @@ export type AuthTokenType = {
 
 export type SessionCookie = {
   token: string,
-  connID: string
+  connID: string,
+  isAuth: boolean
 }

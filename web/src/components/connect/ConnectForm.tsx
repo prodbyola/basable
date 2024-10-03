@@ -12,10 +12,9 @@ import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
-import { BASABLE_COOKIE_NAME, BASE_URL } from "../../env";
-import axios from "axios";
+import { BASABLE_COOKIE_NAME } from "../../env";
 import { AuthTokenType, SessionCookie } from "../../utils/data_types";
-import { setCookie } from "../../utils";
+import { NetworkProvider, setCookie } from "../../utils";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert/Alert";
 
@@ -31,6 +30,7 @@ type ConnectInput = {
 
 export const ConnectForm = () => {
   const navigate = useNavigate();
+  const np = NetworkProvider.getInstance();
 
   const [connInfo, updateConnectInfo] = React.useState<Partial<ConnectInput>>({
     source: "0",
@@ -64,34 +64,38 @@ export const ConnectForm = () => {
   };
 
   const connect = async () => {
+    // reset network-related states
     updateNetworkState((prevData) => ({
       ...prevData,
       showAlert: false,
-      loading: true
+      loading: true,
     }));
 
     try {
-      const access: AuthTokenType = await axios
-        .post(BASE_URL + "auth/guest")
-        .then((resp) => resp.data);
-      
-      const connID = await axios
-      .post(BASE_URL + "connect", connInfo, {
-        headers: {
-          "session-id": "Bearer " + access.token,
-        },
-      })
-      .then((resp) => resp.data);
-      
+      // create a guest user
+      const access: AuthTokenType = await np.request({
+        path: "auth/guest",
+        method: "post",
+      });
+
+      // create new connection
+      const connID: string = await np.request({
+        path: "connect",
+        method: "post",
+        data: connInfo,
+      });
+
+      // create session cookie
       const cookie: SessionCookie = {
         token: access.token,
-        connID
-      }
+        isAuth: false,
+        connID,
+      };
 
-      console.log(cookie)
       const exp = access.exp / 86_400;
       setCookie(BASABLE_COOKIE_NAME, JSON.stringify(cookie), exp);
 
+      // update network state
       updateNetworkState((prevData) => ({
         ...prevData,
         showAlert: true,
@@ -100,10 +104,10 @@ export const ConnectForm = () => {
         message: "Connection successful! Redirecting to dashboard...",
       }));
 
-      navigate('/dashboard')
-
+      navigate("/dashboard");
     } catch (err: any) {
-      const message = err.response.data;
+      // display error
+      const message = err.response.data
       updateNetworkState((prevData) => ({
         ...prevData,
         showAlert: true,
