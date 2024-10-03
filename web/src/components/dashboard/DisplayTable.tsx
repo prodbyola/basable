@@ -1,13 +1,9 @@
 import * as React from "react";
-import { TableSummaryType } from "../../utils/data_types";
-
-type DisplayTableProps = {
-  tables: TableSummaryType[];
-};
+import { useStore } from "../../utils";
 
 const getDate = (d: string) => (new Date(d).toLocaleString())
 
-export const DisplayTable: React.FC<DisplayTableProps> = ({ tables }) => {
+export const DisplayTable = () => {
   const tableHeaders = [
     "SN",
     "Name",
@@ -16,6 +12,9 @@ export const DisplayTable: React.FC<DisplayTableProps> = ({ tables }) => {
     "Date Created",
     "Last Updated",
   ];
+
+  const tables = useStore((state) => state.tables)
+
   return (
     <section className="displayTable dashboardDisplay">
       <h3 className="sectionHeader">Table List</h3>
