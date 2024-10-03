@@ -21,3 +21,10 @@ export type SessionCookie = {
   connID: string,
   isAuth: boolean
 }
+
+export type ServerDetails = {
+  version: string
+  db_size: string
+  os: string
+  comment: string
+}

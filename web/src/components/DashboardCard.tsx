@@ -4,9 +4,9 @@ import * as React from "react";
 import theme from "../theme";
 import { Card } from "@mui/material";
 
-export interface CardDetails {
+export type CardDetails = {
   label: string;
-  value: string;
+  value: number | string;
   action?: string;
 }
 

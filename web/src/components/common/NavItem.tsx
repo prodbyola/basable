@@ -21,11 +21,6 @@ const navItemStyle = {
   },
 };
 
-interface InnerItem {
-  id: number;
-  title: string;
-}
-
 interface NavItemProps {
   label: string;
   icon: React.ReactNode;
@@ -33,7 +28,7 @@ interface NavItemProps {
   expandable?: boolean;
   onClick?: React.MouseEventHandler;
   expanded?: boolean;
-  innerItems?: InnerItem[];
+  tableList?: string[];
 }
 
 export const NavItem = ({
@@ -43,7 +38,7 @@ export const NavItem = ({
   expanded,
   expandable = false,
   onClick,
-  innerItems = [],
+  tableList = [],
 }: NavItemProps) => {
   return (
     <>
@@ -69,9 +64,9 @@ export const NavItem = ({
       {expandable && (
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <List component="div">
-            {innerItems.map((item) => (
+            {tableList.map((item) => (
               <ListItemButton
-                key={item.id}
+                key={item}
                 sx={{
                   fontFamily: '"Exo", sans-serif',
                   pl: 4,
@@ -94,7 +89,7 @@ export const NavItem = ({
                     }}
                   />
                 </ListItemIcon>
-                <ListItemText primary={item.title} />
+                <ListItemText primary={item} />
               </ListItemButton>
             ))}
           </List>

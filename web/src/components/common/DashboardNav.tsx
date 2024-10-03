@@ -24,23 +24,14 @@ import { VisualizationIcon } from "./icons/VisualizationIcon";
 import { HelpIcon } from "./icons/HelpIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
 import { NavItem } from "./NavItem";
+import { useStore } from "../../utils";
 
 const drawerWidth = 240;
 
-interface Item {
-  id: number;
-  title: string;
-}
-const tableitems: Item[] = [
-  { id: 1, title: "Table 1" },
-  { id: 2, title: "Table 2" },
-  { id: 3, title: "Table 3" },
-  { id: 4, title: "Table 4" },
-  { id: 5, title: "Table 5" },
-];
-
 function DashboardNav({ showMobileSidebar = false }) {
   const [openTables, setOpenTables] = React.useState(true);
+  const tables = useStore(state => state.tables)
+  const tableItems = tables.map(t => t.name)
 
   const handleTablesClick = () => {
     setOpenTables(!openTables);
@@ -181,7 +172,7 @@ function DashboardNav({ showMobileSidebar = false }) {
               expandable
               expanded={openTables}
               onClick={handleTablesClick}
-              innerItems={tableitems}
+              tableList={tableItems}
             />
 
             <NavItem label="Visualization" icon={<VisualizationIcon />} />
