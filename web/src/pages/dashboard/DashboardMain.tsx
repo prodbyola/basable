@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import { CardDetails, DashboardCard } from "../../components/DashboardCard";
 import { TableGraph } from "../../components/dashboard/TableGraph";
 import { DisplayTable } from "../../components/dashboard/DisplayTable";
-import { deleteCookie, getCookie, ServerDetails, TableSummaryType, useNetworkRequest } from "../../utils";
+import { getCookie, ServerDetails, TableSummaryType, useLogout, useNetworkRequest } from "../../utils";
 import { BASABLE_COOKIE_NAME } from "../../env";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../../utils";
@@ -20,6 +20,8 @@ const dashboardCards: CardDetails[] = [
 function DashboardMain() {
   const navigate = useNavigate()
   const request = useNetworkRequest()
+  const logout = useLogout()
+
   const updateTables = useStore(state => state.updateTables)
 
   const [ serverDetails, updateServerDetails ] = React.useState(dashboardCards)
@@ -27,8 +29,7 @@ function DashboardMain() {
   React.useEffect(() => {
     const cookie = getCookie(BASABLE_COOKIE_NAME)
     if(!cookie) {
-      deleteCookie(BASABLE_COOKIE_NAME)
-      navigate('')
+      logout()
       return
     }
 
@@ -59,7 +60,6 @@ function DashboardMain() {
     }
 
     getServerDetails()
-
 
   }, [request, navigate, updateTables])
  

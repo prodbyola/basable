@@ -1,12 +1,10 @@
-import { useNavigate } from "react-router-dom";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { BASE_URL, BASABLE_COOKIE_NAME } from "../env";
 import { getCookie } from "./cookies";
 import { SessionCookie } from "./data_types";
-import { useCallback } from "react";
 
 type RequestMethod = "get" | "post" | "put" | "patch" | "delete";
-type RequestOptions = {
+export type RequestOptions = {
   path: string;
   method: RequestMethod;
   data?: unknown;
@@ -79,24 +77,4 @@ export class NetworkProvider {
       }
     });
   }
-}
-
-export const useNetworkRequest = () => {
-  const navigate = useNavigate()
-
-  const makeRequest = useCallback(async(opts: RequestOptions) => {
-    const np = NetworkProvider.getInstance()
-    try {
-      const resp = await np.request(opts)
-      return resp
-    } catch(err) {
-      if(err.status === 403) {
-        navigate('')
-      } else {
-        return err
-      }
-    }
-  }, [navigate])
-
-  return makeRequest
 }

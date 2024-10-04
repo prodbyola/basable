@@ -2,7 +2,6 @@ import * as React from "react";
 import { CssBaseline, List } from "@material-ui/core";
 import ListItemText from "@mui/material/ListItemText";
 import Button from "@mui/material/Button";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ToolBar from "@mui/material/Toolbar";
 import AppBar from "@mui/material/AppBar";
 import ListItem from "@mui/material/ListItem";
@@ -13,15 +12,17 @@ import theme from "../../theme";
 import Logo from "../../assets/images/Basale-logo-white.svg";
 import SearchBar from "../bar/SearchBar";
 import useStyles from "../../styles/styles.js";
-import Avatar from "../../assets/images/Avater.png";
-import { Box, IconButton } from "@mui/material";
+import { Avatar, Box, IconButton } from "@mui/material";
 import { AppNotification } from "../bar/Notification";
 import MenuIcon from "@mui/icons-material/Menu";
+import { useStore } from "../../utils";
 
 const headerHeight = 80;
 
 function DashboardHeader({onShowSidebar}: { onShowSidebar: React.MouseEventHandler }) {
   const classes = useStyles();
+  const currentUser = useStore(state => state.currentUser)
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -88,17 +89,23 @@ function DashboardHeader({onShowSidebar}: { onShowSidebar: React.MouseEventHandl
               <AppNotification />
               <List>
                 <ListItem>
-                  <ListItemAvatar
+                  <Avatar
                     sx={{
                       minWidth: "42px",
+                      bgcolor: theme.palette.primary.main,
+                      color: 'white',
+                      cursor: 'pointer'
                     }}
                   >
-                    <img
-                      src={Avatar}
+                    { 
+                      currentUser.dp ? <img
+                      src={currentUser.dp}
                       alt="avatar"
                       style={{ width: 30, height: 30 }}
-                    />
-                  </ListItemAvatar>
+                    /> : currentUser.name[0]
+                    }
+                    
+                  </Avatar>
 
                   <ListItemText
                     primary="Stefania Asuqo"

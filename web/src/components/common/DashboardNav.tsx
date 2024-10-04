@@ -23,12 +23,13 @@ import { VisualizationIcon } from "./icons/VisualizationIcon";
 import { HelpIcon } from "./icons/HelpIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
 import { NavItem } from "./NavItem";
-import { useStore } from "../../utils";
+import { useLogout, useStore } from "../../utils";
 
 const drawerWidth = 240;
 
 function DashboardNav({ showMobileSidebar = false }) {
   const currentUser = useStore((state) => state.currentUser);
+  const logout = useLogout()
 
   const [openTables, setOpenTables] = React.useState(true);
   const tables = useStore((state) => state.tables);
@@ -187,7 +188,7 @@ function DashboardNav({ showMobileSidebar = false }) {
             <NavItem label="Visualization" icon={<VisualizationIcon />} />
           </div>
           <div className="bottom-container">
-            <NavItem label="LogOut" icon={<LogoutIcon />} />
+            <NavItem label="LogOut" icon={<LogoutIcon />} onClick={logout} />
             <NavItem label="Help" icon={<HelpIcon />} />
           </div>
         </Box>

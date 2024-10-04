@@ -9,8 +9,18 @@ import { ReactComponent as Gradient2 } from "../assets/images/gradient-2.svg";
 import { ReactComponent as Gradient3 } from "../assets/images/gradient-3.svg";
 import { ConnectForm } from '../components/connect/ConnectForm'
 import theme from "../theme";
+import { getCookie } from "../utils";
+import { BASABLE_COOKIE_NAME } from "../env";
+import { useNavigate } from "react-router-dom";
 
 const CreateGuest = () => {
+  const cookie = getCookie(BASABLE_COOKIE_NAME)
+  const navigate = useNavigate()
+
+  React.useEffect(() => {
+    if(cookie) navigate('/dashboard')
+  }, [navigate, cookie])
+
   return (
     <div className="create-guest">
       <div className="content-container">

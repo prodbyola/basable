@@ -5,6 +5,7 @@ type StoreType = {
     tables: TableSummaryType[]; 
     currentUser: CurrentUser,
     updateTables: (tables: TableSummaryType[]) => void;
+    logout: () => void
 };
 
 export const userDefaults: CurrentUser = {
@@ -16,5 +17,8 @@ export const userDefaults: CurrentUser = {
 export const useStore = create<StoreType>(set => ({
     tables: [],
     currentUser: userDefaults,
-    updateTables: (tables: TableSummaryType[]) => set({ tables })
+    updateTables: (tables: TableSummaryType[]) => set({ tables }),
+    logout() {
+      set({currentUser: userDefaults})
+    },
 }))
