@@ -10,7 +10,7 @@ type StoreType = {
 export const userDefaults: CurrentUser = {
   name: 'Guest User',
   isLogged: false,
-  role: 'Developer'
+  role: 'Demo Account'
 }
 
 export const useStore = create<StoreType>(set => ({

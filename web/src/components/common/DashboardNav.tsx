@@ -6,10 +6,9 @@ import Drawer from "@mui/material/Drawer";
 import Divider from "@mui/material/Divider";
 import ListItem from "@mui/material/ListItem";
 import MenuItem from "@mui/material/MenuItem";
-import { ListSubheader } from "@mui/material";
+import { Avatar, ListSubheader } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "../../theme";
-import Avatar from "../../assets/images/Avater.png";
 import database1 from "../../assets/images/database1.svg";
 import database2 from "../../assets/images/database2.svg";
 import database3 from "../../assets/images/database3.svg";
@@ -29,9 +28,11 @@ import { useStore } from "../../utils";
 const drawerWidth = 240;
 
 function DashboardNav({ showMobileSidebar = false }) {
+  const currentUser = useStore((state) => state.currentUser);
+
   const [openTables, setOpenTables] = React.useState(true);
-  const tables = useStore(state => state.tables)
-  const tableItems = tables.map(t => t.name)
+  const tables = useStore((state) => state.tables);
+  const tableItems = tables.map((t) => t.name);
 
   const handleTablesClick = () => {
     setOpenTables(!openTables);
@@ -45,8 +46,8 @@ function DashboardNav({ showMobileSidebar = false }) {
           width: drawerWidth,
           flexShrink: 0,
           display: {
-            xs: showMobileSidebar ? 'flex' : 'none',
-            md: 'flex'
+            xs: showMobileSidebar ? "flex" : "none",
+            md: "flex",
           },
         }}
       >
@@ -63,9 +64,17 @@ function DashboardNav({ showMobileSidebar = false }) {
         >
           <div className="main-container">
             <ListItem>
-              <div style={{ paddingRight: "10px" }}>
-                <img src={Avatar} alt="avatar" />
-              </div>
+              <Avatar sx={{
+                bgcolor: theme.palette.primary.main,
+                color: 'white',
+                marginRight: '12px'
+              }}>
+                {currentUser.dp ? (
+                  <img src={currentUser.dp} alt="avatar" />
+                ) : (
+                  currentUser.name[0]
+                )}
+              </Avatar>
               <ListItemText
                 primary={
                   <strong
@@ -74,7 +83,7 @@ function DashboardNav({ showMobileSidebar = false }) {
                       fontFamily: '"Exo", sans-serif',
                     }}
                   >
-                    Stefania Asuqo
+                    {currentUser.name}
                   </strong>
                 }
                 secondary={
@@ -89,7 +98,7 @@ function DashboardNav({ showMobileSidebar = false }) {
                       fontFamily: '"Exo", sans-serif',
                     }}
                   >
-                    Developer
+                    {currentUser.role}
                   </span>
                 }
               />
