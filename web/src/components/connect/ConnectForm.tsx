@@ -77,17 +77,21 @@ export const ConnectForm = () => {
         path: "auth/guest",
         method: "post",
       });
+      const token = access.token
 
       // create new connection
       const connID: string = await np.request({
         path: "connect",
         method: "post",
         data: connInfo,
+        headers: {
+          'session-id': 'Bearer '+ token
+        }
       });
 
       // create session cookie
       const cookie: SessionCookie = {
-        token: access.token,
+        token,
         isAuth: false,
         connID,
       };
@@ -106,7 +110,6 @@ export const ConnectForm = () => {
 
       navigate("/dashboard");
     } catch (err: any) {
-      console.log('err', err)
       // display error
       let message = ''
       if(err.response) message = err.response.data

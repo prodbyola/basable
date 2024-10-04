@@ -16,6 +16,13 @@ export type AuthTokenType = {
   exp: number
 }
 
+export type CurrentUser = {
+  name: string
+  dp?: string
+  role: string;
+  isLogged: boolean
+}
+
 export type SessionCookie = {
   token: string,
   connID: string,

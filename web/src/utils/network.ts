@@ -10,6 +10,7 @@ type RequestOptions = {
   path: string;
   method: RequestMethod;
   data?: unknown;
+  headers?: AxiosRequestConfig['headers']
 };
 
 export class NetworkProvider {
@@ -31,6 +32,7 @@ export class NetworkProvider {
 
     const config: AxiosRequestConfig = {
       headers: {
+        ...opts.headers,
         "Content-Type": "application/json",
       },
     };
