@@ -31,8 +31,8 @@ export const DisplayTable = () => {
             <tr key={tb.name}>
               <td>{index + 1}</td>
               <td>{tb.name}</td>
-              <td>{tb.row_count}</td>
-              <td>{tb.col_count}</td>
+              <td>{tb.row_count.toLocaleString()}</td>
+              <td>{tb.col_count.toLocaleString()}</td>
               <td>{getDate(tb.created)}</td>
               <td>{getDate(tb.updated)}</td>
             </tr>

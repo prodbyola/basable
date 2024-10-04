@@ -31,7 +31,7 @@ export type SessionCookie = {
 
 export type ServerDetails = {
   version: string
-  db_size: string
+  db_size: number
   os: string
   comment: string
 }

@@ -39,7 +39,7 @@ function DashboardMain() {
       const totalRows = tables.reduce((accm, item) => (accm + item.row_count), 0)
       
       const updatedDetails = [...serverDetails]
-      updatedDetails[0].value = totalRows
+      updatedDetails[0].value = totalRows.toLocaleString()
 
       updateTables(tables)
     })
@@ -51,7 +51,7 @@ function DashboardMain() {
       })
 
       const updatedDetails = [...serverDetails]
-      updatedDetails[1].value = resp.db_size + 'MB'
+      updatedDetails[1].value = resp.db_size.toLocaleString() + 'MB'
       updatedDetails[2].value = resp.os + ' ' + resp.comment
       updatedDetails[3].value = resp.version
 
