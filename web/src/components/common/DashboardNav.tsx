@@ -24,20 +24,20 @@ import { HelpIcon } from "./icons/HelpIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
 import { NavItem } from "./NavItem";
 import { useLogout, useStore } from "../../utils";
+import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
 
 function DashboardNav({ showMobileSidebar = false }) {
   const currentUser = useStore((state) => state.currentUser);
+
+  const navigate = useNavigate()
   const logout = useLogout()
 
   const [openTables, setOpenTables] = React.useState(true);
   const tables = useStore((state) => state.tables);
   const tableItems = tables.map((t) => t.name);
 
-  const handleTablesClick = () => {
-    setOpenTables(!openTables);
-  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -175,13 +175,14 @@ function DashboardNav({ showMobileSidebar = false }) {
               label="Dashboard"
               icon={<DashboardIcon color="#4451CA" />}
               selected
+              onClick={ () => navigate('/dashboard')}
             />
             <NavItem
               label="Tables"
               icon={<TablesIcon />}
               expandable
               expanded={openTables}
-              onClick={handleTablesClick}
+              onClick={() => setOpenTables(!openTables)}
               tableList={tableItems}
             />
 

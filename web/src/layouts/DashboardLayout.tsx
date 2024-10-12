@@ -2,8 +2,8 @@ import React, { useState } from "react";
 
 import DashboardHeader from "../components/common/DashboardHeader";
 import DashboardNav from "../components/common/DashboardNav";
-import DashboardMain from "../pages/dashboard/DashboardMain";
 import Box from "@mui/material/Box";
+import { Outlet } from "react-router-dom";
 
 function DashboardLayout() {
   const [showSidebar, onShowSidebar] = useState(false);
@@ -20,7 +20,7 @@ function DashboardLayout() {
     >
       <DashboardHeader onShowSidebar={() => onShowSidebar(!showSidebar)} />
       <DashboardNav showMobileSidebar={showSidebar} />
-      <DashboardMain />
+      <Outlet />
     </Box>
   );
 }

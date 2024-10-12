@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 
 const navItemStyle = {
   mt: "10px",
@@ -40,6 +41,8 @@ export const NavItem = ({
   onClick,
   tableList = [],
 }: NavItemProps) => {
+  const navigate = useNavigate()
+
   return (
     <>
       <ListItemButton sx={navItemStyle} onClick={onClick} selected={selected}>
@@ -73,6 +76,7 @@ export const NavItem = ({
                   pt: 0,
                   pb: 0,
                 }}
+                onClick={() => navigate('/dashboard/tables/'+item)}
               >
                 <ListItemIcon sx={{
                    "&.MuiListItemIcon-root": {
