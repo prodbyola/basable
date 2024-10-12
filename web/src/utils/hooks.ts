@@ -13,7 +13,8 @@ export const useNetworkRequest = () => {
         const resp = await np.request(opts);
         return resp;
       } catch (err) {
-        if (err.status === 403) {
+        if ([403, 412].includes(err.status)) {
+          deleteCookie(BASABLE_COOKIE_NAME)
           navigate("");
         } else {
           return err;

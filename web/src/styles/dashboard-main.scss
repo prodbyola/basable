@@ -73,41 +73,58 @@ $main_page_padding: 32px;
     .tableRowCount {
         flex-wrap: wrap;
     }
+}
 
-    .displayTable {
-        table {
-            width: 100%;
-            border: variables.$grey_200 solid 1px;
-            border-radius: 8px;
+$table_border: variables.$grey_200 solid 1px;
 
-            thead {
-                background-color: variables.$primary_100;
+.displayTable {
+    table {
+        width: 100%;
+        border: $table_border;
+        border-radius: 8px;
 
-                tr {
-                    
-                    th {
-                        border: none;
-                        outline: none;
-                        text-align: left;
-                        color: variables.$grey_400;
-                        padding: 12px 4px;
-                    }
+        thead {
+            background-color: variables.$primary_100;
+
+            tr {
+                
+                th {
+                    border: none;
+                    outline: none;
+                    text-align: left;
+                    color: variables.$grey_400;
+                    padding: 12px 4px;
                 }
             }
+        }
 
-            tbody {
-                tr {
-                    transition: all .2s;
-                    td {
-                        font-size: 0.833rem;
-                        padding: 12px 4px;
-                    }
+        tbody {
+            tr {
+                transition: all .2s;
+                td {
+                    font-size: 0.833rem;
+                    padding: 12px 4px;
                 }
-                
-                tr:hover {
-                    cursor: pointer;
-                    background-color: variables.$primary_100;
-                    transform: scale(1.05);
+            }
+            
+            tr::not(.editableRow):hover {
+                cursor: pointer;
+                background-color: variables.$primary_100;
+                transform: scale(1.05);
+            }
+
+            tr.editableRow {
+                td {
+                    border-bottom: $table_border;
+                    border-right: $table_border;
+
+                    input {
+                        width: 100%;
+                        height: 100%;
+                        outline: none;
+                        border: none;
+                        color: gray;
+                    }
                 }
             }
         }

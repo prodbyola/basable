@@ -35,3 +35,18 @@ export type ServerDetails = {
   os: string
   comment: string
 }
+
+export type TableColumn = {
+  col_type: string
+  name: string
+  nullable: boolean
+  primary: boolean
+  unique: boolean
+  default_value: unknown
+}
+
+export type TableRow = {
+  [key: string]: {
+    [key: string]: unknown
+  }
+}
