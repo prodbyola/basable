@@ -4,11 +4,13 @@ import DashboardHeader from "../components/common/DashboardHeader";
 import DashboardNav from "../components/common/DashboardNav";
 import Box from "@mui/material/Box";
 import { Outlet } from "react-router-dom";
-import { getCookie, useLogout } from "../utils";
+import { getCookie, TableSummaryType, useLogout, useNetworkRequest, useStore } from "../utils";
 import { BASABLE_COOKIE_NAME } from "../env";
 
 function DashboardLayout() {
   const logout = useLogout()
+  const request = useNetworkRequest()
+  const updateTables = useStore(state => state.updateTables)
 
   const [isReady, setIsReady] = useState(false)
   const [showSidebar, onShowSidebar] = useState(false);
@@ -16,10 +18,21 @@ function DashboardLayout() {
   useEffect(() => {
     const cookie = getCookie(BASABLE_COOKIE_NAME)
     
-    if(!cookie) logout()
-    else setIsReady(true)
+    if(!cookie) {
+      logout()
+    } else {
+      request({
+        method: 'get',
+        path: 'table-summaries'
+      }).then((tables: TableSummaryType[]) => {
+        
+        updateTables(tables)
+      })
 
-  }, [logout])
+      setIsReady(true)
+    } 
+
+  }, [logout, request, updateTables])
 
   if(!isReady) {
     return <div></div>

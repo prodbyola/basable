@@ -8,6 +8,7 @@ const DatabaseTable = () => {
 
   const [columns, setColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
+  const [tableLoaded, updateTableLoaded] = React.useState(false)
 
   const getColumnValue = (name: string, row: TableRow) => {
     const o = row[name]
@@ -28,10 +29,12 @@ const DatabaseTable = () => {
         path: "tables/data/" + tableID,
       });
       setRows(rows);
+
+      updateTableLoaded(true)
     };
 
-    loadData();
-  }, [request, tableID]);
+    if(!tableLoaded) loadData();
+  }, [request, tableID, tableLoaded]);
 
   return (
     <section className="displayTable dashboardDisplay">

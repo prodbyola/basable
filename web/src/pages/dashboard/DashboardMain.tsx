@@ -4,7 +4,7 @@ import * as React from "react";
 import { CardDetails, DashboardCard } from "../../components/DashboardCard";
 import { TableGraph } from "../../components/dashboard/TableGraph";
 import { DisplayTable } from "../../components/dashboard/DisplayTable";
-import { ServerDetails, TableSummaryType, useNetworkRequest } from "../../utils";
+import { ServerDetails, useNetworkRequest } from "../../utils";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../../utils";
 
@@ -19,43 +19,42 @@ function DashboardMain() {
   const navigate = useNavigate()
   const request = useNetworkRequest()
 
-  const updateTables = useStore(state => state.updateTables)
+  const tables = useStore(state => state.tables)
   const [ serverDetails, updateServerDetails ] = React.useState(dashboardCards)
+  const [serverLoaded, setServerLoaded] = React.useState(false)
 
   React.useEffect(() => {
     try {
-      request({
-        method: 'get',
-        path: 'table-summaries'
-      }).then((tables: TableSummaryType[]) => {
+      const updatedDetails = [...serverDetails]
+
+      // Update table row count
+      if(tables.length && !updatedDetails[0].value) {
         const totalRows = tables.reduce((accm, item) => (accm + item.row_count), 0)
-        
-        const updatedDetails = [...serverDetails]
         updatedDetails[0].value = totalRows.toLocaleString()
-  
-        updateTables(tables)
-      })
-  
+        updateServerDetails(updatedDetails)
+      }
+      
+      // update server details
       const getServerDetails = async () => {
         const resp: ServerDetails = await request({
           method: 'get',
           path: 'server'
         })
   
-        const updatedDetails = [...serverDetails]
         updatedDetails[1].value = resp.db_size.toLocaleString() + 'MB'
         updatedDetails[2].value = resp.os + ' ' + resp.comment
         updatedDetails[3].value = resp.version
   
         updateServerDetails(updatedDetails)
+        setServerLoaded(true)
       }
   
-      getServerDetails()
+      if(!serverLoaded) getServerDetails()
     } catch(err) {
       console.log(err)
     }
 
-  }, [request, navigate, updateTables, serverDetails])
+  }, [request, navigate, serverDetails, tables, serverLoaded])
  
   return (
     <>

@@ -107,7 +107,7 @@ $table_border: variables.$grey_200 solid 1px;
                 }
             }
             
-            tr::not(.editableRow):hover {
+            tr:not(.editableRow):hover {
                 cursor: pointer;
                 background-color: variables.$primary_100;
                 transform: scale(1.05);
@@ -125,6 +125,16 @@ $table_border: variables.$grey_200 solid 1px;
                         border: none;
                         color: gray;
                     }
+                }
+
+                td:last-child {
+                    border-right: none;
+                }
+            }
+
+            tr:last-child {
+                td {
+                    border-bottom: none;
                 }
             }
         }
