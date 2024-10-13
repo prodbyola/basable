@@ -5,10 +5,11 @@ import {
   ListItemText,
   Collapse,
   List,
+  ThemeProvider,
 } from "@mui/material";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import theme from "../../theme";
 
 const navItemStyle = {
   mt: "10px",
@@ -29,7 +30,11 @@ interface NavItemProps {
   expandable?: boolean;
   onClick?: React.MouseEventHandler;
   expanded?: boolean;
-  tableList?: string[];
+  subMenu?: {
+    items: string[];
+    active?: string;
+  };
+  onSubItemClick?: (item: string) => void;
 }
 
 export const NavItem = ({
@@ -39,12 +44,13 @@ export const NavItem = ({
   expanded,
   expandable = false,
   onClick,
-  tableList = [],
+  subMenu = {
+    items: [],
+  },
+  onSubItemClick,
 }: NavItemProps) => {
-  const navigate = useNavigate()
-
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <ListItemButton sx={navItemStyle} onClick={onClick} selected={selected}>
         <ListItemIcon
           sx={{
@@ -67,7 +73,7 @@ export const NavItem = ({
       {expandable && (
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <List component="div">
-            {tableList.map((item) => (
+            {subMenu.items.map((item) => (
               <ListItemButton
                 key={item}
                 sx={{
@@ -75,20 +81,24 @@ export const NavItem = ({
                   pl: 4,
                   pt: 0,
                   pb: 0,
+                  backgroundColor: subMenu.active === item ? theme.palette.primary.main : '',
+                  color: subMenu.active === item ? 'white' : ''
                 }}
-                onClick={() => navigate('/dashboard/tables/'+item)}
+                onClick={() => onSubItemClick(item)}
               >
-                <ListItemIcon sx={{
-                   "&.MuiListItemIcon-root": {
-                    minWidth: "18px",
-                  },
-                }}>
+                <ListItemIcon
+                  sx={{
+                    "&.MuiListItemIcon-root": {
+                      minWidth: "18px",
+                    },
+                  }}
+                >
                   <FiberManualRecordIcon
                     sx={{
                       "&.MuiSvgIcon-root": {
                         width: "4px",
                         height: "4px",
-                        fill: "#363636",
+                        fill: subMenu.active === item ? 'white' : '',
                       },
                     }}
                   />
@@ -99,6 +109,6 @@ export const NavItem = ({
           </List>
         </Collapse>
       )}
-    </>
+    </ThemeProvider>
   );
 };

@@ -24,20 +24,25 @@ import { HelpIcon } from "./icons/HelpIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
 import { NavItem } from "./NavItem";
 import { useLogout, useStore } from "../../utils";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 const drawerWidth = 240;
 
 function DashboardNav({ showMobileSidebar = false }) {
   const currentUser = useStore((state) => state.currentUser);
+  const location = useLocation();
+  const { tableID } = useParams();
+  const defaultTextColor = "#363636";
 
-  const navigate = useNavigate()
-  const logout = useLogout()
+  const navigate = useNavigate();
+  const logout = useLogout();
+
+  const isDashboardRoute = location.pathname === "/dashboard";
+  const isTableRoute = location.pathname.startsWith("/dashboard/tables/");
 
   const [openTables, setOpenTables] = React.useState(true);
   const tables = useStore((state) => state.tables);
   const tableItems = tables.map((t) => t.name);
-
 
   return (
     <ThemeProvider theme={theme}>
@@ -65,11 +70,13 @@ function DashboardNav({ showMobileSidebar = false }) {
         >
           <div className="main-container">
             <ListItem>
-              <Avatar sx={{
-                bgcolor: theme.palette.primary.main,
-                color: 'white',
-                marginRight: '12px'
-              }}>
+              <Avatar
+                sx={{
+                  bgcolor: theme.palette.primary.main,
+                  color: "white",
+                  marginRight: "12px",
+                }}
+              >
                 {currentUser.dp ? (
                   <img src={currentUser.dp} alt="avatar" />
                 ) : (
@@ -173,17 +180,33 @@ function DashboardNav({ showMobileSidebar = false }) {
             <Divider />
             <NavItem
               label="Dashboard"
-              icon={<DashboardIcon color="#4451CA" />}
-              selected
-              onClick={ () => navigate('/dashboard')}
+              icon={
+                <DashboardIcon
+                  color={
+                    isDashboardRoute
+                      ? theme.palette.primary.main
+                      : defaultTextColor
+                  }
+                />
+              }
+              selected={isDashboardRoute}
+              onClick={() => navigate("/dashboard")}
             />
             <NavItem
               label="Tables"
-              icon={<TablesIcon />}
+              icon={
+                <TablesIcon
+                  color={
+                    isTableRoute ? theme.palette.primary.main : defaultTextColor
+                  }
+                />
+              }
               expandable
               expanded={openTables}
+              selected={isTableRoute}
               onClick={() => setOpenTables(!openTables)}
-              tableList={tableItems}
+              subMenu={{ items: tableItems, active: tableID }}
+              onSubItemClick={(item) => navigate("/dashboard/tables/" + item)}
             />
 
             <NavItem label="Visualization" icon={<VisualizationIcon />} />
