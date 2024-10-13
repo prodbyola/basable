@@ -139,3 +139,23 @@ $table_border: variables.$grey_200 solid 1px;
     }
   }
 }
+
+.displayTableHeader {
+  display: flex;
+  border: 1px variables.$primary solid;
+  padding: 0 32px;
+  column-gap: 8px;
+
+  .tableName {
+    color: variables.$primary;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-right: auto;
+  }
+
+  .tableToolbar {
+    display: inline-flex;
+    align-items: center;
+    column-gap: 8px;
+  }
+}
