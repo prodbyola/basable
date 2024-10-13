@@ -8,16 +8,17 @@ const DatabaseTable = () => {
 
   const [columns, setColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
-  const [tableLoaded, updateTableLoaded] = React.useState(false)
+  const [loading, setLoading] = React.useState(false);
 
   const getColumnValue = (name: string, row: TableRow) => {
-    const o = row[name]
-    const k = Object.keys(row[name])[0]
-    return o[k] as string
-  }
+    const o = row[name];
+    const k = Object.keys(row[name])[0];
+    return o[k] as string;
+  };
 
   React.useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
       const cols: TableColumn[] = await request({
         method: "get",
         path: "tables/columns/" + tableID,
@@ -29,12 +30,13 @@ const DatabaseTable = () => {
         path: "tables/data/" + tableID,
       });
       setRows(rows);
-
-      updateTableLoaded(true)
+      setLoading(false);
     };
 
-    if(!tableLoaded) loadData();
-  }, [request, tableID, tableLoaded]);
+    if (tableID) loadData();
+  }, [request, tableID]);
+
+  if (loading) return <div>Loading</div>;
 
   return (
     <section className="displayTable dashboardDisplay">
@@ -49,8 +51,15 @@ const DatabaseTable = () => {
         <tbody>
           {rows.map((row, index) => (
             <tr className="editableRow" key={index}>
-              {columns.map(col => (
-                  <td key={col.name}>{ <input value={ getColumnValue(col.name, row) } /> }</td>
+              {columns.map((col) => (
+                <td key={col.name}>
+                  {
+                    <input
+                      value={getColumnValue(col.name, row)}
+                      onChange={() => {}}
+                    />
+                  }
+                </td>
               ))}
             </tr>
           ))}

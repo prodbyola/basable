@@ -1,142 +1,141 @@
-@use './variables';
-@import url('./visualize.scss');
+@use "./variables";
+@import url("./visualize.scss");
 
 $main_page_padding: 32px;
 
 .dashboardMainPage {
-    padding-left: calc(18px + $main_page_padding);
-    padding-right: $main_page_padding;
-    padding-top: calc(80px + $main_page_padding);
-    font-family: "Exo", sans-serif;
+  padding-left: calc(18px + $main_page_padding);
+  padding-right: $main_page_padding;
+  padding-top: calc(80px + $main_page_padding);
+  font-family: "Exo", sans-serif;
 
-    .sectionHeader {
-        font-weight: 600;
-        font-size: 1.2rem;
-        color: variables.$primary;
-    }
+  .sectionHeader {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: variables.$primary;
+  }
 
-    .dashCardList {
+  .dashCardList {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: 12px;
+
+    .dashCard {
+      padding: 8px 16px;
+      border-radius: 8px;
+      background-color: white;
+
+      .dashCardUpperPart {
+        display: inline-flex;
         width: 100%;
-        display: flex;
-        flex-wrap: wrap;
+        align-items: center;
         justify-content: space-between;
-        row-gap: 12px;
+        margin-bottom: 12px;
 
-        .dashCard {
-            padding: 8px 16px;
-            border-radius: 8px;
-            background-color: white;
-
-            .dashCardUpperPart {
-                display: inline-flex;
-                width: 100%;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 12px;
-
-                .dashCardLabel {
-                    width: 50%;
-                    font-weight: 500;
-                    color: #656565;
-                }
-
-                .dashCardAction {
-                    display: inline-flex;
-                    align-items: center;
-                    column-gap: 4px;
-                    cursor: pointer;
-
-                    .dashCardActionLabel {
-                        font-size: 12.33px;
-                        font-weight: 600;
-                        color: #4451CA;
-                    }
-                }
-            }
-
-            .dashCardValue {
-                font-weight: bold;
-                font-size: 27.7px;
-                margin: 0;
-                text-align: left;
-            }
+        .dashCardLabel {
+          width: 50%;
+          font-weight: 500;
+          color: #656565;
         }
-    }
 
-    .dashboardDisplay {
-        background-color: white;
-        border-radius: 12px;
-        padding: 16px;
-        margin-top: 44px;
-    }
+        .dashCardAction {
+          display: inline-flex;
+          align-items: center;
+          column-gap: 4px;
+          cursor: pointer;
 
-    .tableRowCount {
-        flex-wrap: wrap;
+          .dashCardActionLabel {
+            font-size: 12.33px;
+            font-weight: 600;
+            color: #4451ca;
+          }
+        }
+      }
+
+      .dashCardValue {
+        font-weight: bold;
+        font-size: 27.7px;
+        margin: 0;
+        text-align: left;
+      }
     }
+  }
+
+  .dashboardDisplay {
+    background-color: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 44px;
+  }
+
+  .tableRowCount {
+    flex-wrap: wrap;
+  }
 }
 
 $table_border: variables.$grey_200 solid 1px;
 
 .displayTable {
-    table {
-        width: 100%;
-        border: $table_border;
-        border-radius: 8px;
+  table {
+    width: 100%;
+    border: $table_border;
+    border-radius: 8px;
 
-        thead {
-            background-color: variables.$primary_100;
+    thead {
+      background-color: variables.$primary_100;
 
-            tr {
-                
-                th {
-                    border: none;
-                    outline: none;
-                    text-align: left;
-                    color: variables.$grey_400;
-                    padding: 12px 4px;
-                }
-            }
+      tr {
+        th {
+          border: none;
+          outline: none;
+          text-align: left;
+          color: variables.$grey_400;
+          padding: 12px 4px;
         }
-
-        tbody {
-            tr {
-                transition: all .2s;
-                td {
-                    font-size: 0.833rem;
-                    padding: 12px 4px;
-                }
-            }
-            
-            tr:not(.editableRow):hover {
-                cursor: pointer;
-                background-color: variables.$primary_100;
-                transform: scale(1.05);
-            }
-
-            tr.editableRow {
-                td {
-                    border-bottom: $table_border;
-                    border-right: $table_border;
-
-                    input {
-                        width: 100%;
-                        height: 100%;
-                        outline: none;
-                        border: none;
-                        color: gray;
-                    }
-                }
-
-                td:last-child {
-                    border-right: none;
-                }
-            }
-
-            tr:last-child {
-                td {
-                    border-bottom: none;
-                }
-            }
-        }
+      }
     }
+
+    tbody {
+      tr {
+        transition: all 0.2s;
+        td {
+          font-size: 0.833rem;
+          padding: 12px 4px;
+        }
+      }
+
+      tr:not(.editableRow):hover {
+        cursor: pointer;
+        background-color: variables.$primary_100;
+        transform: scale(1.05);
+      }
+
+      tr.editableRow {
+        td {
+          border-bottom: $table_border;
+          border-right: $table_border;
+
+          input {
+            width: 100%;
+            height: 100%;
+            outline: none;
+            border: none;
+            color: gray;
+          }
+        }
+
+        td:last-child {
+          border-right: none;
+        }
+      }
+
+      tr:last-child {
+        td {
+          border-bottom: none;
+        }
+      }
+    }
+  }
 }
