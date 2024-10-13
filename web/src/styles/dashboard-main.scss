@@ -85,8 +85,9 @@ $table_border: variables.$grey_200 solid 1px;
 
     thead {
       background-color: variables.$primary_100;
-
+      
       tr {
+        background-color: variables.$primary_100;
         th {
           border: none;
           outline: none;
@@ -97,7 +98,7 @@ $table_border: variables.$grey_200 solid 1px;
       }
     }
 
-    tbody {
+    tbody {      
       tr {
         transition: all 0.2s;
         td {
@@ -137,7 +138,26 @@ $table_border: variables.$grey_200 solid 1px;
         }
       }
     }
+
   }
+}
+
+.displayTable.databaseTable {
+  max-height: calc(100vh - 230px);
+  overflow: scroll;
+
+  table {
+    thead {
+      tr {
+        position: sticky;
+        top: 0;
+      }
+    }
+  }
+}
+
+.dashboardDisplay.databaseTable {
+  padding-top: 0;
 }
 
 .displayTableHeader {

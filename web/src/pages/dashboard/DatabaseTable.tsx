@@ -74,7 +74,7 @@ const DatabaseTable = () => {
           </IconButton>
         </div>
       </div>
-      <section className="displayTable dashboardDisplay">
+      <section className="displayTable dashboardDisplay databaseTable">
         <table>
           <thead>
             <tr>
