@@ -17,8 +17,11 @@ use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::base::AppState;
+use crate::AppError;
 
 use super::routes::core_routes;
+
+type BasableHttpService = IntoMakeServiceWithConnectInfo<Router<()>, std::net::SocketAddr>;
 
 #[async_trait]
 impl<S> FromRequestParts<S> for AppState
@@ -33,7 +36,7 @@ where
     }
 }
 
-pub fn app() -> IntoMakeServiceWithConnectInfo<Router<()>, std::net::SocketAddr> {
+pub fn app() -> Result<BasableHttpService, AppError> {
     // We add CORS middleware to enable connection from Vue/React Development client
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
@@ -46,11 +49,11 @@ pub fn app() -> IntoMakeServiceWithConnectInfo<Router<()>, std::net::SocketAddr>
         ]);
 
     let state = AppState::default();
-    state.setup_local_db();
+    state.setup_local_db().map_err(|err| AppError::InitError(err.to_string()))?;
 
     let routes = core_routes();
 
-    Router::new()
+    let r = Router::new()
         .nest("/core", routes)
         .layer(
             ServiceBuilder::new()
@@ -72,5 +75,7 @@ pub fn app() -> IntoMakeServiceWithConnectInfo<Router<()>, std::net::SocketAddr>
                 .layer(cors),
         )
         .with_state(state)
-        .into_make_service_with_connect_info::<SocketAddr>()
+        .into_make_service_with_connect_info::<SocketAddr>();
+
+    Ok(r)
 }

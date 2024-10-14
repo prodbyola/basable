@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use axum::{
-    extract::{Path, Query, State}, http::StatusCode, routing::{delete, get, patch, post, put}, Json, Router
+    extract::{Path, Query, State},
+    http::StatusCode,
+    routing::{delete, get, patch, post, put},
+    Json, Router,
 };
 use axum_macros::debug_handler;
 
@@ -10,7 +13,7 @@ use crate::{
         column::ColumnList,
         data::table::{DataQueryFilter, TableConfig, UpdateDataOptions},
         imp::table::Table,
-        HttpError, AppState,
+        AppState, HttpError,
     },
     http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
     imp::database::mysql::table::MySqlTable,
@@ -19,29 +22,31 @@ use crate::{
 #[debug_handler]
 pub(crate) async fn save_configuration(
     Path(table_name): Path<String>,
-    AuthExtractor(user): AuthExtractor,
+    AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     TableExtractor(_): TableExtractor,
-    State(_): State<AppState>,
+    State(state): State<AppState>,
     Json(config): Json<TableConfig>,
 ) -> Result<String, HttpError> {
+    let storage = state.local_db;
     let conn_id = db.id().to_string();
-    user.update_table_config(&conn_id, &table_name, config);
-
+    
+    storage.update_table_config(&table_name, &conn_id, config)?;
     Ok("Operation successful".to_string())
 }
 
 #[debug_handler]
 pub(crate) async fn get_configuration(
     Path(table_name): Path<String>,
-    AuthExtractor(user): AuthExtractor,
+    AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     TableExtractor(_): TableExtractor,
-    State(_): State<AppState>,
-) -> Result<Json<Option<TableConfig>>, HttpError> {
+    State(state): State<AppState>,
+) -> Result<Json<TableConfig>, HttpError> {
+    let storage = state.local_db;
     let conn_id = db.id().to_string();
-    let config = user.get_table_config(&conn_id, &table_name);
 
+    let config = storage.get_table_config(&table_name, &conn_id)?;
     Ok(Json(config))
 }
 
@@ -119,9 +124,8 @@ pub(crate) async fn delete_data(
         (Some(col), Some(value)) => {
             table.delete_data(col.clone(), value.clone())?;
             Ok("Operation successful".to_string())
-        },
+        }
     }
-
 }
 
 /// Routes for database table management

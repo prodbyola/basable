@@ -78,6 +78,8 @@ pub(crate) struct NotifyEvent {
 pub(crate) struct TableConfig {
     pub label: String,
 
+    pub name: String,
+
     /// Name of column to use as primary key.
     pub pk_column: Option<String>,
 
@@ -105,6 +107,7 @@ impl Default for TableConfig {
         TableConfig {
             pk_column: None,
             label: String::new(),
+            name: String::new(),
             created_column: None,
             updated_column: None,
             special_columns: None,

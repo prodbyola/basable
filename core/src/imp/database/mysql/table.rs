@@ -121,6 +121,7 @@ impl Table for MySqlTable {
             
             let c = TableConfig {
                 pk_column: pk,
+                name: self.name.clone(),
                 label: self.name.clone(),
                 ..TableConfig::default()
             };

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use base::user::User;
 use dotenv::dotenv;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -11,8 +13,21 @@ mod utils;
 mod tests;
 mod globals;
 
+#[derive(Debug)]
+enum AppError {
+    InitError(String)
+}
+
+impl Display for AppError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AppError::InitError(msg) => write!(f, "{msg}"),
+        }
+    }
+}
+
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), AppError> {
     dotenv().ok();
     
     tracing_subscriber::registry()
@@ -23,7 +38,7 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let app = app();
+    let app = app()?;
     let listener = tokio::net::TcpListener::bind("0.0.0.0:9000").await.unwrap();
 
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
@@ -33,5 +48,5 @@ async fn main() {
         app,
     )
     .await
-    .unwrap();
+    .map_err(|err| AppError::InitError(err.to_string()))
 }

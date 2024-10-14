@@ -36,19 +36,39 @@ impl LocalDB {
         let pool = self.pool();
         let exec = pool.execute(
             "
-            INSERT INTO table_configs (conn_id, label, pk_column)
-            VALUES (?1, ?2, ?3)
+            INSERT INTO table_configs (conn_id, label, pk_column, name)
+            VALUES (?1, ?2, ?3, ?4)
         ",
-            params![conn_id, tc.label, tc.pk_column],
+            params![conn_id, tc.label, tc.pk_column, tc.name],
         );
 
-        match exec {
-            Ok(rows) => Ok(rows),
-            Err(err) => Err(HttpError::new(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                &err.to_string(),
-            )),
-        }
+        exec.map_err(|err| HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string()))
+    }
+
+    pub fn update_table_config(&self, name: &str, conn_id: &str, tc: TableConfig) -> Result<usize, HttpError>{
+        let pool = self.pool();
+        let exec = pool.execute("UPDATE table_configs SET name = ?, label = ?, pk_column = ? WHERE name = ? AND conn_id = ?", params![tc.name, tc.label, tc.pk_column, name, conn_id]);
+
+        exec.map_err(|err| HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string()))
+    }
+
+    pub fn get_table_config(&self, id: &str, conn_id: &str) -> Result<TableConfig, HttpError> {
+        let pool = self.pool();
+
+        let tc = pool.query_row(
+            "SELECT name, label, pk_column FROM table_configs WHERE (name = ?1 OR label = ?1 LIMIT 1) AND conn_id = ?2",
+            params![id, conn_id],
+            |row| {
+                Ok(TableConfig {
+                    name: row.get(0)?,
+                    label: row.get(1)?,
+                    pk_column: row.get(3)?,
+                    ..Default::default()
+                })
+            },
+        );
+
+        tc.map_err(|err| HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string()))
     }
 }
 
@@ -59,18 +79,18 @@ pub(crate) struct AppState {
 }
 
 impl AppState {
-    pub fn setup_local_db(&self) {
+    pub fn setup_local_db(&self) -> Result<usize, rusqlite::Error> {
         let pool = self.local_db.pool();
         pool.execute(
             "CREATE TABLE IF NOT EXISTS table_configs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
                 conn_id TEXT NOT NULL,
                 label TEXT,
                 pk_column TEXT,
             )",
             params![],
         )
-        .unwrap();
     }
 }
 

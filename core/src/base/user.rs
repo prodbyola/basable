@@ -4,23 +4,11 @@ use axum::http::{HeaderValue, StatusCode};
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
-use time::format_description::well_known::iso8601::Config;
-
 use crate::{base::HttpError, utils::get_env};
-
-use crate::base::data::table::TableConfig;
 
 pub(crate) struct User {
     pub id: String,
     pub is_guest: bool,
-}
-
-impl User {
-    pub fn save_connection(&self, config: Config){}
-    pub fn get_table_config(&self, conn_id: &str, table_name: &str) -> Option<TableConfig> {
-        None
-    }
-    pub fn update_table_config(&self, conn_id: &str, table_name: &str, config: TableConfig) {}
 }
 
 impl Default for User {
