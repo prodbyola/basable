@@ -1,6 +1,6 @@
 use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 
-use crate::base::{config::ConfigRaw, imp::connector::Connector, AppError};
+use crate::base::{config::ConfigRaw, imp::connector::Connector, HttpError};
 
 /// MySQL implementation of `BasableConnection`
 #[derive(Clone, Default)]
@@ -23,7 +23,7 @@ impl Connector for MysqlConnector {
     type Error = mysql::Error;
     type Row = Row;
 
-    fn new(config: ConfigRaw) -> Result<Self, AppError> {
+    fn new(config: ConfigRaw) -> Result<Self, HttpError> {
         let url = config.build_url()?;
         let opts = Opts::from_url(&url).unwrap();
         let pool = Pool::new(opts)?;

@@ -11,7 +11,7 @@ pub(crate) mod db;
 pub(crate) mod table;
 pub(crate) mod graphs;
 
-/// Dynamic [`DB`] type implemented across the app.
+/// Dynamic [`DB`] type to be implemented across the app.
 pub(crate) type DbType = dyn DB<
     Row = <MySqlDB as DB>::Row,
     Error = <MySqlDB as DB>::Error,
@@ -33,5 +33,8 @@ pub(crate) type TableType = dyn Table<
     ColumnValue = <MySqlTable as Table>::ColumnValue,
 >;
 
+/// A thread-safe sharable DB instance
 pub(crate) type SharedDB = Arc<DbType>;
+
+/// A thread-safe sharable Database Table
 pub(crate) type SharedTable = Arc<TableType>;

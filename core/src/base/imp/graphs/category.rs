@@ -6,7 +6,7 @@ use strum_macros::EnumIter;
 
 use crate::base::{
     query::{BasableQuery, QueryOperation},
-    AppError,
+    HttpError,
 };
 
 use super::FromQueryParams;
@@ -31,7 +31,7 @@ impl Display for CategoryAnalysis {
 }
 
 impl TryFrom<&String> for CategoryAnalysis {
-    type Error = AppError;
+    type Error = HttpError;
 
     fn try_from(value: &String) -> Result<Self, Self::Error> {
         let cats = CategoryAnalysis::iter();
@@ -42,7 +42,7 @@ impl TryFrom<&String> for CategoryAnalysis {
             }
         }
 
-        Err(AppError::new(
+        Err(HttpError::new(
             StatusCode::EXPECTATION_FAILED,
             "invalid category_graph_type",
         ))
@@ -57,7 +57,7 @@ pub struct CategoryGraphOpts {
 }
 
 impl FromQueryParams for CategoryGraphOpts {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, HttpError>
     where
         Self: Sized,
     {
@@ -77,7 +77,7 @@ impl FromQueryParams for CategoryGraphOpts {
                     let parse_limit = lmt.parse::<usize>();
 
                     if let Err(err) = parse_limit {
-                        return Err(AppError::new(
+                        return Err(HttpError::new(
                             StatusCode::EXPECTATION_FAILED,
                             err.to_string().as_str(),
                         ));
@@ -96,7 +96,7 @@ impl FromQueryParams for CategoryGraphOpts {
 
                 Ok(opts)
             }
-            _ => Err(AppError::new(
+            _ => Err(HttpError::new(
                 StatusCode::EXPECTATION_FAILED,
                 "missing required parameter",
             )),

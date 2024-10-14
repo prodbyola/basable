@@ -8,7 +8,7 @@ use serde::{ser::SerializeTuple, Serialize};
 use time::Date;
 use trend::TrendGraphOpts;
 
-use crate::base::AppError;
+use crate::base::HttpError;
 
 use super::db::DBError;
 
@@ -102,7 +102,7 @@ pub trait VisualizeDB {
 }
 
 pub trait FromQueryParams {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError> where Self: Sized;
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, HttpError> where Self: Sized;
 }
 
 #[cfg(test)]
@@ -114,7 +114,7 @@ mod tests {
                 chrono::{ChronoAnalysisBasis, ChronoAnalysisRange},
                 trend::CrossOptions,
             },
-            AppError,
+            HttpError,
         },
         tests::common::create_test_db,
     };
@@ -125,7 +125,7 @@ mod tests {
     };
 
     #[test]
-    fn test_chrono_graph() -> Result<(), AppError> {
+    fn test_chrono_graph() -> Result<(), HttpError> {
         let db = create_test_db()?;
         let graph = db.chrono_graph(ChronoAnalysisOpts {
             table: "vgchartz".to_string(),
@@ -140,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn test_trend_graph() -> Result<(), AppError> {
+    fn test_trend_graph() -> Result<(), HttpError> {
         let db = create_test_db()?;
         let opts = TrendGraphOpts {
             table: "patients".to_string(),
@@ -162,7 +162,7 @@ mod tests {
     }
 
     #[test]
-    fn test_category_graph() -> Result<(), AppError> {
+    fn test_category_graph() -> Result<(), HttpError> {
         let db = create_test_db()?;
 
         let opts = CategoryGraphOpts {

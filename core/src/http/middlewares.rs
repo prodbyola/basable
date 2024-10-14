@@ -8,7 +8,7 @@ use axum::{
 use crate::base::{
     imp::{SharedDB, SharedTable},
     user::{decode_jwt, User},
-    AppError, AppState,
+    HttpError, AppState,
 };
 
 /// Extracts information about the current [`User`] by inspecting the Authorization
@@ -22,7 +22,7 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = AppError;
+    type Rejection = HttpError;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let mut auth_header = parts.headers.get(AUTHORIZATION);
@@ -38,7 +38,7 @@ where
                 Err(e) => Err(e),
             },
             None => {
-                let err = AppError::new(
+                let err = HttpError::new(
                     StatusCode::UNAUTHORIZED,
                     "User authentication not provided.",
                 );
@@ -56,7 +56,7 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = AppError;
+    type Rejection = HttpError;
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let user = AuthExtractor::from_request_parts(parts, state).await?;
         let user = user.0;
@@ -69,7 +69,7 @@ where
         };
 
         if let None = conn_id {
-            return Err(AppError::new(
+            return Err(HttpError::new(
                 StatusCode::PRECONDITION_REQUIRED,
                 "Connection Id not provided",
             ));
@@ -81,7 +81,7 @@ where
 
         match db {
             Some(db) => Ok(DbExtractor(db)),
-            None => Err(AppError::new(
+            None => Err(HttpError::new(
                 StatusCode::PRECONDITION_FAILED,
                 "You do not have access to this connection.",
             )),
@@ -97,7 +97,7 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = AppError;
+    type Rejection = HttpError;
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let path: Result<Path<String>, PathRejection> =
             Path::from_request_parts(parts, state).await;
@@ -110,13 +110,13 @@ where
 
                 match db.get_table(&tbl_name) {
                     Some(tbl) => Ok(TableExtractor(tbl.clone())),
-                    None => Err(AppError::new(
+                    None => Err(HttpError::new(
                         StatusCode::NOT_FOUND,
                         "Can't find a table with the given name",
                     )),
                 }
             }
-            Err(err) => Err(AppError::new(
+            Err(err) => Err(HttpError::new(
                 StatusCode::PRECONDITION_FAILED,
                 &err.to_string(),
             )),

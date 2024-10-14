@@ -7,7 +7,7 @@ pub(crate) mod common {
     };
 
     use crate::base::{
-        config::ConfigRaw, foundation::Basable, imp::SharedDB, AppError, AppState
+        config::ConfigRaw, foundation::Basable, imp::SharedDB, HttpError, AppState
     };
 
     /// Get `TEST_USER_ID` from env
@@ -45,7 +45,7 @@ pub(crate) mod common {
         }
     }
 
-    pub fn create_test_db() -> Result<SharedDB, AppError> {
+    pub fn create_test_db() -> Result<SharedDB, HttpError> {
         dotenv().ok();
 
         let user_id = get_test_user_id();
@@ -58,7 +58,7 @@ pub(crate) mod common {
     /// Creates a `Basable` instance for testing.
     ///
     /// Attaches a test `DB` instance if `attach_db` is `true`.
-    pub fn create_test_instance(attach_db: bool) -> Result<Basable, AppError> {
+    pub fn create_test_instance(attach_db: bool) -> Result<Basable, HttpError> {
         dotenv().ok();
 
         let mut bslb = Basable::default();
@@ -75,7 +75,7 @@ pub(crate) mod common {
     /// Creates an `AppState` for testing.
     ///
     /// Attaches a test [DB](`crate::base::db::DB`) instance if `attach_db` is `true`.
-    pub fn create_test_state(attach_db: bool) -> Result<AppState, AppError> {
+    pub fn create_test_state(attach_db: bool) -> Result<AppState, HttpError> {
         let instance = create_test_instance(attach_db)?;
         let state = AppState {
             instance: Arc::new(Mutex::new(instance)),
@@ -89,7 +89,7 @@ pub(crate) mod common {
 #[cfg(test)]
 pub(crate) mod extractors {
     use crate::{
-        base::{user::User, AppError},
+        base::{user::User, HttpError},
         http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
     };
 
@@ -103,12 +103,12 @@ pub(crate) mod extractors {
         })
     }
 
-    pub fn db_extractor() -> Result<DbExtractor, AppError> {
+    pub fn db_extractor() -> Result<DbExtractor, HttpError> {
         let db = create_test_db()?;
         Ok(DbExtractor(db))
     }
 
-    pub fn table_extractor() -> Result<TableExtractor, AppError> {
+    pub fn table_extractor() -> Result<TableExtractor, HttpError> {
         let table_name = get_test_db_table();
         let db = create_test_db()?;
 

@@ -13,7 +13,7 @@ use crate::{
             table::Table,
             ConnectorType, SharedTable,
         },
-        AppError,
+        HttpError,
     },
     imp::database::{DBVersion, DbServerDetails},
 };
@@ -38,7 +38,7 @@ impl MySqlDB {
     }
 
     /// Get MySQL server version and host OS version
-    fn show_version_variables(&self) -> Result<DBVersion, AppError> {
+    fn show_version_variables(&self) -> Result<DBVersion, HttpError> {
         let vars = self.exec_query(
             "
                 SHOW VARIABLES 
@@ -63,7 +63,7 @@ impl MySqlDB {
         Ok(data)
     }
 
-    fn size(&self) -> Result<f64, AppError> {
+    fn size(&self) -> Result<f64, HttpError> {
         let db = self.config().db_name.as_ref().unwrap();
 
         let query = format!(
@@ -114,7 +114,7 @@ impl DB for MySqlDB {
         &self.connector
     }
 
-    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError> {
+    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), HttpError> {
         let tables = self.query_tables()?;
 
         if !tables.is_empty() {
@@ -148,7 +148,7 @@ impl DB for MySqlDB {
         self.connector.exec_query(&query)
     }
 
-    fn query_table_summaries(&self) -> Result<TableSummaries, AppError> {
+    fn query_table_summaries(&self) -> Result<TableSummaries, HttpError> {
         let results = self.query_tables()?;
         let tables: Vec<TableSummary> = results
             .iter()
@@ -172,7 +172,7 @@ impl DB for MySqlDB {
         Ok(tables)
     }
 
-    fn query_column_count(&self, tb_name: &str) -> Result<u32, AppError> {
+    fn query_column_count(&self, tb_name: &str) -> Result<u32, HttpError> {
         let query = format!(
             "
                 SELECT count(*) 
@@ -194,7 +194,7 @@ impl DB for MySqlDB {
         self.tables.iter().find(|t| t.name() == name)
     }
 
-    fn details(&self) -> Result<DbServerDetails, AppError> {
+    fn details(&self) -> Result<DbServerDetails, HttpError> {
         let vrbs = self.show_version_variables()?;
         let version = vrbs.get("version").map(|v| v.to_string());
         let os = vrbs.get("version_compile_os").map(|v| v.to_string());

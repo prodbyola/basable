@@ -6,7 +6,7 @@ use strum_macros::EnumIter;
 
 use crate::base::{
     query::{BasableQuery, QueryOperation},
-    AppError,
+    HttpError,
 };
 
 use super::FromQueryParams;
@@ -33,7 +33,7 @@ impl Display for GeoGraphScope {
 }
 
 impl TryFrom<&String> for GeoGraphScope {
-    type Error = AppError;
+    type Error = HttpError;
 
     fn try_from(value: &String) -> Result<Self, Self::Error> {
         for scope in GeoGraphScope::iter() {
@@ -44,7 +44,7 @@ impl TryFrom<&String> for GeoGraphScope {
 
         let iter: Vec<String> = GeoGraphScope::iter().map(|s| s.to_string()).collect();
         let scopes = iter.join(", ");
-        let err = AppError::new(
+        let err = HttpError::new(
             StatusCode::NOT_ACCEPTABLE,
             format!("Not a valid geo scope. Acceptable options are: {scopes}.").as_str(),
         );
@@ -78,7 +78,7 @@ impl From<GeoGraphOpts> for BasableQuery {
 }
 
 impl FromQueryParams for GeoGraphOpts {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, HttpError>
     where
         Self: Sized,
     {
@@ -102,7 +102,7 @@ impl FromQueryParams for GeoGraphOpts {
             }
             _ => {
                 let err =
-                    AppError::new(StatusCode::EXPECTATION_FAILED, "missing required parameter");
+                    HttpError::new(StatusCode::EXPECTATION_FAILED, "missing required parameter");
                 Err(err)
             }
         }

@@ -120,8 +120,8 @@ impl Table for MySqlTable {
             let pk = pk.map(|pk| pk.name.clone());
             
             let c = TableConfig {
-                pk,
-                table_id: self.name.clone(),
+                pk_column: pk,
+                label: self.name.clone(),
                 ..TableConfig::default()
             };
 

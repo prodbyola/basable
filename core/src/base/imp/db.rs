@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::base::query::filter::{Filter, FilterChain, FilterCondition, FilterOperator};
 use crate::base::query::{BasableQuery, QueryOperation};
-use crate::base::{data::table::TableSummaries, AppError};
+use crate::base::{data::table::TableSummaries, HttpError};
 use crate::imp::database::mysql::db::MySqlDB;
 use crate::imp::database::DbServerDetails;
 
@@ -31,7 +31,7 @@ pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
     /// Caller should provide a [`ConnectorType`] pointer whose copy is assigned to each [Table](`crate::base::table::Table`) that is created.
     ///
     /// The [`ConnectorType`] will be used by the table for their own queries.
-    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError>;
+    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), HttpError>;
 
     fn tables(&self) -> &Vec<SharedTable>;
 
@@ -44,13 +44,13 @@ pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
     fn get_table(&self, name: &str) -> Option<&SharedTable>;
 
     /// Query connection tables from DB source and return table summaries
-    fn query_table_summaries(&self) -> Result<TableSummaries, AppError>;
+    fn query_table_summaries(&self) -> Result<TableSummaries, HttpError>;
 
     /// Details about the connection
-    fn details(&self) -> Result<DbServerDetails, AppError>;
+    fn details(&self) -> Result<DbServerDetails, HttpError>;
 
     /// Get total number of columns
-    fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;
+    fn query_column_count(&self, table_name: &str) -> Result<u32, HttpError>;
 }
 
 pub trait QuerySqlParser {
@@ -189,13 +189,13 @@ mod tests {
                 filter::{Filter, FilterChain, FilterCondition, FilterOperator},
                 BasableQuery, QueryOperation,
             },
-            AppError,
+            HttpError,
         },
         tests::common::create_test_db,
     };
 
     #[test]
-    fn test_generate_sql() -> Result<(), AppError> {
+    fn test_generate_sql() -> Result<(), HttpError> {
         let mut filters = FilterChain::new();
 
         let c1 = FilterCondition {

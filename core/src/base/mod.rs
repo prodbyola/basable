@@ -9,6 +9,7 @@ use axum::{
     http::{Response, StatusCode},
     response::IntoResponse,
 };
+use data::table::TableConfig;
 use foundation::Basable;
 use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
@@ -17,11 +18,11 @@ use serde::Serialize;
 
 pub(crate) mod column;
 pub(crate) mod config;
+pub(crate) mod data;
 pub(crate) mod foundation;
 pub(crate) mod imp;
-pub(crate) mod user;
-pub(crate) mod data;
 pub(crate) mod query;
+pub(crate) mod user;
 
 #[derive(Clone)]
 pub(crate) struct LocalDB(pub Pool<SqliteConnectionManager>);
@@ -29,6 +30,25 @@ pub(crate) struct LocalDB(pub Pool<SqliteConnectionManager>);
 impl LocalDB {
     fn pool(&self) -> PooledConnection<SqliteConnectionManager> {
         self.0.get().unwrap()
+    }
+
+    pub fn create_table_config(&self, conn_id: &str, tc: TableConfig) -> Result<usize, HttpError> {
+        let pool = self.pool();
+        let exec = pool.execute(
+            "
+            INSERT INTO table_configs (conn_id, label, pk_column)
+            VALUES (?1, ?2, ?3)
+        ",
+            params![conn_id, tc.label, tc.pk_column],
+        );
+
+        match exec {
+            Ok(rows) => Ok(rows),
+            Err(err) => Err(HttpError::new(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                &err.to_string(),
+            )),
+        }
     }
 }
 
@@ -42,7 +62,12 @@ impl AppState {
     pub fn setup_local_db(&self) {
         let pool = self.local_db.pool();
         pool.execute(
-            "CREATE TABLE IF NOT EXISTS table_configs (id INTEGER)",
+            "CREATE TABLE IF NOT EXISTS table_configs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conn_id TEXT NOT NULL,
+                label TEXT,
+                pk_column TEXT,
+            )",
             params![],
         )
         .unwrap();
@@ -62,11 +87,11 @@ impl Default for AppState {
 }
 
 #[derive(Debug)]
-pub struct AppError(pub StatusCode, pub String);
+pub struct HttpError(pub StatusCode, pub String);
 
-impl AppError {
+impl HttpError {
     pub fn new(code: StatusCode, msg: &str) -> Self {
-        AppError(code, String::from(msg))
+        HttpError(code, String::from(msg))
     }
 
     pub fn not_implemented() -> Self {
@@ -74,19 +99,19 @@ impl AppError {
     }
 }
 
-impl Display for AppError {
+impl Display for HttpError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.0, self.1)
     }
 }
 
-impl IntoResponse for AppError {
+impl IntoResponse for HttpError {
     fn into_response(self) -> Response<Body> {
         (self.0, self.1).into_response()
     }
 }
 
-impl Serialize for AppError {
+impl Serialize for HttpError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -98,12 +123,12 @@ impl Serialize for AppError {
 #[cfg(test)]
 mod test {
     use crate::{
-        base::AppError,
+        base::HttpError,
         tests::common::{create_test_db, create_test_instance},
     };
 
     #[test]
-    fn test_instance_has_db() -> Result<(), AppError> {
+    fn test_instance_has_db() -> Result<(), HttpError> {
         let db = create_test_db();
         assert!(db.is_ok());
 

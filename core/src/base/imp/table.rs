@@ -63,12 +63,12 @@ pub(crate) trait TableCRUD {
 mod tests {
 
     use crate::{
-        base::{imp::table::DataQueryFilter, AppError},
+        base::{imp::table::DataQueryFilter, HttpError},
         tests::common::{create_test_db, get_test_db_table},
     };
 
     #[test]
-    fn test_table_query_column() -> Result<(), AppError> {
+    fn test_table_query_column() -> Result<(), HttpError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();
 
@@ -84,7 +84,7 @@ mod tests {
     }
 
     #[test]
-    fn test_table_query_data() -> Result<(), AppError> {
+    fn test_table_query_data() -> Result<(), HttpError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();
 
@@ -103,12 +103,12 @@ mod interactive_tests {
     use std::{collections::HashMap, io::stdin};
 
     use crate::{
-        base::{imp::table::UpdateDataOptions, AppError},
+        base::{imp::table::UpdateDataOptions, HttpError},
         tests::common::{create_test_db, get_test_db_table},
     };
 
     #[test]
-    fn test_table_insert_data() -> Result<(), AppError> {
+    fn test_table_insert_data() -> Result<(), HttpError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();
 
@@ -150,7 +150,7 @@ mod interactive_tests {
     }
 
     #[test]
-    fn test_table_update_data() -> Result<(), AppError> {
+    fn test_table_update_data() -> Result<(), HttpError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();
 

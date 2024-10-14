@@ -5,7 +5,7 @@ use axum::Router;
 use crate::base::config::ConfigRaw;
 use crate::base::data::table::TableSummaries;
 use crate::base::foundation::Basable;
-use crate::base::{AppError, AppState};
+use crate::base::{HttpError, AppState};
 use crate::http::middlewares::AuthExtractor;
 use crate::imp::database::DbServerDetails;
 use axum::{extract::State, Json};
@@ -25,8 +25,9 @@ async fn connect(
     State(state): State<AppState>,
     AuthExtractor(user): AuthExtractor,
     Json(config): Json<ConfigRaw>,
-) -> Result<Json<String>, AppError> {
+) -> Result<Json<String>, HttpError> {
     let mut bsbl = state.instance.lock().unwrap();
+    let storage = state.local_db;
 
     let user_id = user.id.clone();
     let db = Basable::create_connection(&config, user_id)?;
@@ -34,16 +35,17 @@ async fn connect(
     bsbl.add_connection(&db);
     std::mem::drop(bsbl); // release Mutex lock
 
+    let conn_id = db.id().to_string();
     let tables = db.tables();
     if !tables.is_empty() {
-        tables.iter().for_each(|tbl| {
+        for tbl in tables {
             if let Some(config) = tbl.init_config() {
-                // TODO: Save table config to local db
+                storage.create_table_config(&conn_id, config)?;
             }
-        })
+        }
     }
 
-    Ok(Json(db.id().to_string()))
+    Ok(Json(conn_id))
 }
 
 #[debug_handler]
@@ -51,7 +53,7 @@ pub(crate) async fn table_summaries(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) -> Result<Json<TableSummaries>, AppError> {
+) -> Result<Json<TableSummaries>, HttpError> {
     let summaries = db.query_table_summaries()?;
 
     Ok(Json(summaries))
@@ -61,7 +63,7 @@ async fn server_details(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) -> Result<Json<DbServerDetails>, AppError> {
+) -> Result<Json<DbServerDetails>, HttpError> {
     let details = db.details()?;
 
     Ok(Json(details))
@@ -82,14 +84,14 @@ mod tests {
     use axum::{extract::State, Json};
 
     use crate::{
-        base::AppError,
+        base::HttpError,
         tests::{common::{create_test_config, create_test_state}, extractors::auth_extractor},
     };
 
     use super::connect;
 
     #[tokio::test]
-    async fn test_connect_route() -> Result<(), AppError> {
+    async fn test_connect_route() -> Result<(), HttpError> {
         let state = create_test_state(false)?;
         let config = create_test_config();
 

@@ -6,7 +6,7 @@ mod routes {
     };
 
     use crate::{
-        base::{data::table::TableConfig, AppError},
+        base::{data::table::TableConfig, HttpError},
         http::routes::table::{get_columns, get_configuration, save_configuration},
         tests::{
             common::{create_test_state, get_test_db_table},
@@ -15,7 +15,7 @@ mod routes {
     };
 
     #[tokio::test]
-    async fn test_save_table_config() -> Result<(), AppError> {
+    async fn test_save_table_config() -> Result<(), HttpError> {
         let state = create_test_state(true)?;
         let auth_extractor = auth_extractor();
         let db_extractor = db_extractor()?;
@@ -39,7 +39,7 @@ mod routes {
     }
 
     #[tokio::test]
-    async fn test_get_table_config() -> Result<(), AppError> {
+    async fn test_get_table_config() -> Result<(), HttpError> {
         let state = create_test_state(true)?;
         let auth_extractor = auth_extractor();
         let db_extractor = db_extractor()?;
@@ -61,7 +61,7 @@ mod routes {
     }
 
     #[tokio::test]
-    async fn test_get_table_columns() -> Result<(), AppError> {
+    async fn test_get_table_columns() -> Result<(), HttpError> {
         let state = create_test_state(true)?;
         let auth_extractor = auth_extractor();
         let db_extractor = db_extractor()?;

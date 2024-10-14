@@ -2,7 +2,7 @@ use axum::http::StatusCode;
 use serde::Deserialize;
 use urlencoding::encode;
 
-use super::AppError;
+use super::HttpError;
 
 #[derive(Deserialize, Clone, Debug)]
 pub(crate) enum DatabaseType {
@@ -14,7 +14,7 @@ pub(crate) enum DatabaseType {
 
 impl TryFrom<&str> for DatabaseType {
     
-    type Error = AppError;
+    type Error = HttpError;
     
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
@@ -22,7 +22,7 @@ impl TryFrom<&str> for DatabaseType {
             "oracle" => Ok(Self::Oracle),
             "mysql" => Ok(Self::Mysql),
             "mongo" => Ok(Self::Mongo),
-            &_ => Err(AppError::new(StatusCode::EXPECTATION_FAILED, "Invalid database source type")),
+            &_ => Err(HttpError::new(StatusCode::EXPECTATION_FAILED, "Invalid database source type")),
         }
     }
 }
@@ -36,12 +36,12 @@ pub(crate) enum SourceType {
 }
 
 impl SourceType {
-    fn from_str(src_type: &str, src: &str) -> Result<SourceType, AppError> {
+    fn from_str(src_type: &str, src: &str) -> Result<SourceType, HttpError> {
         match src_type {
             "database" => Ok(Self::Database(src.try_into()?)),
             "cloud" => Ok(Self::Cloud),
             "file" => Ok(Self::File),
-            &_ => Err(AppError::new(StatusCode::EXPECTATION_FAILED, "Invalid source type"))
+            &_ => Err(HttpError::new(StatusCode::EXPECTATION_FAILED, "Invalid source type"))
         }
     }
 }
@@ -73,7 +73,7 @@ impl Default for ConfigRaw {
 }
 
 impl ConfigRaw {
-    pub fn build_url(&self) -> Result<String, AppError> {
+    pub fn build_url(&self) -> Result<String, HttpError> {
         let src_type = SourceType::from_str(&self.source_type, &self.source)?;
 
         match src_type {
@@ -104,7 +104,7 @@ impl ConfigRaw {
         
     }
 
-    pub fn get_source(&self) -> Result<SourceType, AppError> {
+    pub fn get_source(&self) -> Result<SourceType, HttpError> {
         SourceType::from_str(&self.source_type, &self.source)
     }
 }

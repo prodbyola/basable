@@ -10,7 +10,7 @@ use crate::{
             filter::{Filter, FilterChain, FilterCondition, FilterOperator},
             BasableQuery, QueryOperation, QueryOrder,
         },
-        AppError,
+        HttpError,
     },
     globals::{BASABLE_CHRONO_XCOL, BASABLE_CHRONO_YCOL},
 };
@@ -94,7 +94,7 @@ pub(crate) struct ChronoAnalysisOpts {
 }
 
 impl FromQueryParams for ChronoAnalysisOpts {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, HttpError>
     where
         Self: Sized,
     {
@@ -107,11 +107,11 @@ impl FromQueryParams for ChronoAnalysisOpts {
             (Some(table), Some(column), Some(basis), Some(range)) => {
                 let basis = basis.to_owned().try_into();
                 let basis = basis
-                    .map_err(|err: String| AppError::new(StatusCode::EXPECTATION_FAILED, err.as_str()));
+                    .map_err(|err: String| HttpError::new(StatusCode::EXPECTATION_FAILED, err.as_str()));
     
                 let range = range.to_owned().try_into();
                 let range = range
-                    .map_err(|err: String| AppError::new(StatusCode::EXPECTATION_FAILED, err.as_str()));
+                    .map_err(|err: String| HttpError::new(StatusCode::EXPECTATION_FAILED, err.as_str()));
     
                 let opts = ChronoAnalysisOpts {
                     table: table.to_owned(),
@@ -126,7 +126,7 @@ impl FromQueryParams for ChronoAnalysisOpts {
     
                 // Ok(Json(results))
             }
-            _ => Err(AppError::new(
+            _ => Err(HttpError::new(
                 StatusCode::EXPECTATION_FAILED,
                 "Missing query parameters",
             )),

@@ -6,7 +6,7 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use serde::{Deserialize, Serialize};
 use time::format_description::well_known::iso8601::Config;
 
-use crate::{base::AppError, utils::get_env};
+use crate::{base::HttpError, utils::get_env};
 
 use crate::base::data::table::TableConfig;
 
@@ -45,7 +45,7 @@ pub(crate) struct JwtSession {
     pub exp: usize,
 }
 
-pub(crate) fn create_jwt(user: User) -> Result<JwtSession, AppError> {
+pub(crate) fn create_jwt(user: User) -> Result<JwtSession, HttpError> {
     let exp_time = 7200;
 
     // Token expiration is two hours
@@ -66,7 +66,7 @@ pub(crate) fn create_jwt(user: User) -> Result<JwtSession, AppError> {
     let secret = secret.as_bytes();
 
     let token = encode(&header, &claims, &EncodingKey::from_secret(secret))
-        .map_err(|e| AppError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .map_err(|e| HttpError(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(JwtSession {
         token,
@@ -74,7 +74,7 @@ pub(crate) fn create_jwt(user: User) -> Result<JwtSession, AppError> {
     })
 }
 
-pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<User, AppError> {
+pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<User, HttpError> {
     let token = extract_jwt(header_value)?;
 
     let secret = get_env("BASABLE_JWT_SECRET");
@@ -85,15 +85,15 @@ pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<User, AppError> {
         &DecodingKey::from_secret(secret),
         &Validation::new(Algorithm::HS512),
     )
-    .map_err(|e| AppError(StatusCode::UNAUTHORIZED, e.to_string()))?;
+    .map_err(|e| HttpError(StatusCode::UNAUTHORIZED, e.to_string()))?;
 
     let Claims { sub, is_guest, .. } = decoded.claims;
 
     Ok(User { id: sub, is_guest })
 }
 
-fn extract_jwt(header_value: &HeaderValue) -> Result<String, AppError> {
-    let mut jwt = Err(AppError(
+fn extract_jwt(header_value: &HeaderValue) -> Result<String, HttpError> {
+    let mut jwt = Err(HttpError(
         StatusCode::UNAUTHORIZED,
         String::from("Invalid token!"),
     ));

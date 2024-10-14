@@ -76,10 +76,10 @@ pub(crate) struct NotifyEvent {
 
 #[derive(Deserialize, Serialize, Clone)]
 pub(crate) struct TableConfig {
-    pub table_id: String,
+    pub label: String,
 
     /// Name of column to use as primary key.
-    pub pk: Option<String>,
+    pub pk_column: Option<String>,
 
     /// Column for querying when a row was created.
     pub created_column: Option<HistoryColumn>,
@@ -96,15 +96,15 @@ pub(crate) struct TableConfig {
 
 impl PartialEq for TableConfig {
     fn eq(&self, other: &Self) -> bool {
-        self.table_id == other.table_id
+        self.label == other.label
     }
 }
 
 impl Default for TableConfig {
     fn default() -> Self {
         TableConfig {
-            pk: None,
-            table_id: String::new(),
+            pk_column: None,
+            label: String::new(),
             created_column: None,
             updated_column: None,
             special_columns: None,

@@ -7,13 +7,13 @@ use axum::{
 };
 use axum_macros::debug_handler;
 
-use crate::base::{foundation::Basable, user::JwtSession, AppError, AppState};
+use crate::base::{foundation::Basable, user::JwtSession, HttpError, AppState};
 
 #[debug_handler]
 async fn create_guest_user(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(_): State<AppState>,
-) -> Result<Json<JwtSession>, AppError> {
+) -> Result<Json<JwtSession>, HttpError> {
     let addr = addr.ip().to_string();
     let session = Basable::create_guest_user(&addr)?;
 
@@ -31,10 +31,10 @@ mod tests {
 
     use axum::extract::{ConnectInfo, State};
 
-    use crate::{base::AppError, http::routes::auth::create_guest_user, tests::common::create_test_state};
+    use crate::{base::HttpError, http::routes::auth::create_guest_user, tests::common::create_test_state};
 
     #[tokio::test]
-    async fn test_create_guest() -> Result<(), AppError> {
+    async fn test_create_guest() -> Result<(), HttpError> {
         let state = create_test_state(false)?;
         let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 3000);
 
