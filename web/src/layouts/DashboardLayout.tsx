@@ -11,6 +11,7 @@ function DashboardLayout() {
   const logout = useLogout()
   const request = useNetworkRequest()
   const updateTables = useStore(state => state.updateTables)
+  const addTableConfig = useStore(state => state.addTableConfig)
 
   const [isReady, setIsReady] = useState(false)
   const [showSidebar, onShowSidebar] = useState(false);
@@ -23,10 +24,19 @@ function DashboardLayout() {
     } else {
       request({
         method: 'get',
-        path: 'table-summaries'
+        path: 'tables'
       }).then((tables: TableSummaryType[]) => {
         
         updateTables(tables)
+
+        if(tables.length){
+          tables.forEach(tbl => {
+            request({
+              method: 'get',
+              path: 'tables/configurations/'+ tbl.name
+            }).then(config => addTableConfig(config))
+          })
+        }
       })
 
       setIsReady(true)
