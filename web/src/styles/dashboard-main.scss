@@ -104,6 +104,7 @@ $table_border: variables.$grey_200 solid 1px;
         td {
           font-size: 0.833rem;
           padding: 12px 4px;
+          color: gray;
         }
       }
 
@@ -166,11 +167,21 @@ $table_border: variables.$grey_200 solid 1px;
   padding: 0 32px;
   column-gap: 8px;
 
-  .tableName {
-    color: variables.$primary;
+  .tableConfig {
     font-size: 1.25rem;
     font-weight: 600;
+    margin: 12px 0;
     margin-right: auto;
+    display: inline-flex;
+    padding: 6px 12px;
+    align-items: center;
+    column-gap: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+
+    h3 {
+      margin: 0;
+    }
   }
 
   .tableToolbar {

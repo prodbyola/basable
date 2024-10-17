@@ -1,6 +1,11 @@
 import * as React from "react";
 import { useParams } from "react-router-dom";
-import { useNetworkRequest, TableColumn, TableRow } from "../../utils";
+import {
+  useNetworkRequest,
+  TableColumn,
+  TableRow,
+  TableConfig,
+} from "../../utils";
 import { IconButton, ThemeProvider } from "@mui/material";
 import theme from "../../theme";
 
@@ -17,6 +22,9 @@ const DatabaseTable = () => {
 
   const [columns, setColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
+  const [tableConfig, setTableConfig] = React.useState<Partial<TableConfig>>(
+    {}
+  );
   const [loading, setLoading] = React.useState(false);
 
   const getColumnValue = (name: string, row: TableRow) => {
@@ -40,6 +48,11 @@ const DatabaseTable = () => {
       });
       setRows(rows);
       setLoading(false);
+
+      request({
+        method: "get",
+        path: "tables/configurations/" + tableID,
+      }).then((config) => setTableConfig(config));
     };
 
     if (tableID) loadData();
@@ -50,12 +63,17 @@ const DatabaseTable = () => {
   return (
     <ThemeProvider theme={theme}>
       <div className="displayTableHeader">
-      <div className="tableToolbar">
-        <IconButton>
+        <div
+          className="tableConfig"
+          style={{
+            backgroundColor: theme.palette.primary.main,
+            color: "white",
+          }}
+        >
           <SettingsIcon />
-        </IconButton>
-      </div>
-        <h3 className="tableName">{tableID}</h3>
+          <h3>{tableID}</h3>
+        </div>
+        {/* <h3>{tableID}</h3> */}
         <div className="tableToolbar">
           <IconButton>
             <DownloadIcon />

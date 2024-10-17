@@ -56,13 +56,13 @@ impl LocalDB {
         let pool = self.pool();
 
         let tc = pool.query_row(
-            "SELECT name, label, pk_column FROM table_configs WHERE (name = ?1 OR label = ?1 LIMIT 1) AND conn_id = ?2",
+            "SELECT name, label, pk_column FROM table_configs WHERE (name = ?1 OR label = ?1) AND conn_id = ?2 LIMIT 1",
             params![id, conn_id],
             |row| {
                 Ok(TableConfig {
                     name: row.get(0)?,
                     label: row.get(1)?,
-                    pk_column: row.get(3)?,
+                    pk_column: row.get(2)?,
                     ..Default::default()
                 })
             },
@@ -87,7 +87,7 @@ impl AppState {
                 name TEXT NOT NULL,
                 conn_id TEXT NOT NULL,
                 label TEXT,
-                pk_column TEXT,
+                pk_column TEXT
             )",
             params![],
         )

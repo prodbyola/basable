@@ -3,7 +3,6 @@ use axum::routing::{get, post};
 use axum::Router;
 
 use crate::base::config::ConfigRaw;
-use crate::base::data::table::TableSummaries;
 use crate::base::foundation::Basable;
 use crate::base::{HttpError, AppState};
 use crate::http::middlewares::AuthExtractor;
@@ -48,17 +47,6 @@ async fn connect(
     Ok(Json(conn_id))
 }
 
-#[debug_handler]
-pub(crate) async fn table_summaries(
-    AuthExtractor(_): AuthExtractor,
-    DbExtractor(db): DbExtractor,
-    State(_): State<AppState>,
-) -> Result<Json<TableSummaries>, HttpError> {
-    let summaries = db.query_table_summaries()?;
-
-    Ok(Json(summaries))
-}
-
 async fn server_details(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
@@ -73,7 +61,6 @@ pub(super) fn core_routes() -> Router<AppState> {
     Router::new()
         .route("/connect", post(connect))
         .route("/server", get(server_details))
-        .route("/table-summaries", get(table_summaries))
         .nest("/auth", auth_routes())
         .nest("/tables", table_routes())
         .nest("/graphs", graphs_routes())

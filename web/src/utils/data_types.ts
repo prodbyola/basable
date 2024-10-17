@@ -36,6 +36,16 @@ export type ServerDetails = {
   comment: string
 }
 
+export type TableConfig = {
+  events?: unknown
+  label: string
+  name: string
+  pk_column?: string
+  created_column?: string
+  update_column?: unknown
+  special_columns?: unknown
+}
+
 export type TableColumn = {
   col_type: string
   name: string

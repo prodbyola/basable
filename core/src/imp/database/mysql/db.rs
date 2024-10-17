@@ -148,7 +148,7 @@ impl DB for MySqlDB {
         self.connector.exec_query(&query)
     }
 
-    fn query_table_summaries(&self) -> Result<TableSummaries, HttpError> {
+    fn build_table_list(&self) -> Result<TableSummaries, HttpError> {
         let results = self.query_tables()?;
         let tables: Vec<TableSummary> = results
             .iter()

@@ -43,8 +43,8 @@ pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
     /// Get an instance of a [`SharedTable`], as a mutable thread-safe reference.
     fn get_table(&self, name: &str) -> Option<&SharedTable>;
 
-    /// Query connection tables from DB source and return table summaries
-    fn query_table_summaries(&self) -> Result<TableSummaries, HttpError>;
+    /// Get information about each table in the database and build a list from them.
+    fn build_table_list(&self) -> Result<TableSummaries, HttpError>;
 
     /// Details about the connection
     fn details(&self) -> Result<DbServerDetails, HttpError>;

@@ -11,7 +11,7 @@ use axum_macros::debug_handler;
 use crate::{
     base::{
         column::ColumnList,
-        data::table::{DataQueryFilter, TableConfig, UpdateDataOptions},
+        data::table::{DataQueryFilter, TableConfig, TableSummaries, UpdateDataOptions},
         imp::table::Table,
         AppState, HttpError,
     },
@@ -30,7 +30,7 @@ pub(crate) async fn save_configuration(
 ) -> Result<String, HttpError> {
     let storage = state.local_db;
     let conn_id = db.id().to_string();
-    
+
     storage.update_table_config(&table_name, &conn_id, config)?;
     Ok("Operation successful".to_string())
 }
@@ -128,9 +128,21 @@ pub(crate) async fn delete_data(
     }
 }
 
+#[debug_handler]
+pub(crate) async fn load_tables(
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(db): DbExtractor,
+    State(_): State<AppState>,
+) -> Result<Json<TableSummaries>, HttpError> {
+    let tables = db.build_table_list()?;
+
+    Ok(Json(tables))
+}
+
 /// Routes for database table management
 pub(super) fn table_routes() -> Router<AppState> {
     Router::new()
+        .route("/", get(load_tables))
         .route("/configurations/:table_name", get(get_configuration))
         .route("/configurations/:table_name", put(save_configuration))
         .route("/columns/:table_name", get(get_columns))
