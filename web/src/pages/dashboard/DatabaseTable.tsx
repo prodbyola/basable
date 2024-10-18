@@ -5,6 +5,7 @@ import {
   TableColumn,
   TableRow,
   TableConfig,
+  useStore,
 } from "../../utils";
 import { IconButton, ThemeProvider } from "@mui/material";
 import theme from "../../theme";
@@ -20,11 +21,14 @@ const DatabaseTable = () => {
   const request = useNetworkRequest();
   const { tableID } = useParams();
 
-  const [columns, setColumns] = React.useState<TableColumn[]>([]);
-  const [rows, setRows] = React.useState<TableRow[]>([]);
+  const tableConfigs = useStore((state) => state.tableConfigs);
   const [tableConfig, setTableConfig] = React.useState<Partial<TableConfig>>(
     {}
   );
+
+  const [columns, setColumns] = React.useState<TableColumn[]>([]);
+  const [rows, setRows] = React.useState<TableRow[]>([]);
+
   const [loading, setLoading] = React.useState(false);
 
   const getColumnValue = (name: string, row: TableRow) => {
@@ -48,14 +52,15 @@ const DatabaseTable = () => {
       });
       setRows(rows);
       setLoading(false);
-
-      request({
-        method: "get",
-        path: "tables/configurations/" + tableID,
-      }).then((config) => setTableConfig(config));
     };
 
-    if (tableID) loadData();
+    if (tableID) {
+      loadData();
+
+      const tc = tableConfigs.find((c) => c.name === tableID);
+      if (tc) setTableConfig(tc);
+      console.log("tc", tc);
+    }
   }, [request, tableID]);
 
   if (loading) return <div>Loading</div>;

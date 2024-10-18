@@ -3,10 +3,10 @@ import * as React from "react";
 import Button from "@mui/material/Button";
 import { ThemeProvider } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { ReactComponent as Illustration } from "../assets/images/connection-illustration.svg";
-import { ReactComponent as Gradient1 } from "../assets/images/gradient-1.svg";
-import { ReactComponent as Gradient2 } from "../assets/images/gradient-2.svg";
-import { ReactComponent as Gradient3 } from "../assets/images/gradient-3.svg";
+import Illustration from "../assets/images/connection-illustration.svg?react";
+import Gradient1 from "../assets/images/gradient-1.svg?react";
+import Gradient2 from "../assets/images/gradient-2.svg?react";
+import Gradient3 from "../assets/images/gradient-3.svg?react";
 import { ConnectForm } from '../components/connect/ConnectForm'
 import theme from "../theme";
 import { getCookie } from "../utils";

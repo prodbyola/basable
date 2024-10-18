@@ -3,16 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { deleteCookie, NetworkProvider, RequestOptions, useStore } from ".";
 import { BASABLE_COOKIE_NAME } from "../env";
 
-export const useNetworkRequest = () => {
+export const useNetworkRequest = <R>() => {
   const navigate = useNavigate();
 
   const makeRequest = useCallback(
     async (opts: RequestOptions) => {
       const np = NetworkProvider.getInstance();
       try {
-        const resp = await np.request(opts);
+        const resp: R = await np.request(opts);
         return resp;
-      } catch (err) {
+      } catch (err: any) {
         if ([403, 412].includes(err.status)) {
           deleteCookie(BASABLE_COOKIE_NAME)
           navigate("");

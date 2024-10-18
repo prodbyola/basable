@@ -39,7 +39,7 @@ where
 pub fn app() -> Result<BasableHttpService, AppError> {
     // We add CORS middleware to enable connection from Vue/React Development client
     let cors = CorsLayer::new()
-        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
         .allow_headers([
             ACCEPT,
             ACCESS_CONTROL_ALLOW_HEADERS,

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 
-import { ReactComponent as Logo } from "../../assets/images/basable-logo.svg";
+import Logo from "../../assets/images/basable-logo.svg?react";
 import IconButton from "@mui/material/IconButton";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import InputAdornment from "@mui/material/InputAdornment";

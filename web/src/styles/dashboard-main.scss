@@ -148,6 +148,7 @@ $table_border: variables.$grey_200 solid 1px;
   overflow: scroll;
 
   table {
+    border-radius: 0px;
     thead {
       tr {
         position: sticky;
