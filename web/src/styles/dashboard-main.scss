@@ -167,6 +167,7 @@ $table_border: variables.$grey_200 solid 1px;
   border: 1px variables.$primary solid;
   padding: 0 32px;
   column-gap: 8px;
+  flex-wrap: wrap;
 
   .tableConfig {
     font-size: 1.25rem;
@@ -190,4 +191,12 @@ $table_border: variables.$grey_200 solid 1px;
     align-items: center;
     column-gap: 8px;
   }
+}
+
+.tableHeaderWarning {
+  display: flex;
+  color: red;
+  align-items: center;
+  margin-top: 8px;
+  column-gap: 8px;
 }

@@ -7,9 +7,10 @@ import {
   TableConfig,
   useStore,
 } from "../../utils";
-import { IconButton, ThemeProvider } from "@mui/material";
+import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
 
+import ReportIcon from "@mui/icons-material/Report";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -25,6 +26,7 @@ const DatabaseTable = () => {
   const [tableConfig, setTableConfig] = React.useState<Partial<TableConfig>>(
     {}
   );
+  const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
 
   const [columns, setColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
@@ -58,8 +60,10 @@ const DatabaseTable = () => {
       loadData();
 
       const tc = tableConfigs.find((c) => c.name === tableID);
-      if (tc) setTableConfig(tc);
-      console.log("tc", tc);
+      if (tc) {
+        setTableConfig(tc);
+        setHasUniqueColumn(typeof tc.pk_column === "string");
+      }
     }
   }, [request, tableID]);
 
@@ -78,7 +82,6 @@ const DatabaseTable = () => {
           <SettingsIcon />
           <h3>{tableID}</h3>
         </div>
-        {/* <h3>{tableID}</h3> */}
         <div className="tableToolbar">
           <IconButton>
             <DownloadIcon />
@@ -97,6 +100,16 @@ const DatabaseTable = () => {
           </IconButton>
         </div>
       </div>
+      {!hasUniqueColumn && (
+        <div className="tableHeaderWarning">
+          <ReportIcon />
+          <Typography>
+            No <strong>unique column</strong> is found for this table. Table
+            modification is impossible. You can manually set unique column by
+            clicking the settings button above.
+          </Typography>
+        </div>
+      )}
       <section className="displayTable dashboardDisplay databaseTable">
         <table>
           <thead>
