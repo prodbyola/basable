@@ -7,7 +7,7 @@ import Illustration from "../assets/images/connection-illustration.svg?react";
 import Gradient1 from "../assets/images/gradient-1.svg?react";
 import Gradient2 from "../assets/images/gradient-2.svg?react";
 import Gradient3 from "../assets/images/gradient-3.svg?react";
-import { ConnectForm } from '../components/connect/ConnectForm'
+import { ConnectForm } from '../components/forms/ConnectForm'
 import theme from "../theme";
 import { getCookie } from "../utils";
 import { BASABLE_COOKIE_NAME } from "../env";

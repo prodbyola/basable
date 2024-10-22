@@ -24,15 +24,17 @@ import { ChangeEvent, useState } from "react";
 type ConfigProps = {
   config: Partial<TableConfig>;
   open: boolean;
-  onHideDialog: () => void;
   columns: string[];
+  onHideDialog: () => void;
+  onConfigUpdated: (config: Partial<TableConfig>) => void 
 };
 
 const TableConfigForm = ({
   config,
   open,
-  onHideDialog,
   columns,
+  onHideDialog,
+  onConfigUpdated,
 }: ConfigProps) => {
   const request = useNetworkRequest();
   const columnList = ["None", ...columns];
@@ -87,6 +89,7 @@ const TableConfigForm = ({
       });
 
       updateTableConfig(formData as TableConfig);
+      onConfigUpdated(formData)
     } catch (err: any) {
       updateSnackBar({
         ...snackBar,
@@ -105,7 +108,7 @@ const TableConfigForm = ({
       <DialogTitle>
         {getTableLabel(config as TableConfig)} Configuration
       </DialogTitle>
-      <DialogContent sx={{ minWidth: "420px", marginTop: "12px" }}>
+      <DialogContent sx={{ minWidth: "420px", paddingTop: "32px !important" }}>
         <TextField
           id="tcf-label"
           className="tableConfigField"

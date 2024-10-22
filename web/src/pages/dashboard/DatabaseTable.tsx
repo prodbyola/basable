@@ -6,6 +6,7 @@ import {
   TableRow,
   TableConfig,
   useStore,
+  getTableLabel,
 } from "../../utils";
 import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
@@ -17,7 +18,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
 import TableFilterIcon from "../../components/common/icons/FilterIcon";
 import TableSearchIcon from "../../components/common/icons/SearchIcon";
-import TableConfigForm from "../../components/common/TableConfigForm";
+import TableConfigForm from "../../components/forms/TableConfigForm";
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
@@ -27,6 +28,7 @@ const DatabaseTable = () => {
   const [tableConfig, setTableConfig] = React.useState<Partial<TableConfig>>(
     {}
   );
+  const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
 
@@ -44,22 +46,23 @@ const DatabaseTable = () => {
   React.useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const cols = await request({
+      const cols = (await request({
         method: "get",
         path: "tables/columns/" + tableID,
-      }) as TableColumn[];
+      })) as TableColumn[];
       setColumns(cols);
 
-      const rows = await request({
+      const rows = (await request({
         method: "get",
         path: "tables/data/" + tableID,
-      }) as TableRow[] ;
+      })) as TableRow[];
       setRows(rows);
 
       const tc = tableConfigs.find((c) => c.name === tableID);
       if (tc) {
         setTableConfig(tc);
         setHasUniqueColumn(typeof tc.pk_column === "string");
+        setTableLabel(getTableLabel(tc));
       }
       setLoading(false);
     };
@@ -74,6 +77,7 @@ const DatabaseTable = () => {
       <div className="displayTableHeader">
         <div
           className="tableConfig"
+          key={tableLabel}
           style={{
             backgroundColor: theme.palette.primary.main,
             color: "white",
@@ -81,7 +85,7 @@ const DatabaseTable = () => {
           onClick={() => setOpenTableConfig(true)}
         >
           <SettingsIcon />
-          <h3>{tableID}</h3>
+          <h3>{tableLabel}</h3>
         </div>
         <div className="tableToolbar">
           <IconButton>
@@ -142,8 +146,11 @@ const DatabaseTable = () => {
       <TableConfigForm
         config={tableConfig}
         open={openTableConfig}
-        onHideDialog={() => setOpenTableConfig(false)}
         columns={columns.map((col) => col.name)}
+        onHideDialog={() => setOpenTableConfig(false)}
+        onConfigUpdated={(config) =>
+          setTableLabel(getTableLabel(config as TableConfig))
+        }
       />
     </ThemeProvider>
   );

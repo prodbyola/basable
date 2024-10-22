@@ -23,13 +23,14 @@ import { VisualizationIcon } from "./icons/VisualizationIcon";
 import { HelpIcon } from "./icons/HelpIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
 import { NavItem } from "./NavItem";
-import { useLogout, useStore } from "../../utils";
+import { getTableLabel, useLogout, useStore } from "../../utils";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 const drawerWidth = 240;
 
 function DashboardNav({ showMobileSidebar = false }) {
   const currentUser = useStore((state) => state.currentUser);
+  const tableConfigs = useStore(state => state.tableConfigs)
   const location = useLocation();
   const { tableID } = useParams();
   const defaultTextColor = "#363636";
@@ -42,7 +43,6 @@ function DashboardNav({ showMobileSidebar = false }) {
 
   const [openTables, setOpenTables] = React.useState(true);
   const tables = useStore((state) => state.tables);
-  const tableItems = tables.map((t) => t.name);
 
   return (
     <ThemeProvider theme={theme}>
@@ -205,8 +205,9 @@ function DashboardNav({ showMobileSidebar = false }) {
               expanded={openTables}
               selected={isTableRoute}
               onClick={() => setOpenTables(!openTables)}
-              subMenu={{ items: tableItems, active: tableID }}
-              onSubItemClick={(item) => navigate("/dashboard/tables/" + item)}
+              subMenu={{ items: tableConfigs.map(c => ({ label: getTableLabel(c), value: c.name })), active: tableID }}
+              onSubItemClick={(item) => navigate("/dashboard/tables/" + item.value)}
+              key={tableConfigs.length}
             />
 
             <NavItem label="Visualization" icon={<VisualizationIcon />} />

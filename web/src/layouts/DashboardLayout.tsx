@@ -42,31 +42,33 @@ function DashboardLayout() {
   };
 
   useEffect(() => {
-    const cookie = getCookie(BASABLE_COOKIE_NAME);
+    if (!isReady) {
+      const cookie = getCookie(BASABLE_COOKIE_NAME);
 
-    if (!cookie) {
-      logout();
-    } else {
-      request({
-        method: "get",
-        path: "tables",
-      }).then((resp) => {
-        const tables = resp as TableSummaryType[];
-        updateTables(tables);
+      if (!cookie) {
+        logout();
+      } else {
+        request({
+          method: "get",
+          path: "tables",
+        }).then((resp) => {
+          const tables = resp as TableSummaryType[];
+          updateTables(tables);
 
-        if (tables.length) {
-          tables.forEach((tbl) => {
-            request({
-              method: "get",
-              path: "tables/configurations/" + tbl.name,
-            }).then((config) => addTableConfig(config as TableConfig));
-          });
-        }
-      });
+          if (tables.length) {
+            tables.forEach((tbl) => {
+              request({
+                method: "get",
+                path: "tables/configurations/" + tbl.name,
+              }).then((config) => addTableConfig(config as TableConfig));
+            });
+          }
+        });
 
-      setIsReady(true);
+        setIsReady(true);
+      }
     }
-  }, [logout, request, updateTables]);
+  });
 
   if (!isReady) {
     return <div></div>;

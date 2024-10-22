@@ -23,6 +23,11 @@ const navItemStyle = {
   },
 };
 
+type NavSubmenu = {
+  label: string
+  value: string
+}
+
 interface NavItemProps {
   label: string;
   icon: React.ReactNode;
@@ -31,10 +36,10 @@ interface NavItemProps {
   onClick?: React.MouseEventHandler;
   expanded?: boolean;
   subMenu?: {
-    items: string[];
+    items: NavSubmenu[];
     active?: string;
   };
-  onSubItemClick?: (item: string) => void;
+  onSubItemClick?: (item: NavSubmenu) => void;
 }
 
 export const NavItem = ({
@@ -75,16 +80,18 @@ export const NavItem = ({
           <List component="div">
             {subMenu.items.map((item) => (
               <ListItemButton
-                key={item}
+                key={item.value}
                 sx={{
                   fontFamily: '"Exo", sans-serif',
                   pl: 4,
                   pt: 0,
                   pb: 0,
-                  backgroundColor: subMenu.active === item ? theme.palette.primary.main : '',
-                  color: subMenu.active === item ? 'white' : ''
+                  backgroundColor: subMenu.active === item.value ? theme.palette.primary.main : '',
+                  color: subMenu.active === item.value ? 'white' : ''
                 }}
-                onClick={() => onSubItemClick(item)}
+                onClick={() =>  {
+                  if(onSubItemClick) onSubItemClick(item)
+                }}
               >
                 <ListItemIcon
                   sx={{
@@ -98,12 +105,12 @@ export const NavItem = ({
                       "&.MuiSvgIcon-root": {
                         width: "4px",
                         height: "4px",
-                        fill: subMenu.active === item ? 'white' : '',
+                        fill: subMenu.active === item.value ? 'white' : '',
                       },
                     }}
                   />
                 </ListItemIcon>
-                <ListItemText primary={item} />
+                <ListItemText primary={item.label} />
               </ListItemButton>
             ))}
           </List>
