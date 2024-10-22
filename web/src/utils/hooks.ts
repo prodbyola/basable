@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { deleteCookie, NetworkProvider, RequestOptions, useStore } from ".";
 import { BASABLE_COOKIE_NAME } from "../env";
+import axios from "axios";
 
 export const useNetworkRequest = <R>() => {
   const navigate = useNavigate();
@@ -13,11 +14,15 @@ export const useNetworkRequest = <R>() => {
         const resp: R = await np.request(opts);
         return resp;
       } catch (err: any) {
-        if ([403, 412].includes(err.status)) {
-          deleteCookie(BASABLE_COOKIE_NAME)
-          navigate("");
+        if (axios.isAxiosError(err)) {
+          if (err.status && [403, 412].includes(err.status)) {
+            deleteCookie(BASABLE_COOKIE_NAME);
+            navigate("");
+          }
+
+          throw new Error(err.response?.data)
         } else {
-          return err;
+          throw err;
         }
       }
     },

@@ -7,14 +7,14 @@ import OutlinedInput from "@mui/material/OutlinedInput";
 import InputAdornment from "@mui/material/InputAdornment";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import Select from "@mui/material/Select";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
 import { BASABLE_COOKIE_NAME } from "../../env";
 import { AuthTokenType, SessionCookie } from "../../utils/data_types";
-import { NetworkProvider, setCookie } from "../../utils";
+import { NetworkProvider, setCookie, useStore } from "../../utils";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert/Alert";
 
@@ -42,12 +42,8 @@ export const ConnectForm = () => {
     port: 3306,
   });
 
-  const [networkState, updateNetworkState] = React.useState({
-    showAlert: false,
-    message: "",
-    alertColor: "success" as "success" | "error" | "info" | "warning",
-    loading: false,
-  });
+  const snackBar = useStore((state) => state.snackBar);
+  const updateSnackBar = useStore((state) => state.showSnackBar);
 
   const closeAlert = (
     event?: React.SyntheticEvent | Event,
@@ -57,19 +53,19 @@ export const ConnectForm = () => {
       return;
     }
 
-    updateNetworkState((prevData) => ({
-      ...prevData,
+    updateSnackBar({
+      ...snackBar,
       showAlert: false,
-    }));
+    });
   };
 
   const connect = async () => {
     // reset network-related states
-    updateNetworkState((prevData) => ({
-      ...prevData,
+    updateSnackBar({
+      ...snackBar,
       showAlert: false,
       loading: true,
-    }));
+    });
 
     try {
       // create a guest user
@@ -77,7 +73,7 @@ export const ConnectForm = () => {
         path: "auth/guest",
         method: "post",
       });
-      const token = access.token
+      const token = access.token;
 
       // create new connection
       const connID: string = await np.request({
@@ -85,8 +81,8 @@ export const ConnectForm = () => {
         method: "post",
         data: connInfo,
         headers: {
-          'session-id': 'Bearer '+ token
-        }
+          "session-id": "Bearer " + token,
+        },
       });
 
       // create session cookie
@@ -100,32 +96,29 @@ export const ConnectForm = () => {
       setCookie(BASABLE_COOKIE_NAME, JSON.stringify(cookie), exp);
 
       // update network state
-      updateNetworkState((prevData) => ({
-        ...prevData,
+      updateSnackBar({
+        ...snackBar,
         showAlert: true,
         loading: false,
         alertColor: "success",
         message: "Connection successful! Redirecting to dashboard...",
-      }));
+      });
 
       navigate("/dashboard");
     } catch (err: any) {
-      // display error
-      let message = ''
-      if(err.response) message = err.response.data
-      else message = err.message
-      
-      updateNetworkState((prevData) => ({
-        ...prevData,
+      updateSnackBar({
+        ...snackBar,
         showAlert: true,
         loading: false,
         alertColor: "error",
-        message,
-      }));
+        message: err.message,
+      });
     }
   };
 
-  const onChangeInput = (evt: React.ChangeEvent<HTMLInputElement>) => {
+  const onChangeInput = (
+    evt: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent<string>
+  ) => {
     const { name, value } = evt.target;
     if (value) {
       updateConnectInfo((prevData) => ({
@@ -138,7 +131,7 @@ export const ConnectForm = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
 
-  const handleMouseDownPassword = (event) => {
+  const handleMouseDownPassword = (event: MouseEvent) => {
     event.preventDefault();
   };
 
@@ -221,7 +214,11 @@ export const ConnectForm = () => {
                 placeholder="Enter username"
                 name="username"
                 value={connInfo.username}
-                onChange={onChangeInput}
+                onChange={
+                  onChangeInput as React.ChangeEventHandler<
+                    HTMLInputElement | HTMLTextAreaElement
+                  >
+                }
               />
             </div>
             <div className="pass-input">
@@ -238,13 +235,17 @@ export const ConnectForm = () => {
                 name="password"
                 value={connInfo.password}
                 type={showPassword ? "text" : "password"}
-                onChange={onChangeInput}
+                onChange={
+                  onChangeInput as React.ChangeEventHandler<
+                    HTMLInputElement | HTMLTextAreaElement
+                  >
+                }
                 endAdornment={
                   <InputAdornment position="end">
                     <IconButton
                       aria-label="toggle password visibility"
                       onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
+                      // onMouseDown={handleMouseDownPassword}
                       edge="end"
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -267,7 +268,11 @@ export const ConnectForm = () => {
             placeholder="Enter database name"
             name="db_name"
             value={connInfo.db_name}
-            onChange={onChangeInput}
+            onChange={
+              onChangeInput as React.ChangeEventHandler<
+                HTMLInputElement | HTMLTextAreaElement
+              >
+            }
           />
         </div>
         <div className="port-source-div">
@@ -284,7 +289,11 @@ export const ConnectForm = () => {
               name="port"
               value={connInfo.port}
               type="number"
-              onChange={onChangeInput}
+              onChange={
+                onChangeInput as React.ChangeEventHandler<
+                  HTMLInputElement | HTMLTextAreaElement
+                >
+              }
             />
           </div>
           <div className="host-div">
@@ -299,7 +308,11 @@ export const ConnectForm = () => {
               placeholder="Enter Host name"
               name="host"
               value={connInfo.host}
-              onChange={onChangeInput}
+              onChange={
+                onChangeInput as React.ChangeEventHandler<
+                  HTMLInputElement | HTMLTextAreaElement
+                >
+              }
             />
           </div>
         </div>
@@ -308,8 +321,8 @@ export const ConnectForm = () => {
             color="primary"
             sx={{ width: 1 }}
             variant="contained"
-            onClick={() => connect()}
-            disabled={networkState.loading}
+            onClick={connect}
+            disabled={snackBar.loading}
           >
             <Typography>Create Guest Connection</Typography>
           </Button>
@@ -320,17 +333,17 @@ export const ConnectForm = () => {
         </div>
         <Snackbar
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          open={networkState.showAlert}
+          open={snackBar.showAlert}
           autoHideDuration={5000}
           onClose={closeAlert}
         >
           <Alert
             onClose={closeAlert}
-            severity={networkState.alertColor}
+            severity={snackBar.alertColor}
             variant="filled"
             sx={{ width: "100%" }}
           >
-            {networkState.message}
+            {snackBar.message}
           </Alert>
         </Snackbar>
       </div>

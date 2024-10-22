@@ -3,7 +3,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   FormControl,
   InputLabel,
@@ -12,7 +11,14 @@ import {
   SelectChangeEvent,
   TextField,
 } from "@mui/material";
-import { TableConfig } from "../../utils";
+import LoadingButton from "@mui/lab/LoadingButton";
+
+import {
+  getTableLabel,
+  TableConfig,
+  useNetworkRequest,
+  useStore,
+} from "../../utils";
 import { ChangeEvent, useState } from "react";
 
 type ConfigProps = {
@@ -28,11 +34,20 @@ const TableConfigForm = ({
   onHideDialog,
   columns,
 }: ConfigProps) => {
-  const [formData, setFormData] = useState(config);
+  const request = useNetworkRequest();
   const columnList = ["None", ...columns];
 
+  const snackBar = useStore((state) => state.snackBar);
+  const updateSnackBar = useStore((state) => state.showSnackBar);
+  const updateTableConfig = useStore((state) => state.updateTableConfig);
+
+  const [formData, setFormData] = useState(config);
+  const [loading, setLoading] = useState(false);
+
   const handlePkChange = (evt: SelectChangeEvent<string>) => {
-    const pk_column = evt.target.value;
+    let pk_column: string | undefined = evt.target.value;
+    if (pk_column === "None") pk_column = undefined;
+
     setFormData({
       ...formData,
       pk_column,
@@ -54,13 +69,42 @@ const TableConfigForm = ({
     });
   };
 
-  const saveConfig = () => {
-    console.log(formData)
-  }
+  const saveConfig = async () => {
+    setLoading(true);
+    try {
+      await request({
+        method: "put",
+        path: "tables/configurations/" + config.name,
+        data: formData,
+      });
+
+      updateSnackBar({
+        ...snackBar,
+        showAlert: true,
+        loading: false,
+        alertColor: "success",
+        message: "Table configuration updated successfully!",
+      });
+
+      updateTableConfig(formData as TableConfig);
+    } catch (err: any) {
+      updateSnackBar({
+        ...snackBar,
+        showAlert: true,
+        loading: false,
+        alertColor: "error",
+        message: err.message,
+      });
+    }
+
+    setLoading(false);
+  };
 
   return (
     <Dialog open={open}>
-      <DialogTitle>{config.label} Configuration</DialogTitle>
+      <DialogTitle>
+        {getTableLabel(config as TableConfig)} Configuration
+      </DialogTitle>
       <DialogContent sx={{ minWidth: "420px", marginTop: "12px" }}>
         <TextField
           id="tcf-label"
@@ -102,7 +146,13 @@ const TableConfigForm = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onHideDialog}>Cancel</Button>
-        <Button onClick={saveConfig} variant="contained">Update</Button>
+        <LoadingButton
+          loading={loading}
+          onClick={saveConfig}
+          variant="contained"
+        >
+          Update
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );

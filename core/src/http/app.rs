@@ -14,6 +14,7 @@ use axum::{
 };
 
 use tower::ServiceBuilder;
+use tower_http::cors::Any;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::base::AppState;
@@ -46,10 +47,13 @@ pub fn app() -> Result<BasableHttpService, AppError> {
             CONTENT_TYPE,
             HeaderName::from_static("session-id"),
             HeaderName::from_static("connection-id"),
-        ]);
+        ])
+        .allow_methods(Any);
 
     let state = AppState::default();
-    state.setup_local_db().map_err(|err| AppError::InitError(err.to_string()))?;
+    state
+        .setup_local_db()
+        .map_err(|err| AppError::InitError(err.to_string()))?;
 
     let routes = core_routes();
 

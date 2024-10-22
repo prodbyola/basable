@@ -44,16 +44,16 @@ const DatabaseTable = () => {
   React.useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const cols: TableColumn[] = await request({
+      const cols = await request({
         method: "get",
         path: "tables/columns/" + tableID,
-      });
+      }) as TableColumn[];
       setColumns(cols);
 
-      const rows: TableRow[] = await request({
+      const rows = await request({
         method: "get",
         path: "tables/data/" + tableID,
-      });
+      }) as TableRow[] ;
       setRows(rows);
 
       const tc = tableConfigs.find((c) => c.name === tableID);
