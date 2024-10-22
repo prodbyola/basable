@@ -44,6 +44,7 @@ export type TableConfig = {
   created_column?: string
   update_column?: unknown
   special_columns?: unknown
+  items_per_page?: number
 }
 
 export type TableColumn = {

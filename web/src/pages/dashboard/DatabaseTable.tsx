@@ -55,19 +55,16 @@ const DatabaseTable = () => {
         path: "tables/data/" + tableID,
       });
       setRows(rows);
-      setLoading(false);
-    };
-
-    if (tableID) {
-      loadData();
 
       const tc = tableConfigs.find((c) => c.name === tableID);
       if (tc) {
-        console.log(tc);
         setTableConfig(tc);
         setHasUniqueColumn(typeof tc.pk_column === "string");
       }
-    }
+      setLoading(false);
+    };
+
+    if (tableID) loadData();
   }, [request, tableID]);
 
   if (loading) return <div>Loading</div>;
@@ -146,6 +143,7 @@ const DatabaseTable = () => {
         config={tableConfig}
         open={openTableConfig}
         onHideDialog={() => setOpenTableConfig(false)}
+        columns={columns.map((col) => col.name)}
       />
     </ThemeProvider>
   );
