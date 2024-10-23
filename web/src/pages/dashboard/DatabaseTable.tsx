@@ -140,6 +140,23 @@ const DatabaseTable = () => {
         method: "get",
         path: "tables/columns/" + tableID,
       })) as TableColumn[];
+
+      const tc = tableConfigs.find((c) => c.name === tableID);
+      if (tc) {
+        // if there's a unique column, always shift it to leftmost
+        if(tc.pk_column) {
+          for(let i = 0; i < cols.length; i++) {
+            const col = cols[i]
+            if(col.name === tc.pk_column) {
+              cols.splice(i, 1)
+              cols.splice(0, 0, col)
+              break;
+            }
+          }
+        }
+
+        updateConfigStates(tc);
+      }
       setColumns(cols);
 
       const rows = (await request({
@@ -147,9 +164,6 @@ const DatabaseTable = () => {
         path: "tables/data/" + tableID,
       })) as TableRow[];
       setRows(rows);
-
-      const tc = tableConfigs.find((c) => c.name === tableID);
-      if (tc) updateConfigStates(tc);
 
       setTableLoading(false);
     };
