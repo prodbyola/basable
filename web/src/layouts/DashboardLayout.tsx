@@ -44,29 +44,33 @@ function DashboardLayout() {
   useEffect(() => {
     if (!isReady) {
       const cookie = getCookie(BASABLE_COOKIE_NAME);
-
-      if (!cookie) {
-        logout();
-      } else {
-        request({
-          method: "get",
-          path: "tables",
-        }).then((resp) => {
-          const tables = resp as TableSummaryType[];
+      const loadData = async () => {
+        if (!cookie) {
+          logout();
+        } else {
+          const tables = await request({
+            method: "get",
+            path: "tables",
+          }) as TableSummaryType[];
           updateTables(tables);
 
           if (tables.length) {
-            tables.forEach((tbl) => {
-              request({
+            for (let i = 0; i < tables.length; i++) {
+              const tbl = tables[i];
+              const config = await request({
                 method: "get",
                 path: "tables/configurations/" + tbl.name,
-              }).then((config) => addTableConfig(config as TableConfig));
-            });
-          }
-        });
+              }) as TableConfig;
 
-        setIsReady(true);
-      }
+              addTableConfig(config)
+            }
+          }
+
+          setIsReady(true);
+        }
+      };
+
+      loadData()
     }
   });
 
