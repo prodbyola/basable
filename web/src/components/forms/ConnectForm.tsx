@@ -101,7 +101,7 @@ export const ConnectForm = () => {
         showAlert: true,
         loading: false,
         alertColor: "success",
-        message: "Connection successful! Redirecting to dashboard...",
+        message: "Connection successful!",
       });
 
       navigate("/dashboard");
@@ -130,10 +130,6 @@ export const ConnectForm = () => {
 
   const [showPassword, setShowPassword] = React.useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
-
-  const handleMouseDownPassword = (event: MouseEvent) => {
-    event.preventDefault();
-  };
 
   return (
     <div className="left-frame">

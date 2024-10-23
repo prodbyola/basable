@@ -43,6 +43,12 @@ const DatabaseTable = () => {
     return o[k] as string;
   };
 
+  const updateConfigStates = (config: TableConfig) => {
+    setTableConfig(config);
+    setHasUniqueColumn(typeof config.pk_column === "string");
+    setTableLabel(getTableLabel(config as TableConfig));
+  };
+
   React.useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -59,11 +65,8 @@ const DatabaseTable = () => {
       setRows(rows);
 
       const tc = tableConfigs.find((c) => c.name === tableID);
-      if (tc) {
-        setTableConfig(tc);
-        setHasUniqueColumn(typeof tc.pk_column === "string");
-        setTableLabel(getTableLabel(tc));
-      }
+      if (tc) updateConfigStates(tc);
+
       setLoading(false);
     };
 
@@ -148,9 +151,7 @@ const DatabaseTable = () => {
         open={openTableConfig}
         columns={columns.map((col) => col.name)}
         onHideDialog={() => setOpenTableConfig(false)}
-        onConfigUpdated={(config) =>
-          setTableLabel(getTableLabel(config as TableConfig))
-        }
+        onConfigUpdated={(config) => updateConfigStates(config as TableConfig)}
       />
     </ThemeProvider>
   );
