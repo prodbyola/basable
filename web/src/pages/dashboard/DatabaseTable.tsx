@@ -13,11 +13,12 @@ import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
 
 import ReportIcon from "@mui/icons-material/Report";
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SettingsIcon from "@mui/icons-material/Settings";
+import SearchIcon from '@mui/icons-material/Search';
 import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
-import TableFilterIcon from "../../components/common/icons/FilterIcon";
 import TableSearchIcon from "../../components/common/icons/SearchIcon";
 import TableConfigForm from "../../components/forms/TableConfigForm";
 
@@ -196,10 +197,10 @@ const DatabaseTable = () => {
             <TableRefresh />
           </IconButton>
           <IconButton>
-            <TableSearchIcon />
+            <SearchIcon />
           </IconButton>
           <IconButton>
-            <TableFilterIcon size="18" />
+            <FilterAltIcon />
           </IconButton>
           <IconButton sx={{
             backgroundColor: utd.unique_values.length ? theme.palette.primary.main : '',
