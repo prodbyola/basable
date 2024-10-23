@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{base::{column::ColumnList, data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateDataOptions}}, imp::database::mysql::table::MySqlTable};
+use crate::{base::{column::ColumnList, data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateTableData}}, imp::database::mysql::table::MySqlTable};
 
 use super::ConnectorType;
 
@@ -54,7 +54,7 @@ pub(crate) trait TableCRUD {
         filter: DataQueryFilter,
     ) -> DataQueryResult<TableColumn, TableError>;
 
-    fn update_data(&self, input: UpdateDataOptions) -> Result<(), TableError>;
+    fn update_data(&self, input: UpdateTableData) -> Result<(), TableError>;
 
     fn delete_data(&self, col: String, value: String) -> Result<(), TableError>;
 }
@@ -103,7 +103,7 @@ mod interactive_tests {
     use std::{collections::HashMap, io::stdin};
 
     use crate::{
-        base::{imp::table::UpdateDataOptions, HttpError},
+        base::{imp::table::UpdateTableData, HttpError},
         tests::common::{create_test_db, get_test_db_table},
     };
 
@@ -155,7 +155,7 @@ mod interactive_tests {
         let table_name = get_test_db_table();
 
         if let Some(table) = db.get_table(&table_name) {
-            let mut test_data = UpdateDataOptions::default();
+            let mut test_data = UpdateTableData::default();
 
             // Get update clause
             println!("Please enter update clause as key,value");
@@ -168,8 +168,8 @@ mod interactive_tests {
             let input = input.trim().to_string();
 
             let spl: Vec<&str> = input.split(",").collect();
-            test_data.key = spl[0].to_string();
-            test_data.value = spl[1].to_string();
+            test_data.unique_key = spl[0].to_string();
+            // test_data.unique_value = spl[1].to_string();
 
             // Get update value
             println!("Please enter update clause as column,value");
@@ -182,9 +182,9 @@ mod interactive_tests {
             let input = input.trim().to_string();
 
             let spl: Vec<&str> = input.split(",").collect();
-            test_data
-                .input
-                .insert(spl[0].to_string(), spl[1].to_string());
+            // test_data
+            //     .input
+            //     .insert(spl[0].to_string(), spl[1].to_string());
 
             // update the table
             let update_data = table.update_data(test_data);

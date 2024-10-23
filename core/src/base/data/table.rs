@@ -143,8 +143,9 @@ pub(crate) struct TableSummary {
 }
 
 #[derive(Deserialize, Default)]
-pub(crate) struct UpdateDataOptions {
-    pub key: String,
-    pub value: String,
-    pub input: HashMap<String, String>,
+pub(crate) struct UpdateTableData {
+    pub unique_key: String,
+    pub columns: Vec<String>,
+    pub unique_values: Vec<String>,
+    pub input: Vec<HashMap<String, String>>,
 }

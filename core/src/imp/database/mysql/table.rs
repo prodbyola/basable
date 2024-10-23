@@ -2,8 +2,11 @@ use std::collections::HashMap;
 
 use crate::base::{
     column::{Column, ColumnList},
-    data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateDataOptions},
-    imp::{table::{Table, TableColumn, TableError, TableCRUD}, ConnectorType},
+    data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateTableData},
+    imp::{
+        table::{Table, TableCRUD, TableColumn, TableError},
+        ConnectorType,
+    },
 };
 
 use super::MySqlValue;
@@ -35,7 +38,8 @@ impl Table for MySqlTable {
     fn query_columns(&self) -> Result<ColumnList, Self::Error> {
         let table_name = &self.name;
 
-        let query = format!("
+        let query = format!(
+            "
             SELECT 
                 cols.column_name,
                 cols.column_type,
@@ -66,7 +70,8 @@ impl Table for MySqlTable {
             WHERE
                 cols.table_name = '{table_name}'
 
-        ");
+        "
+        );
 
         let conn = self.connector();
         let result = conn.exec_query(&query)?;
@@ -83,7 +88,7 @@ impl Table for MySqlTable {
 
                 let unique: Option<String> = r.get("IS_UNIQUE");
                 let unique = unique.map(|s| s == "YES".to_owned()).unwrap();
-                
+
                 let primary: Option<String> = r.get("IS_PRIMARY");
                 let primary = primary.map(|s| s == "YES".to_owned()).unwrap();
 
@@ -93,7 +98,7 @@ impl Table for MySqlTable {
                     default_value: default,
                     nullable,
                     unique,
-                    primary
+                    primary,
                 }
             })
             .collect();
@@ -105,7 +110,6 @@ impl Table for MySqlTable {
         &self.connector
     }
 
-    
     fn init_config(&self) -> Option<TableConfig> {
         let mut config = None;
 
@@ -118,7 +122,7 @@ impl Table for MySqlTable {
             }
 
             let pk = pk.map(|pk| pk.name.clone());
-            
+
             let c = TableConfig {
                 pk_column: pk,
                 name: self.name.clone(),
@@ -134,10 +138,7 @@ impl Table for MySqlTable {
 }
 
 impl TableCRUD for MySqlTable {
-    fn query_data(
-        &self,
-        filter: DataQueryFilter,
-    ) -> DataQueryResult<TableColumn, TableError> {
+    fn query_data(&self, filter: DataQueryFilter) -> DataQueryResult<TableColumn, TableError> {
         let cols = self.query_columns()?;
         let mut excluded_cols: Vec<&Column> = vec![]; // columns to exclude from query
 
@@ -205,19 +206,40 @@ impl TableCRUD for MySqlTable {
         Ok(())
     }
 
-    fn update_data(&self, options: UpdateDataOptions) -> Result<(), TableError> {
-        let UpdateDataOptions { key, value, input } = options;
+    fn update_data(&self, options: UpdateTableData) -> Result<(), TableError> {
+        let UpdateTableData {
+            unique_key,
+            columns,
+            unique_values,
+            input,
+        } = options;
 
-        let data: Vec<String> = input
-            .iter()
-            .map(|(k, v)| format!("{} = '{}'", k, v))
-            .collect();
-        let data = data.join(", ");
+        let mut cases = vec![];
+        for (index, col) in columns.iter().enumerate() {
+            let cmd = if index == 0 { "SET \n" } else { "" };
+            let mut q = format!("{cmd} {col} = CASE {unique_key} \n");
+
+            for (index, uv) in unique_values.iter().enumerate() {
+                if let Some(values) = input.get(index) {
+                    if let Some(val) = values.get(col) {
+                        q.push_str(&format!("WHEN {uv} THEN '{val}' \n"));
+                    }
+                }
+            }
+
+            q.push_str(&format!("ELSE {col} \n END"));
+            cases.push(q);
+        }
+
+        let cases = cases.join(", \n");
+        let unique_values = unique_values.join(",");
 
         let query = format!(
-            "UPDATE {} SET {} WHERE {} = '{}'",
-            self.name, data, key, value
+            "UPDATE {} \n {} WHERE {} IN ({})",
+            self.name, cases, unique_key, unique_values
         );
+
+        println!("{query}");
         let conn = self.connector();
         conn.exec_query(&query)?;
 
@@ -231,5 +253,4 @@ impl TableCRUD for MySqlTable {
 
         Ok(())
     }
-
 }

@@ -75,7 +75,7 @@ const TableConfigForm = ({
     setLoading(true);
     try {
       await request({
-        method: "put",
+        method: "patch",
         path: "tables/configurations/" + config.name,
         data: formData,
       });

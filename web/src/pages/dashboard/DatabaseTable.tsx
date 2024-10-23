@@ -7,6 +7,7 @@ import {
   TableConfig,
   useStore,
   getTableLabel,
+  UpdateTableData,
 } from "../../utils";
 import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
@@ -35,6 +36,13 @@ const DatabaseTable = () => {
   const [columns, setColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
 
+  const defaultTableData: UpdateTableData = {
+    columns: [],
+    unique_values: [],
+    input: []
+  }
+  const [utd, setUTD] = React.useState(defaultTableData)
+
   const [loading, setLoading] = React.useState(false);
 
   const getColumnValue = (name: string, row: TableRow) => {
@@ -43,11 +51,74 @@ const DatabaseTable = () => {
     return o[k] as string;
   };
 
+  const getInputLabel = (row: TableRow) => {
+    if (hasUniqueColumn) {
+      return getColumnValue(tableConfig.pk_column as string, row);
+    }
+
+    return "edit-table-input";
+  };
+
+  const onInputChange = (
+    evt: React.ChangeEvent<HTMLInputElement>,
+    column: string,
+    rowIndex: number
+  ) => {
+    const { name: uniqueValue, value } = evt.target;
+
+    // update table rows
+    const row = rows[rowIndex]
+    row[column][0] = value
+    rows.splice(rowIndex, 1, row)
+    setRows([...rows])
+
+    const uniqueValues = utd.unique_values
+    const exists = uniqueValues.find(uv => uv === uniqueValue)
+
+    // if row exists update the row
+    if(exists) {
+      const i = uniqueValues.indexOf(exists)
+      const row = utd.input[i]
+      row[column] = value
+
+      utd.input.splice(i, 1, row)
+    } else {
+      utd.unique_values.push(uniqueValue)
+
+      const columns = utd.columns
+      if(!columns.find(col => col === column)) {
+        columns.push(column)
+        utd.columns = columns
+      }
+
+      utd.input.push({ [column]: value })
+    }
+
+    setUTD({ ...utd })
+  };
+
   const updateConfigStates = (config: TableConfig) => {
     setTableConfig(config);
     setHasUniqueColumn(typeof config.pk_column === "string");
     setTableLabel(getTableLabel(config as TableConfig));
+
+    if(typeof config.pk_column === "string") {
+      setUTD({
+        ...utd,
+        unique_key: config.pk_column
+      })
+    }
   };
+
+  const updateData = async() => {
+    await request({
+      method: 'patch',
+      path: 'tables/data/'+tableID,
+      data: utd
+    })
+
+    console.log('done', utd)
+  }
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -103,7 +174,7 @@ const DatabaseTable = () => {
           <IconButton>
             <TableFilterIcon size="18" />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={updateData}>
             <SaveIcon />
           </IconButton>
         </div>
@@ -134,8 +205,9 @@ const DatabaseTable = () => {
                   <td key={col.name}>
                     {
                       <input
+                        name={getInputLabel(row)}
                         value={getColumnValue(col.name, row)}
-                        onChange={() => {}}
+                        onChange={(evt) => onInputChange(evt, col.name, index)}
                         disabled={!hasUniqueColumn}
                       />
                     }

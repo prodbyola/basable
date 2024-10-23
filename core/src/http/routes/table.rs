@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::{delete, get, patch, post, put},
+    routing::{delete, get, patch, post},
     Json, Router,
 };
 use axum_macros::debug_handler;
@@ -11,7 +11,7 @@ use axum_macros::debug_handler;
 use crate::{
     base::{
         column::ColumnList,
-        data::table::{DataQueryFilter, TableConfig, TableSummaries, UpdateDataOptions},
+        data::table::{DataQueryFilter, TableConfig, TableSummaries, UpdateTableData},
         imp::table::Table,
         AppState, HttpError,
     },
@@ -98,7 +98,7 @@ pub(crate) async fn update_data(
     DbExtractor(_): DbExtractor,
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
-    Json(options): Json<UpdateDataOptions>,
+    Json(options): Json<UpdateTableData>,
 ) -> Result<String, HttpError> {
     table.update_data(options)?;
     Ok("Operation successful".to_string())
@@ -144,7 +144,7 @@ pub(super) fn table_routes() -> Router<AppState> {
     Router::new()
         .route("/", get(load_tables))
         .route("/configurations/:table_name", get(get_configuration))
-        .route("/configurations/:table_name", put(save_configuration))
+        .route("/configurations/:table_name", patch(save_configuration))
         .route("/columns/:table_name", get(get_columns))
         .route("/data/:table_name", get(query_data))
         .route("/data/:table_name", post(insert_data))
