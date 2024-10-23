@@ -239,7 +239,6 @@ impl TableCRUD for MySqlTable {
             self.name, cases, unique_key, unique_values
         );
 
-        println!("{query}");
         let conn = self.connector();
         conn.exec_query(&query)?;
 
