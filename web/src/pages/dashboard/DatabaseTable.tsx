@@ -26,6 +26,8 @@ const DatabaseTable = () => {
   const { tableID } = useParams();
 
   const tableConfigs = useStore((state) => state.tableConfigs);
+  const showAlert = useStore((state) => state.showAlert);
+
   const [tableConfig, setTableConfig] = React.useState<Partial<TableConfig>>(
     {}
   );
@@ -36,14 +38,14 @@ const DatabaseTable = () => {
   const [columns, setColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
 
-  const defaultTableData: UpdateTableData = {
+  const defaultUTD: UpdateTableData = {
     columns: [],
     unique_values: [],
-    input: []
-  }
-  const [utd, setUTD] = React.useState(defaultTableData)
+    input: [],
+  };
+  const [utd, setUTD] = React.useState(defaultUTD);
 
-  const [loading, setLoading] = React.useState(false);
+  const [tableLoading, setTableLoading] = React.useState(false);
 
   const getColumnValue = (name: string, row: TableRow) => {
     const o = row[name];
@@ -67,34 +69,34 @@ const DatabaseTable = () => {
     const { name: uniqueValue, value } = evt.target;
 
     // update table rows
-    const row = rows[rowIndex]
-    row[column][0] = value
-    rows.splice(rowIndex, 1, row)
-    setRows([...rows])
+    const row = rows[rowIndex];
+    row[column][0] = value;
+    rows.splice(rowIndex, 1, row);
+    setRows([...rows]);
 
-    const uniqueValues = utd.unique_values
-    const exists = uniqueValues.find(uv => uv === uniqueValue)
+    const uniqueValues = utd.unique_values;
+    const exists = uniqueValues.find((uv) => uv === uniqueValue);
 
     // if row exists update the row
-    if(exists) {
-      const i = uniqueValues.indexOf(exists)
-      const row = utd.input[i]
-      row[column] = value
+    if (exists) {
+      const i = uniqueValues.indexOf(exists);
+      const row = utd.input[i];
+      row[column] = value;
 
-      utd.input.splice(i, 1, row)
+      utd.input.splice(i, 1, row);
     } else {
-      utd.unique_values.push(uniqueValue)
+      utd.unique_values.push(uniqueValue);
 
-      const columns = utd.columns
-      if(!columns.find(col => col === column)) {
-        columns.push(column)
-        utd.columns = columns
+      const columns = utd.columns;
+      if (!columns.find((col) => col === column)) {
+        columns.push(column);
+        utd.columns = columns;
       }
 
-      utd.input.push({ [column]: value })
+      utd.input.push({ [column]: value });
     }
 
-    setUTD({ ...utd })
+    setUTD({ ...utd });
   };
 
   const updateConfigStates = (config: TableConfig) => {
@@ -102,27 +104,38 @@ const DatabaseTable = () => {
     setHasUniqueColumn(typeof config.pk_column === "string");
     setTableLabel(getTableLabel(config as TableConfig));
 
-    if(typeof config.pk_column === "string") {
+    if (typeof config.pk_column === "string") {
       setUTD({
         ...utd,
-        unique_key: config.pk_column
-      })
+        unique_key: config.pk_column,
+      });
     }
   };
 
-  const updateData = async() => {
-    await request({
-      method: 'patch',
-      path: 'tables/data/'+tableID,
-      data: utd
-    })
+  const updateData = async () => {
+    if(!utd.unique_values.length) return
 
-    console.log('done', utd)
-  }
+    try {
+      await request({
+        method: "patch",
+        path: "tables/data/" + tableID,
+        data: utd,
+      });
+
+      showAlert("success", "Table data saved successfully");
+
+      setUTD({
+        ...defaultUTD,
+        unique_key: tableConfig.pk_column
+      })
+    } catch (err: any) {
+      showAlert("error", err.message);
+    }
+  };
 
   React.useEffect(() => {
     const loadData = async () => {
-      setLoading(true);
+      setTableLoading(true);
       const cols = (await request({
         method: "get",
         path: "tables/columns/" + tableID,
@@ -138,13 +151,13 @@ const DatabaseTable = () => {
       const tc = tableConfigs.find((c) => c.name === tableID);
       if (tc) updateConfigStates(tc);
 
-      setLoading(false);
+      setTableLoading(false);
     };
 
     if (tableID) loadData();
   }, [request, tableID]);
 
-  if (loading) return <div>Loading</div>;
+  if (tableLoading) return <div>Loading</div>;
 
   return (
     <ThemeProvider theme={theme}>
@@ -174,7 +187,10 @@ const DatabaseTable = () => {
           <IconButton>
             <TableFilterIcon size="18" />
           </IconButton>
-          <IconButton onClick={updateData}>
+          <IconButton sx={{
+            backgroundColor: utd.unique_values.length ? theme.palette.primary.main : '',
+            color: utd.unique_values.length ? 'white' : ''
+          }} onClick={updateData}>
             <SaveIcon />
           </IconButton>
         </div>
