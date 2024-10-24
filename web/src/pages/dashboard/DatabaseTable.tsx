@@ -78,6 +78,13 @@ const DatabaseTable = () => {
     const uniqueValues = utd.unique_values;
     const exists = uniqueValues.find((uv) => uv === uniqueValue);
 
+    // if column is not added yet, add it
+    const columns = utd.columns;
+    if (!columns.find((col) => col === column)) {
+      columns.push(column);
+      utd.columns = columns;
+    }
+
     // if row exists update the row
     if (exists) {
       const i = uniqueValues.indexOf(exists);
@@ -87,16 +94,9 @@ const DatabaseTable = () => {
       utd.input.splice(i, 1, row);
     } else {
       utd.unique_values.push(uniqueValue);
-
-      const columns = utd.columns;
-      if (!columns.find((col) => col === column)) {
-        columns.push(column);
-        utd.columns = columns;
-      }
-
       utd.input.push({ [column]: value });
     }
-
+    
     setUTD({ ...utd });
   };
 
