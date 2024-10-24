@@ -26,6 +26,7 @@ r2d2_sqlite = { version = "0.24.0",  features = ["bundled"] }
 r2d2 = "0.8.10"
 strum = "0.26"
 strum_macros = "0.26"
+webbrowser = "1.0.2"
 
 [dependencies.uuid]
 version = "1.8.0"
