@@ -65,14 +65,13 @@ pub(crate) async fn get_columns(
 
 #[debug_handler]
 pub(crate) async fn query_data(
-    Query(params): Query<HashMap<String, String>>,
     Path(_): Path<String>,
+    Query(params): Query<HashMap<String, String>>,
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
 ) -> Result<Json<Vec<HashMap<String, <MySqlTable as Table>::ColumnValue>>>, HttpError> {
-    // TODO: Build query filter from url query params
     let filter = TableQueryOpts::from_query_params(params)?;
     let data = table.query_data(filter, &db)?;
 

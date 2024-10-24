@@ -58,10 +58,10 @@ impl LocalDB {
             Ok(pool) => {
                 let exec = pool.execute(
                     "
-                    INSERT INTO table_configs (conn_id, label, pk_column, name)
-                    VALUES (?1, ?2, ?3, ?4)
+                    INSERT INTO table_configs (conn_id, label, pk_column, name, ipp)
+                    VALUES (?1, ?2, ?3, ?4, ?5)
                 ",
-                    params![conn_id, tc.label, tc.pk_column, tc.name],
+                    params![conn_id, tc.label, tc.pk_column, tc.name, tc.items_per_page],
                 );
 
                 exec.map_err(|err| {

@@ -19,7 +19,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
-import TableSearchIcon from "../../components/common/icons/SearchIcon";
 import TableConfigForm from "../../components/forms/TableConfigForm";
 
 const DatabaseTable = () => {
@@ -162,7 +161,7 @@ const DatabaseTable = () => {
 
       const rows = (await request({
         method: "get",
-        path: "tables/data/" + tableID,
+        path: `tables/data/${tableID}?table=${tableID}`,
       })) as TableRow[];
       setRows(rows);
 

@@ -19,7 +19,7 @@ export const useNetworkRequest = <R>() => {
             deleteCookie(BASABLE_COOKIE_NAME);
             navigate("");
           }
-
+          
           throw new Error(err.response?.data)
         } else {
           throw err;

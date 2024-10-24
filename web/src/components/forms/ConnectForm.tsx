@@ -113,6 +113,7 @@ export const ConnectForm = () => {
         alertColor: "error",
         message: err.message,
       });
+      console.log(err)
     }
   };
 
