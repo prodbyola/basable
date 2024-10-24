@@ -1,7 +1,6 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use axum::http::StatusCode;
 use uuid::Uuid;
 
 use crate::imp::database::mysql::connector::MysqlConnector;

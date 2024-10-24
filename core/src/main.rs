@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
-use base::user::User;
+use axum::http::StatusCode;
+use base::{user::User, HttpError};
 use dotenv::dotenv;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utils::get_env;
@@ -17,17 +18,28 @@ mod utils;
 #[derive(Debug)]
 enum AppError {
     InitError(String),
+    PersistentStorageFailed(String),
 }
 
 impl Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             AppError::InitError(msg) => write!(f, "{msg}"),
+            AppError::PersistentStorageFailed(msg) => write!(f, "{msg}"),
         }
     }
 }
 
-enum DeploymentMode { Remote, Local }
+impl Into<HttpError> for AppError {
+    fn into(self) -> HttpError {
+        HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &self.to_string())
+    }
+}
+
+enum DeploymentMode {
+    Remote,
+    Local,
+}
 impl DeploymentMode {
     fn is_local(&self) -> bool {
         match self {
@@ -60,7 +72,9 @@ async fn main() -> Result<(), AppError> {
 
     let port = get_env("BASABLE_PORT");
     let app = app()?;
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
+        .await
+        .unwrap();
 
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
 
@@ -68,7 +82,6 @@ async fn main() -> Result<(), AppError> {
         .await
         .map_err(|err| AppError::InitError(err.to_string()))?;
 
-    
     if !cfg!(debug_assertions) {
         let dm = get_env("DEPLOYMENT_MODE");
         let dm = DeploymentMode::from(dm);

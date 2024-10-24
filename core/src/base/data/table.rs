@@ -83,6 +83,9 @@ pub(crate) struct TableConfig {
     /// Name of column to use as primary key.
     pub pk_column: Option<String>,
 
+    /// Total number of items to be loaded for each pagination
+    pub items_per_page: usize,
+
     /// Column for querying when a row was created.
     pub created_column: Option<HistoryColumn>,
 
@@ -108,6 +111,7 @@ impl Default for TableConfig {
             pk_column: None,
             label: String::new(),
             name: String::new(),
+            items_per_page: 100,
             created_column: None,
             updated_column: None,
             special_columns: None,

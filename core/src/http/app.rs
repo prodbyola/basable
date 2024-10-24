@@ -52,8 +52,8 @@ pub fn app() -> Result<BasableHttpService, AppError> {
 
     let state = AppState::default();
     state
-        .setup_local_db()
-        .map_err(|err| AppError::InitError(err.to_string()))?;
+        .local_db
+        .setup()?;
 
     let routes = core_routes();
 

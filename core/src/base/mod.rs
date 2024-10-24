@@ -16,6 +16,8 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::params;
 use serde::Serialize;
 
+use crate::AppError;
+
 pub(crate) mod column;
 pub(crate) mod config;
 pub(crate) mod data;
@@ -28,47 +30,92 @@ pub(crate) mod user;
 pub(crate) struct LocalDB(pub Pool<SqliteConnectionManager>);
 
 impl LocalDB {
-    fn pool(&self) -> PooledConnection<SqliteConnectionManager> {
-        self.0.get().unwrap()
+    fn pool(&self) -> Result<PooledConnection<SqliteConnectionManager>, AppError> {
+        self.0
+            .get()
+            .map_err(|err| AppError::PersistentStorageFailed(err.to_string()))
+    }
+
+    pub fn setup(&self) -> Result<usize, AppError> {
+        let pool = self.pool()?;
+
+        pool.execute(
+            "CREATE TABLE IF NOT EXISTS table_configs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                conn_id TEXT NOT NULL,
+                label TEXT,
+                pk_column TEXT,
+                ipp INTEGER
+            )",
+            params![],
+        )
+        .map_err(|err| AppError::PersistentStorageFailed(err.to_string()))
     }
 
     pub fn create_table_config(&self, conn_id: &str, tc: TableConfig) -> Result<usize, HttpError> {
-        let pool = self.pool();
-        let exec = pool.execute(
-            "
-            INSERT INTO table_configs (conn_id, label, pk_column, name)
-            VALUES (?1, ?2, ?3, ?4)
-        ",
-            params![conn_id, tc.label, tc.pk_column, tc.name],
-        );
+        match self.pool() {
+            Ok(pool) => {
+                let exec = pool.execute(
+                    "
+                    INSERT INTO table_configs (conn_id, label, pk_column, name)
+                    VALUES (?1, ?2, ?3, ?4)
+                ",
+                    params![conn_id, tc.label, tc.pk_column, tc.name],
+                );
 
-        exec.map_err(|err| HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string()))
+                exec.map_err(|err| {
+                    HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string())
+                })
+            }
+            Err(err) => Err(err.into()),
+        }
     }
 
-    pub fn update_table_config(&self, name: &str, conn_id: &str, tc: TableConfig) -> Result<usize, HttpError>{
-        let pool = self.pool();
-        let exec = pool.execute("UPDATE table_configs SET name = ?, label = ?, pk_column = ? WHERE name = ? AND conn_id = ?", params![tc.name, tc.label, tc.pk_column, name, conn_id]);
+    pub fn update_table_config(
+        &self,
+        name: &str,
+        conn_id: &str,
+        tc: TableConfig,
+    ) -> Result<usize, HttpError> {
+        match self.pool() {
+            Ok(pool) => {
+                let exec = pool.execute(
+                    "UPDATE table_configs SET name = ?, label = ?, pk_column = ?, ipp = ?, WHERE name = ? AND conn_id = ?", 
+                    params![tc.name, tc.label, tc.pk_column, tc.items_per_page, name, conn_id]
+                );
 
-        exec.map_err(|err| HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string()))
+                exec.map_err(|err| {
+                    HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string())
+                })
+            }
+            Err(err) => Err(err.into()),
+        }
     }
 
     pub fn get_table_config(&self, id: &str, conn_id: &str) -> Result<TableConfig, HttpError> {
-        let pool = self.pool();
+        match self.pool() {
+            Ok(pool) => {
+                let tc = pool.query_row(
+                    "SELECT name, label, pk_column, ipp FROM table_configs WHERE (name = ?1 OR label = ?1) AND conn_id = ?2 LIMIT 1",
+                    params![id, conn_id],
+                    |row| {
+                        Ok(TableConfig {
+                            name: row.get(0)?,
+                            label: row.get(1)?,
+                            pk_column: row.get(2)?,
+                            items_per_page: row.get(3)?,
+                            ..Default::default()
+                        })
+                    },
+                );
 
-        let tc = pool.query_row(
-            "SELECT name, label, pk_column FROM table_configs WHERE (name = ?1 OR label = ?1) AND conn_id = ?2 LIMIT 1",
-            params![id, conn_id],
-            |row| {
-                Ok(TableConfig {
-                    name: row.get(0)?,
-                    label: row.get(1)?,
-                    pk_column: row.get(2)?,
-                    ..Default::default()
+                tc.map_err(|err| {
+                    HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string())
                 })
-            },
-        );
-
-        tc.map_err(|err| HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string()))
+            }
+            Err(err) => Err(err.into()),
+        }
     }
 }
 
@@ -76,22 +123,6 @@ impl LocalDB {
 pub(crate) struct AppState {
     pub instance: Arc<Mutex<Basable>>,
     pub local_db: LocalDB,
-}
-
-impl AppState {
-    pub fn setup_local_db(&self) -> Result<usize, rusqlite::Error> {
-        let pool = self.local_db.pool();
-        pool.execute(
-            "CREATE TABLE IF NOT EXISTS table_configs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                conn_id TEXT NOT NULL,
-                label TEXT,
-                pk_column TEXT
-            )",
-            params![],
-        )
-    }
 }
 
 impl Default for AppState {
