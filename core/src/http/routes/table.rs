@@ -11,8 +11,8 @@ use axum_macros::debug_handler;
 use crate::{
     base::{
         column::ColumnList,
-        data::table::{DataQueryFilter, TableConfig, TableSummaries, UpdateTableData},
-        imp::table::Table,
+        data::table::{TableConfig, TableQueryOpts, TableSummaries, UpdateTableData},
+        imp::{graphs::FromQueryParams, table::Table},
         AppState, HttpError,
     },
     http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
@@ -65,15 +65,16 @@ pub(crate) async fn get_columns(
 
 #[debug_handler]
 pub(crate) async fn query_data(
+    Query(params): Query<HashMap<String, String>>,
     Path(_): Path<String>,
     AuthExtractor(_): AuthExtractor,
-    DbExtractor(_): DbExtractor,
+    DbExtractor(db): DbExtractor,
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
 ) -> Result<Json<Vec<HashMap<String, <MySqlTable as Table>::ColumnValue>>>, HttpError> {
     // TODO: Build query filter from url query params
-    let filter = DataQueryFilter::default();
-    let data = table.query_data(filter)?;
+    let filter = TableQueryOpts::from_query_params(params)?;
+    let data = table.query_data(filter, &db)?;
 
     Ok(Json(data))
 }

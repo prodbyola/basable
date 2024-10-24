@@ -3,9 +3,10 @@ use std::fmt::Display;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::globals::QUERY_FILTER_PREFIX;
+use crate::{base::HttpError, globals::QUERY_FILTER_PREFIX};
 
-pub trait FilterValue: Display + Clone + Default {}
+// pub trait FilterValue: Display + Clone + Default {}
+
 
 #[derive(Clone, Default)]
 pub enum FilterOperator {
@@ -69,13 +70,16 @@ impl Display for FilterOperator {
     }
 }
 
+/// [FilterComparator] is useful for filtering query columns by comparing the value of 
+/// [FilterComparator::column] to the value given to the [FilterComparator::operator]. Please 
+/// see [FilterOperator] for different comparison operations.
 #[derive(Clone, Default)]
-pub struct FilterCondition {
+pub struct FilterComparator {
     pub column: String,
     pub operator: FilterOperator,
 }
 
-impl Display for FilterCondition {
+impl Display for FilterComparator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {}", self.column, self.operator)
     }
@@ -83,9 +87,9 @@ impl Display for FilterCondition {
 
 #[derive(Clone, EnumIter)]
 pub enum Filter {
-    BASE(FilterCondition),
-    AND(FilterCondition),
-    OR(FilterCondition),
+    BASE(FilterComparator),
+    AND(FilterComparator),
+    OR(FilterComparator),
 }
 
 impl Display for Filter {

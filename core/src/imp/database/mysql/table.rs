@@ -1,12 +1,15 @@
 use std::collections::HashMap;
 
+use axum::http::StatusCode;
+
 use crate::base::{
     column::{Column, ColumnList},
-    data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateTableData},
+    data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
     imp::{
         table::{Table, TableCRUD, TableColumn, TableError},
-        ConnectorType,
+        ConnectorType, SharedDB,
     },
+    HttpError,
 };
 
 use super::MySqlValue;
@@ -138,37 +141,27 @@ impl Table for MySqlTable {
 }
 
 impl TableCRUD for MySqlTable {
-    fn query_data(&self, filter: DataQueryFilter) -> DataQueryResult<TableColumn, TableError> {
-        let cols = self.query_columns()?;
-        let mut excluded_cols: Vec<&Column> = vec![]; // columns to exclude from query
+    fn query_data(
+        &self,
+        opts: TableQueryOpts,
+        db: &SharedDB,
+    ) -> DataQueryResult<TableColumn, HttpError> {
+        let query = opts.try_into()?;
+        let sql = db
+            .generate_sql(query)
+            .map_err(|err| HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string()))?;
 
-        if let Some(exclude) = filter.exclude {
-            if !exclude.is_empty() {
-                excluded_cols = cols
-                    .iter()
-                    .filter(|col| {
-                        let m = exclude.iter().find(|ex| col.name == **ex);
-                        m.is_some()
-                    })
-                    .collect();
-            }
-        }
-
-        // TODO: filter excluded columns from the query
-        let query = format!("SELECT * FROM {} LIMIT {}", self.name(), filter.limit);
         let conn = self.connector();
-        let result = conn.exec_query(&query)?;
+        let rows = conn.exec_query(&sql)?;
 
-        // std::mem::drop(db);
-        let data: Vec<HashMap<String, TableColumn>> = result
+        let cols = self.query_columns()?;
+        let data = rows
             .iter()
             .map(|r| {
                 let mut map: HashMap<String, TableColumn> = HashMap::new();
 
                 for col in &cols {
-                    if let None = excluded_cols.iter().find(|c| c.name == col.name) {
-                        let v: mysql::Value = r.get(col.name.as_str()).unwrap();
-
+                    if let Some(v) = r.get::<mysql::Value, &str>(col.name.as_str()) {
                         map.insert(col.name.clone(), v.into());
                     }
                 }

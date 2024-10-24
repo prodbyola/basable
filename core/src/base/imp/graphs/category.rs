@@ -120,7 +120,7 @@ impl From<CategoryGraphOpts> for BasableQuery {
             table,
             operation,
             group_by: Some(vec![target_column]),
-            limit,
+            row_count: limit,
             ..Default::default()
         }
     }

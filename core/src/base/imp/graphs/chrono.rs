@@ -7,7 +7,7 @@ use strum_macros::EnumIter;
 use crate::{
     base::{
         query::{
-            filter::{Filter, FilterChain, FilterCondition, FilterOperator},
+            filter::{Filter, FilterChain, FilterComparator, FilterOperator},
             BasableQuery, QueryOperation, QueryOrder,
         },
         HttpError,
@@ -153,7 +153,7 @@ impl From<ChronoAnalysisOpts> for BasableQuery {
         let operation = QueryOperation::SelectData(selections);
 
         // create query filters
-        let filter = Filter::BASE(FilterCondition {
+        let filter = Filter::BASE(FilterComparator {
             column: chrono_col.clone(),
             operator: FilterOperator::Btw(range.start().to_string(), range.end().to_string()),
         });

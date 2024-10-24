@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{base::{column::ColumnList, data::table::{DataQueryFilter, DataQueryResult, TableConfig, UpdateTableData}}, imp::database::mysql::table::MySqlTable};
+use crate::{base::{column::ColumnList, data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData}, HttpError}, imp::database::mysql::table::MySqlTable};
 
-use super::ConnectorType;
+use super::{ConnectorType, SharedDB};
 
 pub(crate) type TableError = <MySqlTable as Table>::Error;
 pub(crate) type TableColumn = <MySqlTable as Table>::ColumnValue;
@@ -51,8 +51,9 @@ pub(crate) trait TableCRUD {
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
-        filter: DataQueryFilter,
-    ) -> DataQueryResult<TableColumn, TableError>;
+        filter: TableQueryOpts,
+        db: &SharedDB
+    ) -> DataQueryResult<TableColumn, HttpError>;
 
     fn update_data(&self, input: UpdateTableData) -> Result<(), TableError>;
 
@@ -62,8 +63,10 @@ pub(crate) trait TableCRUD {
 #[cfg(test)]
 mod tests {
 
+    use std::collections::HashMap;
+
     use crate::{
-        base::{imp::table::DataQueryFilter, HttpError},
+        base::{imp::{graphs::FromQueryParams, table::TableQueryOpts}, HttpError},
         tests::common::{create_test_db, get_test_db_table},
     };
 
@@ -87,10 +90,11 @@ mod tests {
     fn test_table_query_data() -> Result<(), HttpError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();
+        let params = HashMap::new();
 
         if let Some(table) = db.get_table(&table_name) {
-            let filter = DataQueryFilter::default();
-            let data = table.query_data(filter);
+            let filter = TableQueryOpts::from_query_params(params)?;
+            let data = table.query_data(filter, &db);
             assert!(data.is_ok());
         }
 

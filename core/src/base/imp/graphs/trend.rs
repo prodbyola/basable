@@ -6,7 +6,7 @@ use strum_macros::EnumIter;
 
 use crate::base::{
     query::{
-        filter::{Filter, FilterChain, FilterCondition, FilterOperator},
+        filter::{Filter, FilterChain, FilterComparator, FilterOperator},
         BasableQuery, QueryOperation, QueryOrder,
     },
     HttpError,
@@ -185,7 +185,8 @@ impl FromQueryParams for TrendGraphOpts {
                 Ok(opts)
             }
             _ => {
-                let err = HttpError::new(StatusCode::EXPECTATION_FAILED, "Missing query parameters");
+                let err =
+                    HttpError::new(StatusCode::EXPECTATION_FAILED, "Missing query parameters");
                 Err(err)
             }
         }
@@ -224,7 +225,7 @@ impl TryFrom<TrendGraphOpts> for BasableQuery {
                     table,
                     operation,
                     order_by,
-                    limit,
+                    row_count: limit,
                     ..Default::default()
                 };
 
@@ -247,7 +248,7 @@ impl TryFrom<TrendGraphOpts> for BasableQuery {
                     let left_join = format!("{foreign_table} y ON x.{target_col} = y.{ycol}");
 
                     let mut having = FilterChain::new();
-                    having.add_one(Filter::BASE(FilterCondition {
+                    having.add_one(Filter::BASE(FilterComparator {
                         column: ycol.clone(),
                         operator: FilterOperator::Gt("0".to_string()),
                     }));
@@ -269,7 +270,7 @@ impl TryFrom<TrendGraphOpts> for BasableQuery {
                         left_join: Some(left_join),
                         group_by: Some(vec![xcol]),
                         order_by,
-                        limit,
+                        row_count: limit,
                         ..Default::default()
                     };
 

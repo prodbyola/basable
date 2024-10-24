@@ -1,7 +1,7 @@
 use mysql::MySqlError;
 use uuid::Uuid;
 
-use crate::base::query::filter::{Filter, FilterChain, FilterCondition, FilterOperator};
+use crate::base::query::filter::{Filter, FilterChain, FilterComparator, FilterOperator};
 use crate::base::query::{BasableQuery, QueryOperation};
 use crate::base::{data::table::TableSummaries, HttpError};
 use crate::imp::database::mysql::db::MySqlDB;
@@ -90,7 +90,7 @@ pub trait QuerySqlParser {
         }
     }
 
-    fn parse_filter_condition(c: &FilterCondition) -> String
+    fn parse_filter_condition(c: &FilterComparator) -> String
     where
         Self: Sized,
     {
@@ -125,7 +125,8 @@ pub trait QuerySqlParser {
             table,
             operation,
             filters,
-            limit,
+            row_count,
+            offset,
             order_by,
             group_by,
             left_join,
@@ -173,8 +174,9 @@ pub trait QuerySqlParser {
         }
 
         // Parse LIMIT
-        if let Some(limit) = limit {
-            sql.push_str(format!(" LIMIT {limit}").as_str());
+        if let Some(row_count) = row_count {
+            let offset = offset.unwrap_or_default();
+            sql.push_str(format!(" LIMIT {offset}, {row_count}").as_str());
         }
 
         Ok(sql)
@@ -186,7 +188,7 @@ mod tests {
     use crate::{
         base::{
             query::{
-                filter::{Filter, FilterChain, FilterCondition, FilterOperator},
+                filter::{Filter, FilterChain, FilterComparator, FilterOperator},
                 BasableQuery, QueryOperation,
             },
             HttpError,
@@ -198,12 +200,12 @@ mod tests {
     fn test_generate_sql() -> Result<(), HttpError> {
         let mut filters = FilterChain::new();
 
-        let c1 = FilterCondition {
+        let c1 = FilterComparator {
             column: "publisher".to_string(),
             operator: FilterOperator::Eq("Rockstar Games".to_string()),
         };
 
-        let c2 = FilterCondition {
+        let c2 = FilterComparator {
             column: "release_date".to_string(),
             operator: FilterOperator::Btw("2010-09-01".to_string(), "2010-11-30".to_string()),
         };
@@ -214,7 +216,7 @@ mod tests {
             table: "vhchartz".to_string(),
             operation: QueryOperation::SelectData(None),
             filters,
-            limit: Some(100),
+            row_count: Some(100),
             ..Default::default()
         };
 
