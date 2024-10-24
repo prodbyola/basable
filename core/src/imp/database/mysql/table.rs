@@ -217,7 +217,7 @@ impl TableCRUD for MySqlTable {
         let mut cases = vec![];
         for (index, col) in columns.iter().enumerate() {
             let cmd = if index == 0 { "SET \n" } else { "" };
-            let mut q = format!("{cmd} {col} = CASE {unique_key} \n");
+            let mut q = format!("{cmd} `{col}` = CASE `{unique_key}` \n");
 
             for (index, uv) in unique_values.iter().enumerate() {
                 if let Some(values) = input.get(index) {
@@ -227,7 +227,7 @@ impl TableCRUD for MySqlTable {
                 }
             }
 
-            q.push_str(&format!("ELSE {col} \n END"));
+            q.push_str(&format!("ELSE `{col}` \n END"));
             cases.push(q);
         }
 
@@ -235,7 +235,7 @@ impl TableCRUD for MySqlTable {
         let unique_values = unique_values.join(",");
 
         let query = format!(
-            "UPDATE {} \n {} WHERE {} IN ({})",
+            "UPDATE {} \n {} WHERE `{}` IN ({})",
             self.name, cases, unique_key, unique_values
         );
 
