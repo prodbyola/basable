@@ -12,7 +12,7 @@ const App = () => {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<CreateGuest />} />
+          <Route path="/connect" element={<CreateGuest />} />
           <Route path="/overview" element={<ConnectionOverview />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardMain />} />
