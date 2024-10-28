@@ -79,16 +79,10 @@ where
         }
 
         let bsbl = state.instance.lock().unwrap();
-        let db = bsbl.get_connection(conn_id.unwrap(), &user.id);
+        let db = bsbl.get_connection(conn_id.unwrap(), &user.id)?;
         std::mem::drop(bsbl); // release Mutex lock
 
-        match db {
-            Some(db) => Ok(DbExtractor(db)),
-            None => Err(AppError::HttpError(
-                StatusCode::PRECONDITION_FAILED,
-                "You do not have access to this connection.".to_string(),
-            )),
-        }
+        Ok(DbExtractor(db))
     }
 }
 

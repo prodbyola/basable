@@ -1,6 +1,7 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
+use axum::http::StatusCode;
 use uuid::Uuid;
 
 use crate::imp::database::mysql::connector::MysqlConnector;
@@ -28,7 +29,6 @@ impl Basable {
         config: &ConfigRaw,
         user_id: String,
     ) -> Result<SharedDB, AppError> {
-
         let mut db = match config.get_source()? {
             SourceType::Database(db) => match db {
                 DatabaseType::Mysql => {
@@ -63,11 +63,23 @@ impl Basable {
         self.connections.push(db.clone());
     }
 
-    pub fn get_connection(&self, id: &str, user_id: &str) -> Option<SharedDB> {
-        let id = Uuid::from_str(id).unwrap();
+    pub fn get_connection(&self, id: &str, user_id: &str) -> Result<SharedDB, AppError> {
+        // let id = Uuid::from_str(id).unwrap();
 
-        self.connections.iter()
-            .find(|c| *c.id() == id && c.user_id() == user_id)
-            .map(|c| c.clone())
+        match Uuid::from_str(id) {
+            Ok(id) => {
+                let conn = self
+                    .connections
+                    .iter()
+                    .find(|c| *c.id() == id && c.user_id() == user_id)
+                    .map(|c| c.clone());
+
+                match conn {
+                    Some(conn) => Ok(conn),
+                    None => Err(AppError::HttpError(StatusCode::NOT_FOUND, "Connection instance not found".to_string()))
+                }
+            }
+            Err(err) => Err(AppError::ServerError(err.to_string()))
+        }
     }
 }

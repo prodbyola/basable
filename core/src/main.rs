@@ -1,9 +1,6 @@
 use std::fmt::Display;
 
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
+use axum::{http::StatusCode, response::IntoResponse};
 use base::user::User;
 use dotenv::dotenv;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -54,12 +51,17 @@ impl From<mysql::Error> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        Response::new(self.to_string().into())
+        let resp = match self {
+            AppError::HttpError(code, msg) => (code, msg),
+            _ => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
+        };
+
+        resp.into_response()
     }
 }
 
 enum DeploymentMode {
-    Remote,
+    Cloud,
     Local,
 }
 impl DeploymentMode {
@@ -72,8 +74,8 @@ impl DeploymentMode {
 }
 impl From<String> for DeploymentMode {
     fn from(value: String) -> Self {
-        if value == "remote" {
-            return Self::Remote;
+        if value == "cloud" {
+            return Self::Cloud;
         }
 
         Self::Local

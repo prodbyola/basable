@@ -48,29 +48,33 @@ function DashboardLayout() {
         if (!cookie) {
           logout();
         } else {
-          const tables = await request({
-            method: "get",
-            path: "tables",
-          }) as TableSummaryType[];
-          updateTables(tables);
+          try {
+            const tables = (await request({
+              method: "get",
+              path: "tables",
+            })) as TableSummaryType[];
+            updateTables(tables);
 
-          if (tables.length) {
-            for (let i = 0; i < tables.length; i++) {
-              const tbl = tables[i];
-              const config = await request({
-                method: "get",
-                path: "tables/configurations/" + tbl.name,
-              }) as TableConfig;
+            if (tables.length) {
+              for (let i = 0; i < tables.length; i++) {
+                const tbl = tables[i];
+                const config = (await request({
+                  method: "get",
+                  path: "tables/configurations/" + tbl.name,
+                })) as TableConfig;
 
-              addTableConfig(config)
+                addTableConfig(config);
+              }
             }
-          }
 
-          setIsReady(true);
+            setIsReady(true);
+          } catch (err) {
+            console.log(err);
+          }
         }
       };
 
-      loadData()
+      loadData();
     }
   });
 
