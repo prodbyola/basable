@@ -1,6 +1,9 @@
 use mysql::{prelude::Queryable, Opts, Params, Pool, Row};
 
-use crate::base::{config::ConfigRaw, imp::connector::Connector, HttpError};
+use crate::{
+    base::{config::ConfigRaw, imp::connector::Connector},
+    AppError,
+};
 
 /// MySQL implementation of `BasableConnection`
 #[derive(Clone, Default)]
@@ -20,25 +23,28 @@ impl MysqlConnector {
 }
 
 impl Connector for MysqlConnector {
-    type Error = mysql::Error;
+    // type Error = mysql::Error;
     type Row = Row;
 
-    fn new(config: ConfigRaw) -> Result<Self, HttpError> {
+    fn new(config: ConfigRaw) -> Result<Self, AppError> {
         let url = config.build_url()?;
-        let opts = Opts::from_url(&url).unwrap();
-        let pool = Pool::new(opts)?;
+        let opts = Opts::from_url(&url).map_err(|err| AppError::ServerError(err.to_string()))?;
 
-        Ok(MysqlConnector {
-            pool: Some(pool),
-            config,
-        })
+        Pool::new(opts)
+            .map(|pool| MysqlConnector {
+                pool: Some(pool),
+                config,
+            })
+            .map_err(|err| AppError::ServerError(err.to_string()))
     }
 
-    fn exec_query(&self, query: &str) -> Result<Vec<Self::Row>, Self::Error> {
+    fn exec_query(&self, query: &str) -> Result<Vec<Self::Row>, AppError> {
         let conn = &mut self.pool().get_conn()?;
 
         let stmt = conn.prep(query)?;
-        conn.exec(stmt, Params::Empty)
+        let rows = conn.exec(stmt, Params::Empty)?;
+
+        Ok(rows)
     }
 
     fn config(&self) -> &ConfigRaw {

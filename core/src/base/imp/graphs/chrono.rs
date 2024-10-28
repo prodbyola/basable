@@ -5,14 +5,12 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
-    base::{
-        query::{
-            filter::{Filter, FilterChain, FilterComparator, FilterOperator},
-            BasableQuery, QueryOperation, QueryOrder,
-        },
-        HttpError,
+    base::query::{
+        filter::{Filter, FilterChain, FilterComparator, FilterOperator},
+        BasableQuery, QueryOperation, QueryOrder,
     },
     globals::{BASABLE_CHRONO_XCOL, BASABLE_CHRONO_YCOL},
+    AppError,
 };
 
 use super::FromQueryParams;
@@ -94,7 +92,7 @@ pub(crate) struct ChronoAnalysisOpts {
 }
 
 impl FromQueryParams for ChronoAnalysisOpts {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, HttpError>
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -102,17 +100,19 @@ impl FromQueryParams for ChronoAnalysisOpts {
         let column = params.get("column");
         let basis = params.get("basis");
         let range = params.get("range");
-    
+
         match (table, column, basis, range) {
             (Some(table), Some(column), Some(basis), Some(range)) => {
                 let basis = basis.to_owned().try_into();
-                let basis = basis
-                    .map_err(|err: String| HttpError::new(StatusCode::EXPECTATION_FAILED, err.as_str()));
-    
+                let basis = basis.map_err(|err: String| {
+                    AppError::HttpError(StatusCode::EXPECTATION_FAILED, err)
+                });
+
                 let range = range.to_owned().try_into();
-                let range = range
-                    .map_err(|err: String| HttpError::new(StatusCode::EXPECTATION_FAILED, err.as_str()));
-    
+                let range = range.map_err(|err: String| {
+                    AppError::HttpError(StatusCode::EXPECTATION_FAILED, err)
+                });
+
                 let opts = ChronoAnalysisOpts {
                     table: table.to_owned(),
                     chrono_col: column.to_owned(),
@@ -121,17 +121,16 @@ impl FromQueryParams for ChronoAnalysisOpts {
                 };
 
                 Ok(opts)
-    
+
                 // let results = db.chrono_graph(opts)?;
-    
+
                 // Ok(Json(results))
             }
-            _ => Err(HttpError::new(
+            _ => Err(AppError::HttpError(
                 StatusCode::EXPECTATION_FAILED,
-                "Missing query parameters",
+                "Missing query parameters".to_string(),
             )),
         }
-    
     }
 }
 

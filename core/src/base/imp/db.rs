@@ -1,23 +1,20 @@
-use mysql::MySqlError;
 use uuid::Uuid;
 
+use crate::base::data::table::TableSummaries;
 use crate::base::query::filter::{Filter, FilterChain, FilterComparator, FilterOperator};
 use crate::base::query::{BasableQuery, QueryOperation};
-use crate::base::{data::table::TableSummaries, HttpError};
 use crate::imp::database::mysql::db::MySqlDB;
 use crate::imp::database::DbServerDetails;
+use crate::AppError;
 
 use super::graphs::VisualizeDB;
 use super::{ConnectorType, SharedTable};
 
 pub type DBQueryResult<R, E> = Result<Vec<R>, E>;
 
-pub type DBError = <MySqlDB as DB>::Error;
-
 /// An abstraction of database connection.
 pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
     type Row;
-    type Error;
     type ColumnValue;
 
     fn id(&self) -> &Uuid;
@@ -31,26 +28,26 @@ pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
     /// Caller should provide a [`ConnectorType`] pointer whose copy is assigned to each [Table](`crate::base::table::Table`) that is created.
     ///
     /// The [`ConnectorType`] will be used by the table for their own queries.
-    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), HttpError>;
+    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError>;
 
     fn tables(&self) -> &Vec<SharedTable>;
 
     /// Query [`DB`] server for information about available tables. It only queries the database server and
     /// return results as [`DB::Row`]. It is different from [`DB::load_tables`] which actually loads the [`Table`]
     /// abstraction into memory.
-    fn query_tables(&self) -> DBQueryResult<Self::Row, Self::Error>;
+    fn query_tables(&self) -> DBQueryResult<Self::Row, AppError>;
 
     /// Get an instance of a [`SharedTable`], as a mutable thread-safe reference.
     fn get_table(&self, name: &str) -> Option<&SharedTable>;
 
     /// Get information about each table in the database and build a list from them.
-    fn build_table_list(&self) -> Result<TableSummaries, HttpError>;
+    fn build_table_list(&self) -> Result<TableSummaries, AppError>;
 
     /// Details about the connection
-    fn details(&self) -> Result<DbServerDetails, HttpError>;
+    fn details(&self) -> Result<DbServerDetails, AppError>;
 
     /// Get total number of columns
-    fn query_column_count(&self, table_name: &str) -> Result<u32, HttpError>;
+    fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;
 }
 
 pub trait QuerySqlParser {
@@ -120,7 +117,7 @@ pub trait QuerySqlParser {
         filters.join(" ")
     }
 
-    fn generate_sql(&self, query: BasableQuery) -> Result<String, MySqlError> {
+    fn generate_sql(&self, query: BasableQuery) -> Result<String, AppError> {
         let BasableQuery {
             table,
             operation,
@@ -186,18 +183,16 @@ pub trait QuerySqlParser {
 #[cfg(test)]
 mod tests {
     use crate::{
-        base::{
-            query::{
-                filter::{Filter, FilterChain, FilterComparator, FilterOperator},
-                BasableQuery, QueryOperation,
-            },
-            HttpError,
+        base::query::{
+            filter::{Filter, FilterChain, FilterComparator, FilterOperator},
+            BasableQuery, QueryOperation,
         },
         tests::common::create_test_db,
+        AppError,
     };
 
     #[test]
-    fn test_generate_sql() -> Result<(), HttpError> {
+    fn test_generate_sql() -> Result<(), AppError> {
         let mut filters = FilterChain::new();
 
         let c1 = FilterComparator {

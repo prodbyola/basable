@@ -4,12 +4,12 @@ use axum::http::StatusCode;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::base::{
-    query::{
+use crate::{
+    base::query::{
         filter::{Filter, FilterChain, FilterComparator, FilterOperator},
         BasableQuery, QueryOperation, QueryOrder,
     },
-    HttpError,
+    AppError,
 };
 
 use super::FromQueryParams;
@@ -21,7 +21,7 @@ pub enum TrendGraphType {
 }
 
 impl TryFrom<&String> for TrendGraphType {
-    type Error = HttpError;
+    type Error = AppError;
 
     fn try_from(value: &String) -> Result<Self, Self::Error> {
         if value == "intra" {
@@ -29,9 +29,9 @@ impl TryFrom<&String> for TrendGraphType {
         } else if value == "cross" {
             Ok(Self::CrossModel)
         } else {
-            Err(HttpError::new(
+            Err(AppError::HttpError(
                 StatusCode::EXPECTATION_FAILED,
-                "Invalid TrendGraphType",
+                "Invalid TrendGraphType".to_string(),
             ))
         }
     }
@@ -55,7 +55,7 @@ impl Display for TrendGraphOrder {
 }
 
 impl TryFrom<&String> for TrendGraphOrder {
-    type Error = HttpError;
+    type Error = AppError;
 
     fn try_from(value: &String) -> Result<Self, Self::Error> {
         for order in TrendGraphOrder::iter() {
@@ -64,9 +64,9 @@ impl TryFrom<&String> for TrendGraphOrder {
             }
         }
 
-        Err(HttpError::new(
+        Err(AppError::HttpError(
             StatusCode::EXPECTATION_FAILED,
-            "Error parsing TrendOrder",
+            "Error parsing TrendOrder".to_string(),
         ))
     }
 }
@@ -104,7 +104,7 @@ pub struct TrendGraphOpts {
 }
 
 impl FromQueryParams for TrendGraphOpts {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, HttpError> {
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError> {
         let table = params.get("table");
         let graph_type = params.get("graph_type");
         let xcol = params.get("xcol");
@@ -130,9 +130,9 @@ impl FromQueryParams for TrendGraphOpts {
                     let parse_limit = lmt.parse::<usize>();
 
                     if let Err(err) = parse_limit {
-                        return Err(HttpError::new(
+                        return Err(AppError::HttpError(
                             StatusCode::EXPECTATION_FAILED,
-                            err.to_string().as_str(),
+                            err.to_string(),
                         ));
                     }
 
@@ -148,15 +148,15 @@ impl FromQueryParams for TrendGraphOpts {
                 match (foreign_table, target_column) {
                     (None, None) => cross = None,
                     (None, Some(_)) => {
-                        cross_err = Err(HttpError::new(
+                        cross_err = Err(AppError::HttpError(
                             StatusCode::EXPECTATION_FAILED,
-                            "missing 'foreign_table' parameter",
+                            "missing 'foreign_table' parameter".to_string(),
                         ))
                     }
                     (Some(_), None) => {
-                        cross_err = Err(HttpError::new(
+                        cross_err = Err(AppError::HttpError(
                             StatusCode::EXPECTATION_FAILED,
-                            "missing 'target_column' parameter",
+                            "missing 'target_column' parameter".to_string(),
                         ))
                     }
                     (Some(ft), Some(tc)) => {
@@ -185,8 +185,10 @@ impl FromQueryParams for TrendGraphOpts {
                 Ok(opts)
             }
             _ => {
-                let err =
-                    HttpError::new(StatusCode::EXPECTATION_FAILED, "Missing query parameters");
+                let err = AppError::HttpError(
+                    StatusCode::EXPECTATION_FAILED,
+                    "Missing query parameters".to_string(),
+                );
                 Err(err)
             }
         }
@@ -194,7 +196,7 @@ impl FromQueryParams for TrendGraphOpts {
 }
 
 impl TryFrom<TrendGraphOpts> for BasableQuery {
-    type Error = HttpError;
+    type Error = AppError;
 
     fn try_from(value: TrendGraphOpts) -> Result<Self, Self::Error> {
         let TrendGraphOpts {
@@ -277,9 +279,9 @@ impl TryFrom<TrendGraphOpts> for BasableQuery {
                     Ok(q)
                 }
                 None => {
-                    let err = HttpError::new(
+                    let err = AppError::HttpError(
                         StatusCode::EXPECTATION_FAILED,
-                        "You must provide cross model options.",
+                        "You must provide cross model options.".to_string(),
                     );
 
                     Err(err)

@@ -1,14 +1,19 @@
 use std::collections::HashMap;
 
-use crate::{base::{column::ColumnList, data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData}, HttpError}, imp::database::mysql::table::MySqlTable};
+use crate::{
+    base::{
+        column::ColumnList,
+        data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
+    },
+    imp::database::mysql::table::MySqlTable,
+    AppError,
+};
 
 use super::{ConnectorType, SharedDB};
 
-pub(crate) type TableError = <MySqlTable as Table>::Error;
 pub(crate) type TableColumn = <MySqlTable as Table>::ColumnValue;
 
 pub(crate) trait Table: TableCRUD + Sync + Send {
-    type Error;
     type Row;
     type ColumnValue;
 
@@ -37,7 +42,7 @@ pub(crate) trait Table: TableCRUD + Sync + Send {
     fn connector(&self) -> &ConnectorType;
 
     /// Retrieve available columns for the table and build a [`ColumnList`].
-    fn query_columns(&self) -> Result<ColumnList, <Self as Table>::Error>;
+    fn query_columns(&self) -> Result<ColumnList, AppError>;
 
     /// Create table's initial [`TableConfig`] if possible. Caller is responsible for
     /// saving the configuration in persistent DB.
@@ -46,18 +51,18 @@ pub(crate) trait Table: TableCRUD + Sync + Send {
 
 pub(crate) trait TableCRUD {
     /// Inserts a new data into the table.
-    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), TableError>;
+    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), AppError>;
 
     /// Retrieve data from table based on query `filter`.
     fn query_data(
         &self,
         filter: TableQueryOpts,
-        db: &SharedDB
-    ) -> DataQueryResult<TableColumn, HttpError>;
+        db: &SharedDB,
+    ) -> DataQueryResult<TableColumn, AppError>;
 
-    fn update_data(&self, input: UpdateTableData) -> Result<(), TableError>;
+    fn update_data(&self, input: UpdateTableData) -> Result<(), AppError>;
 
-    fn delete_data(&self, col: String, value: String) -> Result<(), TableError>;
+    fn delete_data(&self, col: String, value: String) -> Result<(), AppError>;
 }
 
 #[cfg(test)]
@@ -66,12 +71,13 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::{
-        base::{imp::{graphs::FromQueryParams, table::TableQueryOpts}, HttpError},
+        base::imp::{graphs::FromQueryParams, table::TableQueryOpts},
         tests::common::{create_test_db, get_test_db_table},
+        AppError,
     };
 
     #[test]
-    fn test_table_query_column() -> Result<(), HttpError> {
+    fn test_table_query_column() -> Result<(), AppError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();
 
@@ -87,7 +93,7 @@ mod tests {
     }
 
     #[test]
-    fn test_table_query_data() -> Result<(), HttpError> {
+    fn test_table_query_data() -> Result<(), AppError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();
         let params = HashMap::new();
@@ -107,12 +113,13 @@ mod interactive_tests {
     use std::{collections::HashMap, io::stdin};
 
     use crate::{
-        base::{imp::table::UpdateTableData, HttpError},
+        base::imp::table::UpdateTableData,
         tests::common::{create_test_db, get_test_db_table},
+        AppError,
     };
 
     #[test]
-    fn test_table_insert_data() -> Result<(), HttpError> {
+    fn test_table_insert_data() -> Result<(), AppError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();
 
@@ -154,7 +161,7 @@ mod interactive_tests {
     }
 
     #[test]
-    fn test_table_update_data() -> Result<(), HttpError> {
+    fn test_table_update_data() -> Result<(), AppError> {
         let db = create_test_db()?;
         let table_name = get_test_db_table();
 

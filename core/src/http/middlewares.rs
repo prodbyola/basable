@@ -5,10 +5,13 @@ use axum::{
     RequestPartsExt,
 };
 
-use crate::base::{
-    imp::{SharedDB, SharedTable},
-    user::{decode_jwt, User},
-    HttpError, AppState,
+use crate::{
+    base::{
+        imp::{SharedDB, SharedTable},
+        user::{decode_jwt, User},
+        AppState,
+    },
+    AppError,
 };
 
 /// Extracts information about the current [`User`] by inspecting the Authorization
@@ -22,7 +25,7 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = HttpError;
+    type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let mut auth_header = parts.headers.get(AUTHORIZATION);
@@ -38,9 +41,9 @@ where
                 Err(e) => Err(e),
             },
             None => {
-                let err = HttpError::new(
+                let err = AppError::HttpError(
                     StatusCode::UNAUTHORIZED,
-                    "User authentication not provided.",
+                    "User authentication not provided.".to_string(),
                 );
                 return Err(err);
             }
@@ -56,7 +59,7 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = HttpError;
+    type Rejection = AppError;
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let user = AuthExtractor::from_request_parts(parts, state).await?;
         let user = user.0;
@@ -69,9 +72,9 @@ where
         };
 
         if let None = conn_id {
-            return Err(HttpError::new(
+            return Err(AppError::HttpError(
                 StatusCode::PRECONDITION_REQUIRED,
-                "Connection Id not provided",
+                "Connection Id not provided".to_string(),
             ));
         }
 
@@ -81,9 +84,9 @@ where
 
         match db {
             Some(db) => Ok(DbExtractor(db)),
-            None => Err(HttpError::new(
+            None => Err(AppError::HttpError(
                 StatusCode::PRECONDITION_FAILED,
-                "You do not have access to this connection.",
+                "You do not have access to this connection.".to_string(),
             )),
         }
     }
@@ -97,7 +100,7 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = HttpError;
+    type Rejection = AppError;
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let path: Result<Path<String>, PathRejection> =
             Path::from_request_parts(parts, state).await;
@@ -110,15 +113,15 @@ where
 
                 match db.get_table(&tbl_name) {
                     Some(tbl) => Ok(TableExtractor(tbl.clone())),
-                    None => Err(HttpError::new(
+                    None => Err(AppError::HttpError(
                         StatusCode::NOT_FOUND,
-                        "Can't find a table with the given name",
+                        "Can't find a table with the given name".to_string(),
                     )),
                 }
             }
-            Err(err) => Err(HttpError::new(
+            Err(err) => Err(AppError::HttpError(
                 StatusCode::PRECONDITION_FAILED,
-                &err.to_string(),
+                err.to_string(),
             )),
         }
     }

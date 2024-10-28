@@ -13,10 +13,11 @@ use crate::{
         column::ColumnList,
         data::table::{TableConfig, TableQueryOpts, TableSummaries, UpdateTableData},
         imp::{graphs::FromQueryParams, table::Table},
-        AppState, HttpError,
+        AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
     imp::database::mysql::table::MySqlTable,
+    AppError,
 };
 
 #[debug_handler]
@@ -27,7 +28,7 @@ pub(crate) async fn save_configuration(
     TableExtractor(_): TableExtractor,
     State(state): State<AppState>,
     Json(config): Json<TableConfig>,
-) -> Result<String, HttpError> {
+) -> Result<String, AppError> {
     let storage = state.local_db;
     let conn_id = db.id().to_string();
 
@@ -42,7 +43,7 @@ pub(crate) async fn get_configuration(
     DbExtractor(db): DbExtractor,
     TableExtractor(_): TableExtractor,
     State(state): State<AppState>,
-) -> Result<Json<TableConfig>, HttpError> {
+) -> Result<Json<TableConfig>, AppError> {
     let storage = state.local_db;
     let conn_id = db.id().to_string();
 
@@ -57,7 +58,7 @@ pub(crate) async fn get_columns(
     DbExtractor(_): DbExtractor,
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
-) -> Result<Json<ColumnList>, HttpError> {
+) -> Result<Json<ColumnList>, AppError> {
     let cols = table.query_columns()?;
 
     Ok(Json(cols))
@@ -71,7 +72,7 @@ pub(crate) async fn query_data(
     DbExtractor(db): DbExtractor,
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
-) -> Result<Json<Vec<HashMap<String, <MySqlTable as Table>::ColumnValue>>>, HttpError> {
+) -> Result<Json<Vec<HashMap<String, <MySqlTable as Table>::ColumnValue>>>, AppError> {
     let filter = TableQueryOpts::from_query_params(params)?;
     let data = table.query_data(filter, &db)?;
 
@@ -86,7 +87,7 @@ pub(crate) async fn insert_data(
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
     Json(data): Json<HashMap<String, String>>,
-) -> Result<String, HttpError> {
+) -> Result<String, AppError> {
     table.insert_data(data)?;
     Ok("Operation successful".to_string())
 }
@@ -99,7 +100,7 @@ pub(crate) async fn update_data(
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
     Json(options): Json<UpdateTableData>,
-) -> Result<String, HttpError> {
+) -> Result<String, AppError> {
     table.update_data(options)?;
     Ok("Operation successful".to_string())
 }
@@ -111,11 +112,11 @@ pub(crate) async fn delete_data(
     DbExtractor(_): DbExtractor,
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
-) -> Result<String, HttpError> {
+) -> Result<String, AppError> {
     let col = params.get("col");
     let value = params.get("value");
 
-    let err = |msg| HttpError::new(StatusCode::EXPECTATION_FAILED, msg);
+    let err = |msg: &str| AppError::HttpError(StatusCode::EXPECTATION_FAILED, msg.to_string());
 
     match (col, value) {
         (None, None) => Err(err("Please provide filter 'col' and 'value' query params.")),
@@ -133,7 +134,7 @@ pub(crate) async fn load_tables(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) -> Result<Json<TableSummaries>, HttpError> {
+) -> Result<Json<TableSummaries>, AppError> {
     let tables = db.build_table_list()?;
 
     Ok(Json(tables))

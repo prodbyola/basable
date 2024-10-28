@@ -13,9 +13,9 @@ use crate::{
             table::Table,
             ConnectorType, SharedTable,
         },
-        HttpError,
     },
     imp::database::{DBVersion, DbServerDetails},
+    AppError,
 };
 
 use super::{table::MySqlTable, MySqlValue};
@@ -38,7 +38,7 @@ impl MySqlDB {
     }
 
     /// Get MySQL server version and host OS version
-    fn show_version_variables(&self) -> Result<DBVersion, HttpError> {
+    fn show_version_variables(&self) -> Result<DBVersion, AppError> {
         let vars = self.exec_query(
             "
                 SHOW VARIABLES 
@@ -63,7 +63,7 @@ impl MySqlDB {
         Ok(data)
     }
 
-    fn size(&self) -> Result<f64, HttpError> {
+    fn size(&self) -> Result<f64, AppError> {
         let db = self.config().db_name.as_ref().unwrap();
 
         let query = format!(
@@ -92,13 +92,12 @@ impl MySqlDB {
         &self.connector.config()
     }
 
-    fn exec_query(&self, query: &str) -> mysql::Result<Vec<Row>> {
+    fn exec_query(&self, query: &str) -> Result<Vec<Row>, AppError> {
         self.connector.exec_query(query)
     }
 }
 
 impl DB for MySqlDB {
-    type Error = mysql::Error;
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
@@ -114,7 +113,7 @@ impl DB for MySqlDB {
         &self.connector
     }
 
-    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), HttpError> {
+    fn load_tables(&mut self, connector: ConnectorType) -> Result<(), AppError> {
         let tables = self.query_tables()?;
 
         if !tables.is_empty() {
@@ -134,7 +133,7 @@ impl DB for MySqlDB {
         &self.tables
     }
 
-    fn query_tables(&self) -> mysql::Result<Vec<Row>> {
+    fn query_tables(&self) -> Result<Vec<Row>, AppError> {
         let query = format!(
             "
                 SELECT table_name, table_rows, create_time, update_time
@@ -148,7 +147,7 @@ impl DB for MySqlDB {
         self.connector.exec_query(&query)
     }
 
-    fn build_table_list(&self) -> Result<TableSummaries, HttpError> {
+    fn build_table_list(&self) -> Result<TableSummaries, AppError> {
         let results = self.query_tables()?;
         let tables: Vec<TableSummary> = results
             .iter()
@@ -172,7 +171,7 @@ impl DB for MySqlDB {
         Ok(tables)
     }
 
-    fn query_column_count(&self, tb_name: &str) -> Result<u32, HttpError> {
+    fn query_column_count(&self, tb_name: &str) -> Result<u32, AppError> {
         let query = format!(
             "
                 SELECT count(*) 
@@ -194,7 +193,7 @@ impl DB for MySqlDB {
         self.tables.iter().find(|t| t.name() == name)
     }
 
-    fn details(&self) -> Result<DbServerDetails, HttpError> {
+    fn details(&self) -> Result<DbServerDetails, AppError> {
         let vrbs = self.show_version_variables()?;
         let version = vrbs.get("version").map(|v| v.to_string());
         let os = vrbs.get("version_compile_os").map(|v| v.to_string());

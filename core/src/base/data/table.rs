@@ -10,9 +10,9 @@ use crate::{
             filter::{Filter, FilterChain},
             BasableQuery, QueryOperation,
         },
-        HttpError,
     },
     globals::DEFAULT_ROWS_PER_PAGE,
+    AppError,
 };
 
 pub(crate) type TableSummaries = Vec<TableSummary>;
@@ -152,7 +152,7 @@ pub struct TableQueryOpts {
 }
 
 impl FromQueryParams for TableQueryOpts {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, HttpError>
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -166,14 +166,14 @@ impl FromQueryParams for TableQueryOpts {
             Some(table) => {
                 let row_count = match row_count {
                     Some(c) => c.parse::<usize>().map_err(|err| {
-                        HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string())
+                        AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
                     })?,
                     None => DEFAULT_ROWS_PER_PAGE,
                 };
 
                 let offset = match offset {
                     Some(c) => c.parse::<usize>().map_err(|err| {
-                        HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string())
+                        AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
                     })?,
                     None => 0,
                 };
@@ -195,9 +195,9 @@ impl FromQueryParams for TableQueryOpts {
                 Ok(tqf)
             }
             None => {
-                let err = HttpError::new(
+                let err = AppError::HttpError(
                     StatusCode::EXPECTATION_FAILED,
-                    "Table name must be provided",
+                    "Table name must be provided".to_string(),
                 );
 
                 Err(err)
@@ -207,7 +207,7 @@ impl FromQueryParams for TableQueryOpts {
 }
 
 impl TryFrom<TableQueryOpts> for BasableQuery {
-    type Error = HttpError;
+    type Error = AppError;
 
     fn try_from(opts: TableQueryOpts) -> Result<Self, Self::Error> {
         let TableQueryOpts {
@@ -223,7 +223,7 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
         if let Some(filters) = filters {
             for s in filters {
                 let f = Filter::try_from(s).map_err(|err| {
-                    HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string())
+                    AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
                 })?;
                 filter_chain.add_one(f);
             }
@@ -237,7 +237,7 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
             filters: filter_chain,
             ..Default::default()
         };
-        
+
         Ok(bq)
     }
 }

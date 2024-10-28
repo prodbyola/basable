@@ -1,12 +1,13 @@
-use graphs::graphs_routes;
 use axum::routing::{get, post};
 use axum::Router;
+use graphs::graphs_routes;
 
 use crate::base::config::ConfigRaw;
 use crate::base::foundation::Basable;
-use crate::base::{HttpError, AppState};
+use crate::base::AppState;
 use crate::http::middlewares::AuthExtractor;
 use crate::imp::database::DbServerDetails;
+use crate::AppError;
 use axum::{extract::State, Json};
 use axum_macros::debug_handler;
 
@@ -16,15 +17,15 @@ use self::table::table_routes;
 use super::middlewares::DbExtractor;
 
 pub(super) mod auth;
-pub(super) mod table;
 pub(super) mod graphs;
+pub(super) mod table;
 
 #[debug_handler]
 async fn connect(
     State(state): State<AppState>,
     AuthExtractor(user): AuthExtractor,
     Json(config): Json<ConfigRaw>,
-) -> Result<Json<String>, HttpError> {
+) -> Result<Json<String>, AppError> {
     let mut bsbl = state.instance.lock().unwrap();
     let storage = state.local_db;
 
@@ -51,7 +52,7 @@ async fn server_details(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) -> Result<Json<DbServerDetails>, HttpError> {
+) -> Result<Json<DbServerDetails>, AppError> {
     let details = db.details()?;
 
     Ok(Json(details))
@@ -71,14 +72,17 @@ mod tests {
     use axum::{extract::State, Json};
 
     use crate::{
-        base::HttpError,
-        tests::{common::{create_test_config, create_test_state}, extractors::auth_extractor},
+        tests::{
+            common::{create_test_config, create_test_state},
+            extractors::auth_extractor,
+        },
+        AppError,
     };
 
     use super::connect;
 
     #[tokio::test]
-    async fn test_connect_route() -> Result<(), HttpError> {
+    async fn test_connect_route() -> Result<(), AppError> {
         let state = create_test_state(false)?;
         let config = create_test_config();
 

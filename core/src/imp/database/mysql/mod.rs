@@ -1,20 +1,10 @@
-use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
-use crate::base::HttpError;
 use mysql::Value;
 
 pub(crate) mod db;
 pub(crate) mod connector;
 pub(crate) mod table;
 pub(crate) mod graphs;
-
-/// Implements conversion of `mysql::Error` to AppError. At the moment, all variations
-/// of `mysql::Error` resolves to `StatusCode::INTERNAL_SERVER_ERROR`.
-impl From<mysql::Error> for HttpError {
-    fn from(value: mysql::Error) -> Self {
-        Self(StatusCode::INTERNAL_SERVER_ERROR, value.to_string())
-    }
-}
 
 /// Client side representation of a value of MySql column.
 ///

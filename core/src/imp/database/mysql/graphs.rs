@@ -2,7 +2,7 @@ use time::Date;
 
 use crate::{
     base::imp::{
-        db::{DBError, QuerySqlParser, DB},
+        db::{QuerySqlParser, DB},
         graphs::{
             category::CategoryGraphOpts,
             chrono::{ChronoAnalysisBasis, ChronoAnalysisOpts},
@@ -12,13 +12,14 @@ use crate::{
         },
     },
     globals::{BASABLE_CHRONO_XCOL, BASABLE_CHRONO_YCOL},
+    AppError,
 };
 
 use super::db::MySqlDB;
 use mysql::{DriverError::SetupError, Value};
 
 impl VisualizeDB for MySqlDB {
-    fn chrono_graph(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError> {
+    fn chrono_graph(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, AppError> {
         let basis = opts.basis.clone();
 
         let query = opts.into();
@@ -47,7 +48,7 @@ impl VisualizeDB for MySqlDB {
         Ok(results)
     }
 
-    fn trend_graph(&self, opts: TrendGraphOpts) -> Result<AnalysisResults, DBError> {
+    fn trend_graph(&self, opts: TrendGraphOpts) -> Result<AnalysisResults, AppError> {
         let xcol = opts.xcol.clone();
         let ycol = opts.ycol.clone();
         let analysis_type = opts.graph_type.clone();
@@ -82,7 +83,7 @@ impl VisualizeDB for MySqlDB {
         Ok(results)
     }
 
-    fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, DBError> {
+    fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, AppError> {
         let target_col = opts.target_column.clone();
         let query = opts.into();
 
@@ -108,7 +109,7 @@ impl VisualizeDB for MySqlDB {
         Ok(results)
     }
 
-    fn geo_graph(&self, opts: GeoGraphOpts) -> Result<AnalysisResults, DBError> {
+    fn geo_graph(&self, opts: GeoGraphOpts) -> Result<AnalysisResults, AppError> {
         let target_col = opts.target_column.clone();
         let query = opts.into();
 

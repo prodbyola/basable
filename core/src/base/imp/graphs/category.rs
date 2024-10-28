@@ -4,9 +4,9 @@ use axum::http::StatusCode;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::base::{
-    query::{BasableQuery, QueryOperation},
-    HttpError,
+use crate::{
+    base::query::{BasableQuery, QueryOperation},
+    AppError,
 };
 
 use super::FromQueryParams;
@@ -31,7 +31,7 @@ impl Display for CategoryAnalysis {
 }
 
 impl TryFrom<&String> for CategoryAnalysis {
-    type Error = HttpError;
+    type Error = AppError;
 
     fn try_from(value: &String) -> Result<Self, Self::Error> {
         let cats = CategoryAnalysis::iter();
@@ -42,9 +42,9 @@ impl TryFrom<&String> for CategoryAnalysis {
             }
         }
 
-        Err(HttpError::new(
+        Err(AppError::HttpError(
             StatusCode::EXPECTATION_FAILED,
-            "invalid category_graph_type",
+            "invalid category_graph_type".to_string(),
         ))
     }
 }
@@ -57,7 +57,7 @@ pub struct CategoryGraphOpts {
 }
 
 impl FromQueryParams for CategoryGraphOpts {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, HttpError>
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -77,9 +77,9 @@ impl FromQueryParams for CategoryGraphOpts {
                     let parse_limit = lmt.parse::<usize>();
 
                     if let Err(err) = parse_limit {
-                        return Err(HttpError::new(
+                        return Err(AppError::HttpError(
                             StatusCode::EXPECTATION_FAILED,
-                            err.to_string().as_str(),
+                            err.to_string(),
                         ));
                     }
 
@@ -96,9 +96,9 @@ impl FromQueryParams for CategoryGraphOpts {
 
                 Ok(opts)
             }
-            _ => Err(HttpError::new(
+            _ => Err(AppError::HttpError(
                 StatusCode::EXPECTATION_FAILED,
-                "missing required parameter",
+                "missing required parameter".to_string(),
             )),
         }
     }

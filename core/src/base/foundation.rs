@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::imp::database::mysql::connector::MysqlConnector;
 use crate::imp::database::mysql::db::MySqlDB;
-use crate::User;
+use crate::{AppError, User};
 
 use super::imp::connector::Connector;
 use super::imp::db::DB;
@@ -13,7 +13,6 @@ use super::imp::SharedDB;
 use super::{
     config::{ConfigRaw, DatabaseType, SourceType},
     user::{create_jwt, JwtSession},
-    HttpError,
 };
 
 #[derive(Default)]
@@ -28,7 +27,7 @@ impl Basable {
     pub(crate) fn create_connection(
         config: &ConfigRaw,
         user_id: String,
-    ) -> Result<SharedDB, HttpError> {
+    ) -> Result<SharedDB, AppError> {
 
         let mut db = match config.get_source()? {
             SourceType::Database(db) => match db {
@@ -37,9 +36,9 @@ impl Basable {
                     let db = MySqlDB::new(Arc::new(conn), user_id);
                     Ok(db)
                 }
-                _ => Err(HttpError::not_implemented()),
+                _ => Err(AppError::not_implemented()),
             },
-            _ => Err(HttpError::not_implemented()),
+            _ => Err(AppError::not_implemented()),
         }?;
 
         let conn = db.connector().clone();
@@ -49,7 +48,7 @@ impl Basable {
     }
 
     /// Creates a new guest user using the request `SocketAddr`
-    pub(crate) fn create_guest_user(req_ip: &str) -> Result<JwtSession, HttpError> {
+    pub(crate) fn create_guest_user(req_ip: &str) -> Result<JwtSession, AppError> {
         let user = User {
             id: req_ip.to_owned(),
             ..Default::default()

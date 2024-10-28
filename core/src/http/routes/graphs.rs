@@ -13,9 +13,10 @@ use crate::{
             category::CategoryGraphOpts, chrono::ChronoAnalysisOpts, geo::GeoGraphOpts,
             trend::TrendGraphOpts, AnalysisResults, FromQueryParams,
         },
-        HttpError, AppState,
+        AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor},
+    AppError,
 };
 
 #[debug_handler]
@@ -24,7 +25,7 @@ pub async fn chrono_graph(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) -> Result<Json<AnalysisResults>, HttpError> {
+) -> Result<Json<AnalysisResults>, AppError> {
     let opts = ChronoAnalysisOpts::from_query_params(params)?;
     let results = db.chrono_graph(opts)?;
 
@@ -37,7 +38,7 @@ pub async fn trend_graph(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) -> Result<Json<AnalysisResults>, HttpError> {
+) -> Result<Json<AnalysisResults>, AppError> {
     let opts = TrendGraphOpts::from_query_params(params)?;
     let graph = db.trend_graph(opts)?;
 
@@ -50,7 +51,7 @@ pub async fn category_graph(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) -> Result<Json<AnalysisResults>, HttpError> {
+) -> Result<Json<AnalysisResults>, AppError> {
     let opts = CategoryGraphOpts::from_query_params(params)?;
     let graph = db.category_graph(opts)?;
 
@@ -63,7 +64,7 @@ pub async fn geo_graph(
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     State(_): State<AppState>,
-) -> Result<Json<AnalysisResults>, HttpError> {
+) -> Result<Json<AnalysisResults>, AppError> {
     let opts = GeoGraphOpts::from_query_params(params)?;
     let graph = db.geo_graph(opts)?;
 

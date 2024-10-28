@@ -2,7 +2,7 @@ use axum::http::StatusCode;
 use serde::Deserialize;
 use urlencoding::encode;
 
-use super::HttpError;
+use crate::AppError;
 
 #[derive(Deserialize, Clone, Debug)]
 pub(crate) enum DatabaseType {
@@ -14,7 +14,7 @@ pub(crate) enum DatabaseType {
 
 impl TryFrom<&str> for DatabaseType {
     
-    type Error = HttpError;
+    type Error = AppError;
     
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
@@ -22,7 +22,7 @@ impl TryFrom<&str> for DatabaseType {
             "oracle" => Ok(Self::Oracle),
             "mysql" => Ok(Self::Mysql),
             "mongo" => Ok(Self::Mongo),
-            &_ => Err(HttpError::new(StatusCode::EXPECTATION_FAILED, "Invalid database source type")),
+            &_ => Err(AppError::HttpError(StatusCode::EXPECTATION_FAILED, "Invalid database source type".to_string())),
         }
     }
 }
@@ -36,12 +36,12 @@ pub(crate) enum SourceType {
 }
 
 impl SourceType {
-    fn from_str(src_type: &str, src: &str) -> Result<SourceType, HttpError> {
+    fn from_str(src_type: &str, src: &str) -> Result<SourceType, AppError> {
         match src_type {
             "database" => Ok(Self::Database(src.try_into()?)),
             "cloud" => Ok(Self::Cloud),
             "file" => Ok(Self::File),
-            &_ => Err(HttpError::new(StatusCode::EXPECTATION_FAILED, "Invalid source type"))
+            &_ => Err(AppError::HttpError(StatusCode::EXPECTATION_FAILED, "Invalid source type".to_string()))
         }
     }
 }
@@ -73,7 +73,7 @@ impl Default for ConfigRaw {
 }
 
 impl ConfigRaw {
-    pub fn build_url(&self) -> Result<String, HttpError> {
+    pub fn build_url(&self) -> Result<String, AppError> {
         let src_type = SourceType::from_str(&self.source_type, &self.source)?;
 
         match src_type {
@@ -104,7 +104,7 @@ impl ConfigRaw {
         
     }
 
-    pub fn get_source(&self) -> Result<SourceType, HttpError> {
+    pub fn get_source(&self) -> Result<SourceType, AppError> {
         SourceType::from_str(&self.source_type, &self.source)
     }
 }

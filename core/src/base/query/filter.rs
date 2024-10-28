@@ -3,10 +3,7 @@ use std::fmt::Display;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{base::HttpError, globals::QUERY_FILTER_PREFIX};
-
-// pub trait FilterValue: Display + Clone + Default {}
-
+use crate::globals::QUERY_FILTER_PREFIX;
 
 #[derive(Clone, Default)]
 pub enum FilterOperator {
@@ -70,8 +67,8 @@ impl Display for FilterOperator {
     }
 }
 
-/// [FilterComparator] is useful for filtering query columns by comparing the value of 
-/// [FilterComparator::column] to the value given to the [FilterComparator::operator]. Please 
+/// [FilterComparator] is useful for filtering query columns by comparing the value of
+/// [FilterComparator::column] to the value given to the [FilterComparator::operator]. Please
 /// see [FilterOperator] for different comparison operations.
 #[derive(Clone, Default)]
 pub struct FilterComparator {
@@ -154,7 +151,7 @@ impl Display for FilterChain {
             let first = values.get(0).unwrap();
 
             if !matches!(first, &Filter::BASE(_)) {
-                return Err(std::fmt::Error)
+                return Err(std::fmt::Error);
             }
         }
 

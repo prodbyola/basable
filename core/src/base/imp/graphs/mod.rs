@@ -1,4 +1,7 @@
-use std::{collections::HashMap, fmt::{Debug, Display}};
+use std::{
+    collections::HashMap,
+    fmt::{Debug, Display},
+};
 
 use category::CategoryGraphOpts;
 use chrono::ChronoAnalysisOpts;
@@ -8,14 +11,12 @@ use serde::{ser::SerializeTuple, Serialize};
 use time::Date;
 use trend::TrendGraphOpts;
 
-use crate::base::HttpError;
-
-use super::db::DBError;
+use crate::AppError;
 
 pub mod category;
 pub mod chrono;
-pub mod trend;
 pub mod geo;
+pub mod trend;
 
 pub type AnalysisResults = Vec<AnalysisResult>;
 
@@ -95,28 +96,28 @@ impl Debug for AnalysisResult {
 }
 
 pub trait VisualizeDB {
-    fn chrono_graph(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, DBError>;
-    fn trend_graph(&self, opts: TrendGraphOpts) -> Result<AnalysisResults, DBError>;
-    fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, DBError>;
-    fn geo_graph(&self, opts: GeoGraphOpts) -> Result<AnalysisResults, DBError>;
+    fn chrono_graph(&self, opts: ChronoAnalysisOpts) -> Result<AnalysisResults, AppError>;
+    fn trend_graph(&self, opts: TrendGraphOpts) -> Result<AnalysisResults, AppError>;
+    fn category_graph(&self, opts: CategoryGraphOpts) -> Result<AnalysisResults, AppError>;
+    fn geo_graph(&self, opts: GeoGraphOpts) -> Result<AnalysisResults, AppError>;
 }
 
 pub trait FromQueryParams {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, HttpError> where Self: Sized;
+    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
+    where
+        Self: Sized;
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        base::{
-            imp::graphs::{
-                category::{CategoryGraphOpts, CategoryAnalysis},
-                chrono::{ChronoAnalysisBasis, ChronoAnalysisRange},
-                trend::CrossOptions,
-            },
-            HttpError,
+        base::imp::graphs::{
+            category::{CategoryAnalysis, CategoryGraphOpts},
+            chrono::{ChronoAnalysisBasis, ChronoAnalysisRange},
+            trend::CrossOptions,
         },
         tests::common::create_test_db,
+        AppError,
     };
 
     use super::{
@@ -125,7 +126,7 @@ mod tests {
     };
 
     #[test]
-    fn test_chrono_graph() -> Result<(), HttpError> {
+    fn test_chrono_graph() -> Result<(), AppError> {
         let db = create_test_db()?;
         let graph = db.chrono_graph(ChronoAnalysisOpts {
             table: "vgchartz".to_string(),
@@ -140,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn test_trend_graph() -> Result<(), HttpError> {
+    fn test_trend_graph() -> Result<(), AppError> {
         let db = create_test_db()?;
         let opts = TrendGraphOpts {
             table: "patients".to_string(),
@@ -162,7 +163,7 @@ mod tests {
     }
 
     #[test]
-    fn test_category_graph() -> Result<(), HttpError> {
+    fn test_category_graph() -> Result<(), AppError> {
         let db = create_test_db()?;
 
         let opts = CategoryGraphOpts {

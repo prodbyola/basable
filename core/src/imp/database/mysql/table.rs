@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use axum::http::StatusCode;
-
-use crate::base::{
-    column::{Column, ColumnList},
-    data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
-    imp::{
-        table::{Table, TableCRUD, TableColumn, TableError},
-        ConnectorType, SharedDB,
+use crate::{
+    base::{
+        column::{Column, ColumnList},
+        data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
+        imp::{
+            table::{Table, TableCRUD, TableColumn},
+            ConnectorType, SharedDB,
+        },
     },
-    HttpError,
+    AppError,
 };
 
 use super::MySqlValue;
@@ -20,7 +20,6 @@ pub(crate) struct MySqlTable {
 }
 
 impl Table for MySqlTable {
-    type Error = mysql::Error;
     type Row = mysql::Row;
     type ColumnValue = MySqlValue;
 
@@ -38,7 +37,7 @@ impl Table for MySqlTable {
         &self.name
     }
 
-    fn query_columns(&self) -> Result<ColumnList, Self::Error> {
+    fn query_columns(&self) -> Result<ColumnList, AppError> {
         let table_name = &self.name;
 
         let query = format!(
@@ -145,11 +144,9 @@ impl TableCRUD for MySqlTable {
         &self,
         opts: TableQueryOpts,
         db: &SharedDB,
-    ) -> DataQueryResult<TableColumn, HttpError> {
+    ) -> DataQueryResult<TableColumn, AppError> {
         let query = opts.try_into()?;
-        let sql = db
-            .generate_sql(query)
-            .map_err(|err| HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, &err.to_string()))?;
+        let sql = db.generate_sql(query)?;
 
         let conn = self.connector();
         let rows = conn.exec_query(&sql)?;
@@ -173,7 +170,7 @@ impl TableCRUD for MySqlTable {
         Ok(data)
     }
 
-    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), TableError> {
+    fn insert_data(&self, input: HashMap<String, String>) -> Result<(), AppError> {
         let len = input.len();
         let mut data = HashMap::new();
 
@@ -199,7 +196,7 @@ impl TableCRUD for MySqlTable {
         Ok(())
     }
 
-    fn update_data(&self, options: UpdateTableData) -> Result<(), TableError> {
+    fn update_data(&self, options: UpdateTableData) -> Result<(), AppError> {
         let UpdateTableData {
             unique_key,
             columns,
@@ -238,7 +235,7 @@ impl TableCRUD for MySqlTable {
         Ok(())
     }
 
-    fn delete_data(&self, col: String, value: String) -> Result<(), TableError> {
+    fn delete_data(&self, col: String, value: String) -> Result<(), AppError> {
         let query = format!("DELETE FROM {} WHERE {} = '{}'", self.name, col, value);
         let conn = self.connector();
         conn.exec_query(&query)?;
