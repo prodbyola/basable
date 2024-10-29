@@ -64,7 +64,6 @@ impl Basable {
     }
 
     pub fn get_connection(&self, id: &str, user_id: &str) -> Result<SharedDB, AppError> {
-        // let id = Uuid::from_str(id).unwrap();
 
         match Uuid::from_str(id) {
             Ok(id) => {

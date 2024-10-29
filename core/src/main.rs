@@ -94,7 +94,7 @@ async fn main() -> Result<(), AppError> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let port = get_env("BASABLE_PORT");
+    let port = get_env("BASABLE_PORT").map_err(|err| AppError::InitError(err.to_string()))?;
     let app = app()?;
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
         .await
@@ -107,7 +107,7 @@ async fn main() -> Result<(), AppError> {
         .map_err(|err| AppError::InitError(err.to_string()))?;
 
     if !cfg!(debug_assertions) {
-        let dm = get_env("DEPLOYMENT_MODE");
+        let dm = get_env("DEPLOYMENT_MODE").map_err(|err| AppError::InitError(err.to_string()))?;
         let dm = DeploymentMode::from(dm);
 
         if dm.is_local() {

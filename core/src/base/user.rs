@@ -50,7 +50,8 @@ pub(crate) fn create_jwt(user: User) -> Result<JwtSession, AppError> {
 
     let header = Header::new(Algorithm::HS512);
 
-    let secret = get_env("BASABLE_JWT_SECRET");
+    let secret = get_env("BASABLE_JWT_SECRET")
+        .map_err(|err| AppError::HttpError(StatusCode::UNAUTHORIZED, err.to_string()))?;
     let secret = secret.as_bytes();
 
     let token = encode(&header, &claims, &EncodingKey::from_secret(secret))
@@ -65,7 +66,8 @@ pub(crate) fn create_jwt(user: User) -> Result<JwtSession, AppError> {
 pub(crate) fn decode_jwt(header_value: &HeaderValue) -> Result<User, AppError> {
     let token = extract_jwt(header_value)?;
 
-    let secret = get_env("BASABLE_JWT_SECRET");
+    let secret = get_env("BASABLE_JWT_SECRET")
+        .map_err(|err| AppError::HttpError(StatusCode::UNAUTHORIZED, err.to_string()))?;
     let secret = secret.as_bytes();
 
     let decoded = decode::<Claims>(
@@ -86,7 +88,9 @@ fn extract_jwt(header_value: &HeaderValue) -> Result<String, AppError> {
         String::from("Invalid token!"),
     ));
 
-    let bearer = format!("{} ", get_env("BASABLE_JWT_BEARER"));
+    let auth_token = get_env("BASABLE_JWT_BEARER")
+        .map_err(|err| AppError::HttpError(StatusCode::UNAUTHORIZED, err.to_string()))?;
+    let bearer = format!("{auth_token} ");
     let bearer = bearer.as_str();
 
     if let Ok(v) = from_utf8(header_value.as_bytes()) {

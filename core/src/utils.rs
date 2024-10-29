@@ -1,7 +1,7 @@
-use std::env;
+use std::env::{self, VarError};
 
-pub(crate) fn get_env(key: &str) -> String {
-    env::var(key).unwrap()
+pub(crate) fn get_env(key: &str) -> Result<String, VarError> {
+    env::var(key)
 }
 
 pub(crate) mod datetime_parser {
