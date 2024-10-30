@@ -96,25 +96,27 @@ async fn main() -> Result<(), AppError> {
 
     let port = get_env("BASABLE_PORT").map_err(|err| AppError::InitError(err.to_string()))?;
     let app = app()?;
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
-        .await
-        .unwrap();
 
-    tracing::debug!("listening on {}", listener.local_addr().unwrap());
+    if let Ok(listener) = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await {
+        if let Ok(addr) = listener.local_addr() {
+            tracing::debug!("listening on {addr}");
+        }
 
-    axum::serve(listener, app)
-        .await
-        .map_err(|err| AppError::InitError(err.to_string()))?;
+        axum::serve(listener, app)
+            .await
+            .map_err(|err| AppError::InitError(err.to_string()))?;
 
-    if !cfg!(debug_assertions) {
-        let dm = get_env("DEPLOYMENT_MODE").map_err(|err| AppError::InitError(err.to_string()))?;
-        let dm = DeploymentMode::from(dm);
+        if !cfg!(debug_assertions) {
+            let dm =
+                get_env("DEPLOYMENT_MODE").map_err(|err| AppError::InitError(err.to_string()))?;
+            let dm = DeploymentMode::from(dm);
 
-        if dm.is_local() {
-            let url = format!("http://localhost:{port}");
-            match webbrowser::open(&url) {
-                Ok(_) => println!("Browser launched successfully"),
-                Err(err) => println!("Error launching browser: {err}"),
+            if dm.is_local() {
+                let url = format!("http://localhost:{port}");
+                match webbrowser::open(&url) {
+                    Ok(_) => println!("Browser launched successfully"),
+                    Err(err) => println!("Error launching browser: {err}"),
+                }
             }
         }
     }

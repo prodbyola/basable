@@ -65,20 +65,23 @@ where
         let user = user.0;
 
         let state = extract_app_state(parts, state).await;
-        let conn_id = parts.headers.get("connection-id").map(|hv| hv.to_str().unwrap());
 
-        if let None = conn_id {
-            return Err(AppError::HttpError(
-                StatusCode::PRECONDITION_REQUIRED,
-                "Connection Id not provided".to_string(),
-            ));
+        match parts.headers.get("connection-id") {
+            Some(header) => {
+                let conn_id = header.to_str().map_err(|err| AppError::HttpError(StatusCode::UNAUTHORIZED, err.to_string()))?;
+                let bsbl = state.instance.lock().map_err(|err| AppError::HttpError(StatusCode::UNAUTHORIZED, err.to_string()))?;
+                let db = bsbl.get_connection(conn_id, &user.id)?;
+                std::mem::drop(bsbl); // release Mutex lock
+
+                Ok(DbExtractor(db))
+            }
+            None => {
+                Err(AppError::HttpError(
+                    StatusCode::PRECONDITION_REQUIRED,
+                    "Connection Id not provided".to_string(),
+                ))
+            }
         }
-
-        let bsbl = state.instance.lock().unwrap();
-        let db = bsbl.get_connection(conn_id.unwrap(), &user.id)?;
-        std::mem::drop(bsbl); // release Mutex lock
-
-        Ok(DbExtractor(db))
     }
 }
 

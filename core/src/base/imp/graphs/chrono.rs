@@ -73,8 +73,8 @@ impl TryFrom<String> for ChronoAnalysisRange {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         let spl: Vec<&str> = value.split("range").collect();
         if spl.len() == 2 {
-            let start = spl.get(0).unwrap();
-            let end = spl.get(1).unwrap();
+            let start = spl.get(0).unwrap_or(&&"");
+            let end = spl.get(1).unwrap_or(&&"");
 
             let range = ChronoAnalysisRange(start.trim().to_string(), end.trim().to_string());
             return Ok(range);

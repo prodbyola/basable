@@ -117,15 +117,17 @@ pub(crate) struct AppState {
     pub local_db: LocalDB,
 }
 
-impl Default for AppState {
-    fn default() -> Self {
+impl AppState {
+    pub fn create() -> Result<Self, AppError> {
         let manager = SqliteConnectionManager::memory();
-        let pool = r2d2::Pool::new(manager).unwrap();
+        let pool = r2d2::Pool::new(manager).map_err(|err| AppError::InitError(err.to_string()))?;
 
-        Self {
+        let i = Self {
             instance: Default::default(),
             local_db: LocalDB(pool),
-        }
+        };
+
+        Ok(i)
     }
 }
 

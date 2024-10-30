@@ -72,20 +72,11 @@ impl FromQueryParams for CategoryGraphOpts {
                 let analysis = graph_type.try_into()?;
                 let target_column = target_column.to_string();
 
-                let mut limit = None;
-                if let Some(lmt) = cat_limit {
-                    let parse_limit = lmt.parse::<usize>();
-
-                    if let Err(err) = parse_limit {
-                        return Err(AppError::HttpError(
-                            StatusCode::EXPECTATION_FAILED,
-                            err.to_string(),
-                        ));
-                    }
-
-                    // it's safe to unwrap since we checked and returned error earlier
-                    limit = Some(parse_limit.unwrap())
-                }
+                let limit = cat_limit.map_or(Ok(0), |lmt| {
+                    lmt.parse::<usize>().map_err(|err| {
+                        AppError::HttpError(StatusCode::EXPECTATION_FAILED, err.to_string())
+                    })
+                }).ok();
 
                 let opts = CategoryGraphOpts {
                     table,

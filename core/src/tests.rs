@@ -78,10 +78,8 @@ pub(crate) mod common {
     /// Attaches a test [DB](`crate::base::db::DB`) instance if `attach_db` is `true`.
     pub fn create_test_state(attach_db: bool) -> Result<AppState, AppError> {
         let instance = create_test_instance(attach_db)?;
-        let state = AppState {
-            instance: Arc::new(Mutex::new(instance)),
-            ..Default::default()
-        };
+        let mut state = AppState::create()?;
+        state.instance = Arc::new(Mutex::new(instance));
 
         Ok(state)
     }

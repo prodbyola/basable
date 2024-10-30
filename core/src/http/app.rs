@@ -51,7 +51,7 @@ pub fn app() -> Result<BasableHttpService, AppError> {
         ])
         .allow_methods(Any);
 
-    let state = AppState::default();
+    let state = AppState::create()?;
     state.local_db.setup()?;
 
     let routes = core_routes();
