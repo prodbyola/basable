@@ -65,11 +65,7 @@ where
         let user = user.0;
 
         let state = extract_app_state(parts, state).await;
-
-        let conn_id = match parts.headers.get("connection-id") {
-            Some(h) => Some(h.to_str().unwrap()),
-            None => None,
-        };
+        let conn_id = parts.headers.get("connection-id").map(|hv| hv.to_str().unwrap());
 
         if let None = conn_id {
             return Err(AppError::HttpError(

@@ -148,10 +148,10 @@ impl Display for FilterChain {
         let values = &self.0;
 
         if !values.is_empty() {
-            let first = values.get(0).unwrap();
-
-            if !matches!(first, &Filter::BASE(_)) {
-                return Err(std::fmt::Error);
+            if let Some(first) = values.get(0) {
+                if !matches!(first, &Filter::BASE(_)) {
+                    return Err(std::fmt::Error);
+                }
             }
         }
 

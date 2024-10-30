@@ -97,8 +97,8 @@ impl VisualizeDB for MySqlDB {
         let results: AnalysisResults = rows
             .iter()
             .map(|r| {
-                let x_value: Value = r.get(target_col.as_str()).unwrap();
-                let x = x_value.into();
+                let x_value: Value = r.get(target_col.as_str()).unwrap_or(Value::NULL);
+                let x = x_value.try_into().unwrap_or_default();
 
                 let y = AnalysisValue::UInt(r.get("COUNT").unwrap());
 
@@ -123,8 +123,8 @@ impl VisualizeDB for MySqlDB {
         let results: AnalysisResults = rows
             .iter()
             .map(|r| {
-                let x_value: Value = r.get(target_col.as_str()).unwrap();
-                let x = x_value.into();
+                let x_value: Value = r.get(target_col.as_str()).unwrap_or(Value::NULL);
+                let x = x_value.try_into().unwrap_or_default();
 
                 let y = AnalysisValue::UInt(r.get("COUNT").unwrap());
 

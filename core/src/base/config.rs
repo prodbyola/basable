@@ -99,7 +99,7 @@ impl ConfigRaw {
                 Ok(url)
             }
 
-            _ => todo!()
+            _ => Err(AppError::not_implemented())
         }
         
     }

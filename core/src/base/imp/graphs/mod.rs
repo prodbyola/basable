@@ -1,8 +1,10 @@
 use std::{
     collections::HashMap,
+    default,
     fmt::{Debug, Display},
 };
 
+use axum::http::StatusCode;
 use category::CategoryGraphOpts;
 use chrono::ChronoAnalysisOpts;
 use geo::GeoGraphOpts;
@@ -20,7 +22,9 @@ pub mod trend;
 
 pub type AnalysisResults = Vec<AnalysisResult>;
 
+#[derive(Default)]
 pub enum AnalysisValue {
+    #[default]
     NULL,
     UInt(usize),
     Int(isize),
@@ -67,17 +71,36 @@ impl Display for AnalysisValue {
     }
 }
 
-impl From<MysqlValue> for AnalysisValue {
-    fn from(value: MysqlValue) -> Self {
-        match value {
+impl TryFrom<MysqlValue> for AnalysisValue {
+    type Error = AppError;
+
+    fn try_from(value: MysqlValue) -> Result<Self, Self::Error> {
+        let s = match value {
             MysqlValue::NULL => AnalysisValue::NULL,
-            MysqlValue::Bytes(v) => AnalysisValue::Text(String::from_utf8(v).unwrap()),
-            MysqlValue::UInt(v) => AnalysisValue::UInt(usize::try_from(v).unwrap()),
-            MysqlValue::Int(v) => AnalysisValue::Int(isize::try_from(v).unwrap()),
+            MysqlValue::Bytes(v) => {
+                let v = String::from_utf8(v).map_err(|err| {
+                    AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+                })?;
+                AnalysisValue::Text(v)
+            }
+            MysqlValue::UInt(v) => {
+                let v = usize::try_from(v).map_err(|err| {
+                    AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+                })?;
+                AnalysisValue::UInt(v)
+            }
+            MysqlValue::Int(v) => {
+                let v = isize::try_from(v).map_err(|err| {
+                    AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+                })?;
+                AnalysisValue::Int(v)
+            }
             MysqlValue::Float(v) => AnalysisValue::Float(v),
             MysqlValue::Double(v) => AnalysisValue::Double(v),
-            _ => todo!(),
-        }
+            _ => AnalysisValue::NULL,
+        };
+
+        Ok(s)
     }
 }
 
