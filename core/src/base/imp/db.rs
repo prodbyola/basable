@@ -133,10 +133,13 @@ pub trait QuerySqlParser {
         // Parse query operation type
         let mut sql = match operation {
             QueryOperation::SelectData(cols) => {
-                let mut select_cols = String::from("*");
-                if let Some(col_list) = cols {
-                    select_cols = col_list.join(", ");
-                };
+                let select_cols = cols.map_or_else(
+                    || "*".to_string(),
+                    |list| {
+                        let s: Vec<String> = list.iter().map(|s| format!("`{s}`")).collect();
+                        s.join(", ")
+                    },
+                );
 
                 format!("SELECT {select_cols} FROM {table}")
             }
