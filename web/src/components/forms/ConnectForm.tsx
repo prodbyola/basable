@@ -45,6 +45,7 @@ export const ConnectForm = () => {
 
   const snackBar = useStore((state) => state.snackBar);
   const showAlert = useStore((state) => state.showAlert);
+  const hideAlert = useStore((state) => state.hideAlert);
 
   const closeAlert = (
     event?: React.SyntheticEvent | Event,
@@ -53,6 +54,8 @@ export const ConnectForm = () => {
     if (reason === "clickaway") {
       return;
     }
+
+    hideAlert()
   };
 
   const connect = async () => {
