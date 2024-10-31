@@ -14,6 +14,7 @@ import {
 } from "../utils";
 import { BASABLE_COOKIE_NAME } from "../env";
 import { Alert, Snackbar, SnackbarCloseReason } from "@mui/material";
+import { isAxiosError } from "axios";
 
 function DashboardLayout() {
   const logout = useLogout();
@@ -22,7 +23,7 @@ function DashboardLayout() {
   const addTableConfig = useStore((state) => state.addTableConfig);
 
   const snackBar = useStore((state) => state.snackBar);
-  const updateSnackBar = useStore((state) => state.showSnackBar);
+  const showAlert = useStore((state) => state.showAlert);
 
   const [isReady, setIsReady] = useState(false);
   const [showSidebar, onShowSidebar] = useState(false);
@@ -35,10 +36,10 @@ function DashboardLayout() {
       return;
     }
 
-    updateSnackBar({
-      ...snackBar,
-      showAlert: false,
-    });
+    // showAlert({
+    //   ...snackBar,
+    //   showAlert: false,
+    // });
   };
 
   useEffect(() => {
@@ -68,8 +69,14 @@ function DashboardLayout() {
             }
 
             setIsReady(true);
-          } catch (err) {
-            console.log(err);
+          } catch (err: any) {
+            let msg = err.message;
+            if (isAxiosError(err)) {
+              msg = err.response?.data;
+            }
+
+            showAlert("error", msg);
+            logout()
           }
         }
       };

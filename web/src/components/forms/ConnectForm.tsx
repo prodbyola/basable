@@ -17,6 +17,7 @@ import { AuthTokenType, SessionCookie } from "../../utils/data_types";
 import { NetworkProvider, setCookie, useStore } from "../../utils";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert/Alert";
+import { isAxiosError } from "axios";
 
 type ConnectInput = {
   username: string;
@@ -43,7 +44,7 @@ export const ConnectForm = () => {
   });
 
   const snackBar = useStore((state) => state.snackBar);
-  const updateSnackBar = useStore((state) => state.showSnackBar);
+  const showAlert = useStore((state) => state.showAlert);
 
   const closeAlert = (
     event?: React.SyntheticEvent | Event,
@@ -52,21 +53,9 @@ export const ConnectForm = () => {
     if (reason === "clickaway") {
       return;
     }
-
-    updateSnackBar({
-      ...snackBar,
-      showAlert: false,
-    });
   };
 
   const connect = async () => {
-    // reset network-related states
-    updateSnackBar({
-      ...snackBar,
-      showAlert: false,
-      loading: true,
-    });
-
     try {
       // create a guest user
       const access: AuthTokenType = await np.request({
@@ -96,23 +85,16 @@ export const ConnectForm = () => {
       setCookie(BASABLE_COOKIE_NAME, JSON.stringify(cookie), exp);
 
       // update network state
-      updateSnackBar({
-        ...snackBar,
-        showAlert: true,
-        loading: false,
-        alertColor: "success",
-        message: "Connection successful!",
-      });
+      showAlert("success", "Connection successful!");
 
       navigate("/dashboard");
     } catch (err: any) {
-      updateSnackBar({
-        ...snackBar,
-        showAlert: true,
-        loading: false,
-        alertColor: "error",
-        message: err.message,
-      });
+      let msg = err.message
+      if(isAxiosError(err)){
+        msg = err.response?.data
+      }
+      
+      showAlert("error", msg);
       console.log(err)
     }
   };
@@ -146,12 +128,7 @@ export const ConnectForm = () => {
       </div>
       <div className="form-container">
         <div className="user-pass-div">
-          <div className="note-div">
-            <span className="note-name">Note: </span>
-            <span className="note-text">
-              Enter username and password used when creating your database
-            </span>
-          </div>
+         
           <div className="databasetype-host-div">
             <div className="source-div">
               <label>

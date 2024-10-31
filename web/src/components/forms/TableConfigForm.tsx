@@ -1,5 +1,7 @@
 import {
+  Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -7,9 +9,12 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
+  OutlinedInput,
   Select,
   SelectChangeEvent,
   TextField,
+  Theme,
+  useTheme,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 
@@ -26,7 +31,30 @@ type ConfigProps = {
   open: boolean;
   columns: string[];
   onHideDialog: () => void;
-  onConfigUpdated: (config: Partial<TableConfig>) => void 
+  onConfigUpdated: (config: Partial<TableConfig>) => void;
+};
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+const getStyles = (
+  item: string,
+  list: readonly string[] | undefined,
+  theme: Theme
+) => {
+  return {
+    fontWeight: list && list.includes(item)
+      ? theme.typography.fontWeightMedium
+      : theme.typography.fontWeightRegular,
+  };
 };
 
 const TableConfigForm = ({
@@ -36,11 +64,11 @@ const TableConfigForm = ({
   onHideDialog,
   onConfigUpdated,
 }: ConfigProps) => {
+  const theme = useTheme();
   const request = useNetworkRequest();
   const columnList = ["None", ...columns];
 
-  const snackBar = useStore((state) => state.snackBar);
-  const updateSnackBar = useStore((state) => state.showSnackBar);
+  const showAlert = useStore((state) => state.showAlert);
   const updateTableConfig = useStore((state) => state.updateTableConfig);
 
   const [formData, setFormData] = useState(config);
@@ -53,6 +81,20 @@ const TableConfigForm = ({
     setFormData({
       ...formData,
       pk_column,
+    });
+  };
+
+  const onAddSelectColumns = (evt: SelectChangeEvent<string[]>) => {
+    const {
+      target: { value },
+    } = evt;
+
+    const exclude_columns =
+      typeof value === "string" ? value.split(",") : value;
+
+    setFormData({
+      ...formData,
+      exclude_columns,
     });
   };
 
@@ -80,24 +122,12 @@ const TableConfigForm = ({
         data: formData,
       });
 
-      updateSnackBar({
-        ...snackBar,
-        showAlert: true,
-        loading: false,
-        alertColor: "success",
-        message: "Table configuration updated successfully!",
-      });
+      showAlert("success", "Table configuration updated successfully!");
 
       updateTableConfig(formData as TableConfig);
-      onConfigUpdated(formData)
+      onConfigUpdated(formData);
     } catch (err: any) {
-      updateSnackBar({
-        ...snackBar,
-        showAlert: true,
-        loading: false,
-        alertColor: "error",
-        message: err.message,
-      });
+      showAlert("error", err.message);
     }
 
     setLoading(false);
@@ -133,6 +163,40 @@ const TableConfigForm = ({
             {columnList.map((col) => (
               <MenuItem key={col} value={col}>
                 {col}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl className="tableConfigField" fullWidth>
+          <InputLabel id="demo-multiple-chip-label">Exclude Columns</InputLabel>
+          <Select
+            labelId="tcf-multiple-chip-label"
+            id="tcf-multiple-chip"
+            multiple
+            value={formData.exclude_columns ?? []}
+            onChange={onAddSelectColumns}
+            input={
+              <OutlinedInput
+                id="select-multiple-chip"
+                label="Exclude Columns"
+              />
+            }
+            renderValue={(selected) => (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {selected.map((value) => (
+                  <Chip key={value} label={value} />
+                ))}
+              </Box>
+            )}
+            MenuProps={MenuProps}
+          >
+            {columns.map((name) => (
+              <MenuItem
+                key={name}
+                value={name}
+                style={getStyles(name, formData.exclude_columns, theme)}
+              >
+                {name}
               </MenuItem>
             ))}
           </Select>

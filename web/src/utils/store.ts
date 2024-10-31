@@ -18,7 +18,7 @@ type StoreType = {
     updateTables: (tables: TableSummaryType[]) => void;
     addTableConfig: (config: TableConfig) => void;
     updateTableConfig: (config: TableConfig) => void;
-    showSnackBar: (opts: SnackBarOption) => void
+    // showSnackBar: (opts: SnackBarOption) => void
     showAlert: (alterType: 'success' | 'error', msg: string) => void;
     logout: () => void
 };
@@ -51,7 +51,7 @@ export const useStore = create<StoreType>((set, get) => ({
         set({ tableConfigs })
       }
     },
-    showSnackBar: (opts: SnackBarOption) => set({ snackBar: opts }),
+    // showSnackBar: (opts: SnackBarOption) => set({ snackBar: opts }),
     showAlert(alterType, message) {
       const snackBar = {
         ...get().snackBar,
