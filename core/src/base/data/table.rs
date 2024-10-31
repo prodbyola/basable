@@ -110,6 +110,9 @@ pub(crate) struct TableConfig {
 
     /// Notification events for this table.
     pub events: Option<Vec<NotifyEvent>>,
+
+    /// Columns to exclude from fetch query
+    pub exclude_columns: Option<Vec<String>>
 }
 
 impl PartialEq for TableConfig {
@@ -129,6 +132,7 @@ impl Default for TableConfig {
             updated_column: None,
             special_columns: None,
             events: None,
+            exclude_columns: None
         }
     }
 }
