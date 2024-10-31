@@ -57,7 +57,7 @@ impl LocalDB {
                 let exec = pool.execute(
                     "
                     INSERT INTO table_configs (conn_id, label, pk_column, name, ipp, exclude_columns)
-                    VALUES (?1, ?2, ?3, ?4, ?5)
+                    VALUES (?1, ?2, ?3, ?4, ?5, ?6)
                 ",
                     params![conn_id, tc.label, tc.pk_column, tc.name, tc.items_per_page, exclude_columns],
                 );
@@ -84,7 +84,7 @@ impl LocalDB {
                     })?;
 
                 let exec = pool.execute(
-                    "UPDATE table_configs SET name = ?, label = ?, pk_column = ?, ipp = ?, exclude_columns = ?, WHERE name = ? AND conn_id = ?", 
+                    "UPDATE table_configs SET name = ?, label = ?, pk_column = ?, ipp = ?, exclude_columns = ? WHERE name = ? AND conn_id = ?", 
                     params![tc.name, tc.label, tc.pk_column, tc.items_per_page, exclude_columns, name, conn_id]
                 );
 
