@@ -126,6 +126,7 @@ const TableConfigForm = ({
 
       updateTableConfig(formData as TableConfig);
       onConfigUpdated(formData);
+      onHideDialog()
     } catch (err: any) {
       showAlert("error", err.message);
     }
