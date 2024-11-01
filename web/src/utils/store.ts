@@ -66,7 +66,7 @@ export const useStore = create<StoreType>((set, get) => ({
     hideAlert() {
       const snackBar = {
         ...get().snackBar,
-        showAlert: true,
+        showAlert: false,
       }
 
       set({ snackBar })
