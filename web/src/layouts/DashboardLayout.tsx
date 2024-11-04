@@ -24,7 +24,6 @@ function DashboardLayout() {
 
   const snackBar = useStore((state) => state.snackBar);
   const showAlert = useStore((state) => state.showAlert);
-  const hideAlert = useStore((state) => state.hideAlert);
 
   const [isReady, setIsReady] = useState(false);
   const [showSidebar, onShowSidebar] = useState(false);
@@ -37,7 +36,10 @@ function DashboardLayout() {
       return;
     }
 
-    hideAlert()
+    // showAlert({
+    //   ...snackBar,
+    //   showAlert: false,
+    // });
   };
 
   useEffect(() => {
@@ -74,7 +76,7 @@ function DashboardLayout() {
             }
 
             showAlert("error", msg);
-            logout();
+            logout()
           }
         }
       };
