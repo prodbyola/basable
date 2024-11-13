@@ -20,6 +20,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
 import TableConfigForm from "../../components/forms/TableConfigForm";
+import TableFiltering from "../../components/forms/TableFiltering";
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
@@ -34,8 +35,11 @@ const DatabaseTable = () => {
   const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
+  const [openFiltering, setOpenFiltering] = React.useState(false);
 
-  const [filteredColumns, setFilteredColumns] = React.useState<TableColumn[]>([]);
+  const [filteredColumns, setFilteredColumns] = React.useState<TableColumn[]>(
+    []
+  );
   const [allColumns, setAllColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
 
@@ -141,9 +145,9 @@ const DatabaseTable = () => {
       path: "tables/columns/" + tableID,
     })) as TableColumn[];
 
-    setAllColumns(cols)
+    setAllColumns(cols);
 
-    let fcols = cols
+    let fcols = cols;
     let dataQuery = `?table=${tableID}`;
     const tc = tableConfigs.find((c) => c.name === tableID);
     if (tc) {
@@ -209,7 +213,7 @@ const DatabaseTable = () => {
           <IconButton>
             <SearchIcon />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => setOpenFiltering(true)}>
             <FilterAltIcon />
           </IconButton>
           <IconButton
@@ -272,6 +276,11 @@ const DatabaseTable = () => {
         onConfigUpdated={(config) => {
           if (config !== tableConfig) loadData();
         }}
+      />
+      <TableFiltering
+        open={openFiltering}
+        columnNames={allColumns.map((col) => col.name)}
+        onHideDialog={() => setOpenFiltering(false)}
       />
     </ThemeProvider>
   );
