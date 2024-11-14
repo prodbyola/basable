@@ -1,9 +1,11 @@
 import "./index.scss";
 
-import CloseIcon from '@mui/icons-material/Close';
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Box,
+  Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
@@ -40,7 +42,9 @@ function TabPanel(props: TabPanelProps) {
 type RowFilteringProps = {
   open: boolean;
   columnNames: string[];
+  tableFilters: BasableFilter[]
   onHideDialog: () => void;
+  onUpdateFilters: (filters: BasableFilter[]) => void
 };
 
 const a11yProps = (index: number) => ({
@@ -51,54 +55,58 @@ const a11yProps = (index: number) => ({
 const TableFiltering = ({
   open,
   columnNames,
+  tableFilters,
   onHideDialog,
+  onUpdateFilters
 }: RowFilteringProps) => {
-  const [filters, setFilters] = useState<BasableFilter[]>([])
+  const [filters, setFilters] = useState<BasableFilter[]>(tableFilters);
   const [tabValue, setTabValue] = useState(0);
   const changeTabValue = (_: React.SyntheticEvent, newValue: number) =>
     setTabValue(newValue);
 
   const insertFilter = (filter: BasableFilter) => {
-    filters.push(filter)
-    setFilters([...filters])
-    setTabValue(0)
-  } 
+    filters.push(filter);
+    setFilters([...filters]);
+    setTabValue(0);
+  };
 
   return (
     <Dialog open={open}>
       <DialogTitle>Data Filtering</DialogTitle>
       <IconButton
-          aria-label="close"
-          onClick={onHideDialog}
-          sx={(theme) => ({
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: theme.palette.grey[500],
-          })}
-        >
-          <CloseIcon />
-        </IconButton>
+        aria-label="close"
+        onClick={onHideDialog}
+        sx={(theme) => ({
+          position: "absolute",
+          right: 8,
+          top: 8,
+          color: theme.palette.grey[500],
+        })}
+      >
+        <CloseIcon />
+      </IconButton>
       <DialogContent sx={{ minWidth: "420px", paddingTop: "32px !important" }}>
         <Tabs value={tabValue} onChange={changeTabValue}>
           <Tab label="Filters" {...a11yProps(0)} />
           <Tab label="Filtering" {...a11yProps(1)} />
         </Tabs>
         <TabPanel value={tabValue} index={0}>
-          <ShowFilterList filters={filters} onCreateFilter={() => setTabValue(1)} />
+          <ShowFilterList
+            filters={filters}
+            onCreateFilter={() => setTabValue(1)}
+          />
         </TabPanel>
         <TabPanel value={tabValue} index={1}>
-          <FilterForm columnNames={columnNames} onInsertFilter={ insertFilter } />
+          <FilterForm columnNames={columnNames} onInsertFilter={insertFilter} />
         </TabPanel>
       </DialogContent>
-      {/* <DialogActions>
-        <Button onClick={onHideDialog} variant="outlined" size="large">
-          Close
-        </Button>
-        <Button onClick={onHideDialog} variant="contained" size="large">
-          Add Filter
-        </Button>
-      </DialogActions> */}
+      {tabValue === 0 && (
+        <DialogActions>
+          <Button onClick={() => onUpdateFilters(filters)} variant="outlined" size="large">
+            Save
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 };

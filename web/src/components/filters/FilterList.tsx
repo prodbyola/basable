@@ -30,14 +30,14 @@ const FilterList = ({ filters }: FilterListProps) => {
         <TableBody>
           {filters.map((filter, index) => (
             <TableRow
-              key={filter.operatorKey + index}
+              key={index}
               sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
             >
                 <TableCell>{ index + 1 }</TableCell>
                 <TableCell>{ filter.filterType.toUpperCase() }</TableCell>
                 <TableCell>{ filter.column }</TableCell>
                 <TableCell>{ filter.operatorKey }</TableCell>
-                <TableCell>{ filter.filterType }</TableCell>
+                <TableCell>{ filter.filterValue }</TableCell>
             </TableRow>
           ))}
         </TableBody>

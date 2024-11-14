@@ -105,6 +105,7 @@ export const FILTER_OPERATOR_LABELS = Object.keys(
  */
 export class BasableFilter {
   public filterValue: string = ''
+  public endValue: string = ''
 
   constructor(
     public column: string,
@@ -117,4 +118,17 @@ export class BasableFilter {
     return TABLE_FILTER_OPERATORS[this.operatorKey]
   }
   
+  public get buildQuery(){
+    const key = this.operatorKey
+    let value = this.filterValue
+
+    if(['LIKE', 'NOT_LIKE'].includes(key)) value = `${value}%`
+    else if(['LIKE_SINGLE', 'NOT_LIKE_SINGLE'].includes(key)) value = `_${value}%`
+    else if(['RANGE', 'NOT_RANGE'].includes(key)) value = `('${value}' AND '${this.endValue}')`
+
+    if(['and', 'or'].includes(this.filterType)) value = `${this.filterType.toUpperCase()} ${value}`
+
+    console.log('ready', `${this.column} ${this.operatorValue} '${value}'`)
+    return `${this.column} ${this.operatorValue} '${value}'`
+  }
 }

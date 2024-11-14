@@ -8,6 +8,8 @@ import {
   useStore,
   getTableLabel,
   UpdateTableData,
+  BasableFilter,
+  TABLE_FILTER_OPERATORS,
 } from "../../utils";
 import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
@@ -21,6 +23,21 @@ import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
 import TableConfigForm from "../../components/forms/TableConfigForm";
 import TableFiltering from "../../components/filters";
+import { isAxiosError } from "axios";
+
+const buildFilterQuery = (filter: BasableFilter) => {
+  const key = filter.operatorKey
+    let value = filter.filterValue
+
+    if(['LIKE', 'NOT_LIKE'].includes(key)) value = `${value}%`
+    else if(['LIKE_SINGLE', 'NOT_LIKE_SINGLE'].includes(key)) value = `_${value}%`
+    else if(['RANGE', 'NOT_RANGE'].includes(key)) value = `('${value}' AND '${filter.endValue}')`
+
+    if(['and', 'or'].includes(filter.filterType)) value = `${filter.filterType.toUpperCase()} ${value}`
+
+    const operator = TABLE_FILTER_OPERATORS[filter.operatorKey]
+    return `\`${filter.column}\` ${operator} \`${value}\``
+}
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
@@ -35,7 +52,9 @@ const DatabaseTable = () => {
   const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
+
   const [openFiltering, setOpenFiltering] = React.useState(false);
+  const [filters, setFilters] = React.useState<BasableFilter[]>([]);
 
   const [filteredColumns, setFilteredColumns] = React.useState<TableColumn[]>(
     []
@@ -140,46 +159,68 @@ const DatabaseTable = () => {
 
   const loadData = async () => {
     setTableLoading(true);
-    const cols = (await request({
-      method: "get",
-      path: "tables/columns/" + tableID,
-    })) as TableColumn[];
 
-    setAllColumns(cols);
+    try {
+      const cols = (await request({
+        method: "get",
+        path: "tables/columns/" + tableID,
+      })) as TableColumn[];
 
-    let fcols = cols;
-    let dataQuery = `?table=${tableID}`;
-    const tc = tableConfigs.find((c) => c.name === tableID);
-    if (tc) {
-      const excluded = tc.exclude_columns;
-      if (excluded && excluded.length) {
-        fcols = cols.filter((col) => !excluded.includes(col.name));
-        const selection = cols.map((col) => col.name).join(",");
+      setAllColumns(cols);
 
-        dataQuery += "&columns=" + selection;
-      }
+      let fcols = cols;
+      let dataQuery = `?table=${tableID}`;
 
-      // if there's a unique column, always shift it to leftmost
-      if (tc.pk_column) {
-        const pkc = fcols.find((col) => col.name === tc.pk_column);
-        if (pkc) {
-          const i = fcols.indexOf(pkc);
-          fcols.splice(i, 1);
-          fcols.splice(0, 0, pkc);
+      // Add excluded columns to query
+      const tc = tableConfigs.find((c) => c.name === tableID);
+      if (tc) {
+        const excluded = tc.exclude_columns;
+        if (excluded && excluded.length) {
+          fcols = cols.filter((col) => !excluded.includes(col.name));
+          const selection = cols.map((col) => col.name).join(",");
+
+          dataQuery += "&columns=" + selection;
         }
+
+        // if there's a unique column, always shift it to leftmost
+        if (tc.pk_column) {
+          const pkc = fcols.find((col) => col.name === tc.pk_column);
+          if (pkc) {
+            const i = fcols.indexOf(pkc);
+            fcols.splice(i, 1);
+            fcols.splice(0, 0, pkc);
+          }
+        }
+
+        updateConfigStates(tc);
+      }
+      setFilteredColumns(fcols);
+
+      // Add filters to query param
+      if (filters.length) {
+        const fs = filters.map((f) => buildFilterQuery(f));
+        const fj = fs.join(",");
+        console.log(fs, fj)
+        dataQuery = dataQuery + `&filters=${fj}`;
       }
 
-      updateConfigStates(tc);
+      const rows = (await request({
+        method: "get",
+        path: `tables/data/${tableID}` + dataQuery,
+      })) as TableRow[];
+
+      setRows(rows);
+      setTableLoading(false);
+    } catch (err: any) {
+      setTableLoading(false);
+
+      let msg = err.message
+      if(isAxiosError(err)) {
+        msg = err.response?.data
+      }
+
+      showAlert('error', msg)
     }
-    setFilteredColumns(fcols);
-
-    const rows = (await request({
-      method: "get",
-      path: `tables/data/${tableID}` + dataQuery,
-    })) as TableRow[];
-
-    setRows(rows);
-    setTableLoading(false);
   };
 
   React.useEffect(() => {
@@ -233,7 +274,7 @@ const DatabaseTable = () => {
         <div className="tableHeaderWarning">
           <ReportIcon />
           <Typography>
-            No <strong>unique column</strong> is found for this table. Table
+            No <strong>unique column</strong> is found for filter table. Table
             modification is impossible. You can manually set unique column by
             clicking the settings button above.
           </Typography>
@@ -280,7 +321,14 @@ const DatabaseTable = () => {
       <TableFiltering
         open={openFiltering}
         columnNames={allColumns.map((col) => col.name)}
+        tableFilters={filters}
         onHideDialog={() => setOpenFiltering(false)}
+        onUpdateFilters={(newFilters) => {
+          if (newFilters !== filters) {
+            setFilters([...newFilters]);
+            loadData();
+          }
+        }}
       />
     </ThemeProvider>
   );

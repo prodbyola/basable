@@ -6,7 +6,7 @@ use strum_macros::EnumIter;
 
 use crate::{
     base::query::{
-        filter::{Filter, FilterChain, FilterComparator, FilterOperator},
+        filter::{Filter, FilterChain, FilterCombinator, FilterExpression},
         BasableQuery, QueryOperation, QueryOrder,
     },
     AppError,
@@ -241,10 +241,11 @@ impl TryFrom<TrendGraphOpts> for BasableQuery {
                     let left_join = format!("{foreign_table} y ON x.{target_col} = y.{ycol}");
 
                     let mut having = FilterChain::new();
-                    having.add_one(Filter::BASE(FilterComparator {
+                    having.add_one(Filter{
+                        combinator: FilterCombinator::BASE,
                         column: ycol.clone(),
-                        operator: FilterOperator::Gt("0".to_string()),
-                    }));
+                        expression: FilterExpression::Gt("0".to_string())
+                    });
 
                     let order = match order {
                         Some(order) => match order {

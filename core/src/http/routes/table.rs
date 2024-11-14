@@ -12,7 +12,7 @@ use crate::{
     base::{
         column::ColumnList,
         data::table::{TableConfig, TableQueryOpts, TableSummaries, UpdateTableData},
-        imp::{graphs::FromQueryParams, table::Table},
+        imp::table::Table,
         AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
@@ -65,17 +65,15 @@ pub(crate) async fn get_columns(
 }
 
 #[debug_handler]
-pub(crate) async fn query_data(
+pub(crate) async fn load_data(
     Path(_): Path<String>,
-    Query(params): Query<HashMap<String, String>>,
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
+    Json(filter): Json<TableQueryOpts>,
 ) -> Result<Json<Vec<HashMap<String, <MySqlTable as Table>::ColumnValue>>>, AppError> {
-    let filter = TableQueryOpts::from_query_params(params)?;
     let data = table.query_data(filter, &db)?;
-
     Ok(Json(data))
 }
 
@@ -147,7 +145,7 @@ pub(super) fn table_routes() -> Router<AppState> {
         .route("/configurations/:table_name", get(get_configuration))
         .route("/configurations/:table_name", patch(save_configuration))
         .route("/columns/:table_name", get(get_columns))
-        .route("/data/:table_name", get(query_data))
+        .route("/load-data/:table_name", post(load_data))
         .route("/data/:table_name", post(insert_data))
         .route("/data/:table_name", patch(update_data))
         .route("/data/:table_name", delete(delete_data))

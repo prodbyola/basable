@@ -4,14 +4,10 @@ use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    base::{
-        imp::graphs::FromQueryParams,
-        query::{
-            filter::{Filter, FilterChain},
-            BasableQuery, QueryOperation,
-        },
+    base::query::{
+        filter::{Filter, FilterChain},
+        BasableQuery, QueryOperation,
     },
-    globals::DEFAULT_ROWS_PER_PAGE,
     AppError,
 };
 
@@ -112,7 +108,7 @@ pub(crate) struct TableConfig {
     pub events: Option<Vec<NotifyEvent>>,
 
     /// Columns to exclude from fetch query
-    pub exclude_columns: Option<Vec<String>>
+    pub exclude_columns: Option<Vec<String>>,
 }
 
 impl PartialEq for TableConfig {
@@ -132,11 +128,12 @@ impl Default for TableConfig {
             updated_column: None,
             special_columns: None,
             events: None,
-            exclude_columns: None
+            exclude_columns: None,
         }
     }
 }
 
+#[derive(Deserialize)]
 pub struct TableQueryOpts {
     /// The table we're querying
     pub table: String,
@@ -155,60 +152,60 @@ pub struct TableQueryOpts {
     pub columns: Option<Vec<String>>,
 }
 
-impl FromQueryParams for TableQueryOpts {
-    fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
-    where
-        Self: Sized,
-    {
-        let table = params.get("table");
-        let row_count = params.get("row_count");
-        let offset = params.get("offset");
-        let filters = params.get("filters");
-        let columns = params.get("columns");
+// impl FromQueryParams for TableQueryOpts {
+//     fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
+//     where
+//         Self: Sized,
+//     {
+//         let table = params.get("table");
+//         let row_count = params.get("row_count");
+//         let offset = params.get("offset");
+//         let filters = params.get("filters");
+//         let columns = params.get("columns");
 
-        match table {
-            Some(table) => {
-                let row_count = match row_count {
-                    Some(c) => c.parse::<usize>().map_err(|err| {
-                        AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-                    })?,
-                    None => DEFAULT_ROWS_PER_PAGE,
-                };
+//         match table {
+//             Some(table) => {
+//                 let row_count = match row_count {
+//                     Some(c) => c.parse::<usize>().map_err(|err| {
+//                         AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+//                     })?,
+//                     None => DEFAULT_ROWS_PER_PAGE,
+//                 };
 
-                let offset = match offset {
-                    Some(c) => c.parse::<usize>().map_err(|err| {
-                        AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-                    })?,
-                    None => 0,
-                };
+//                 let offset = match offset {
+//                     Some(c) => c.parse::<usize>().map_err(|err| {
+//                         AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+//                     })?,
+//                     None => 0,
+//                 };
 
-                let filters: Option<Vec<String>> =
-                    filters.map(|s| s.split(",").map(|s| s.to_string()).collect());
+//                 let filters: Option<Vec<String>> =
+//                     filters.map(|s| s.split(",").map(|s| s.to_string()).collect());
 
-                let columns: Option<Vec<String>> =
-                    columns.map(|s| s.split(",").map(|s| s.to_string()).collect());
+//                 let columns: Option<Vec<String>> =
+//                     columns.map(|s| s.split(",").map(|s| s.to_string()).collect());
 
-                let tqf = TableQueryOpts {
-                    table: table.to_string(),
-                    row_count,
-                    offset,
-                    filters,
-                    columns,
-                };
+//                 let tqf = TableQueryOpts {
+//                     table: table.to_string(),
+//                     row_count,
+//                     offset,
+//                     filters,
+//                     columns,
+//                 };
 
-                Ok(tqf)
-            }
-            None => {
-                let err = AppError::HttpError(
-                    StatusCode::EXPECTATION_FAILED,
-                    "Table name must be provided".to_string(),
-                );
+//                 Ok(tqf)
+//             }
+//             None => {
+//                 let err = AppError::HttpError(
+//                     StatusCode::EXPECTATION_FAILED,
+//                     "Table name must be provided".to_string(),
+//                 );
 
-                Err(err)
-            }
-        }
-    }
-}
+//                 Err(err)
+//             }
+//         }
+//     }
+// }
 
 impl TryFrom<TableQueryOpts> for BasableQuery {
     type Error = AppError;
@@ -226,9 +223,10 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
         let mut filter_chain = FilterChain::new();
         if let Some(filters) = filters {
             for s in filters {
-                let f = Filter::try_from(s).map_err(|err| {
+                let f: Filter = serde_json::from_str(&s).map_err(|err| {
                     AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
                 })?;
+
                 filter_chain.add_one(f);
             }
         }

@@ -68,10 +68,7 @@ pub(crate) trait TableCRUD {
 #[cfg(test)]
 mod tests {
 
-    use std::collections::HashMap;
-
     use crate::{
-        base::imp::{graphs::FromQueryParams, table::TableQueryOpts},
         tests::common::{create_test_db, get_test_db_table},
         AppError,
     };
@@ -91,21 +88,7 @@ mod tests {
 
         Ok(())
     }
-
-    #[test]
-    fn test_table_query_data() -> Result<(), AppError> {
-        let db = create_test_db()?;
-        let table_name = get_test_db_table();
-        let params = HashMap::new();
-
-        if let Some(table) = db.get_table(&table_name) {
-            let filter = TableQueryOpts::from_query_params(params)?;
-            let data = table.query_data(filter, &db);
-            assert!(data.is_ok());
-        }
-
-        Ok(())
-    }
+    
 }
 
 #[cfg(test)]
@@ -190,9 +173,9 @@ mod interactive_tests {
                 .read_line(&mut input)
                 .expect("Please enter a valid string");
 
-            let input = input.trim().to_string();
+            // let input = input.trim().to_string();
 
-            let spl: Vec<&str> = input.split(",").collect();
+            // let spl: Vec<&str> = input.split(",").collect();
             // test_data
             //     .input
             //     .insert(spl[0].to_string(), spl[1].to_string());
