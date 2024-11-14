@@ -92,13 +92,22 @@ export const TABLE_FILTER_OPERATORS = {
 };
 
 export type FilterOperatorLabel = keyof typeof TABLE_FILTER_OPERATORS;
+
+/**
+ * A list of labels for each filter operator
+ */
 export const FILTER_OPERATOR_LABELS = Object.keys(
   TABLE_FILTER_OPERATORS
 ) as FilterOperatorLabel[];
+
+/**
+ * Abstraction of query filtering in Basable
+ */
 export class BasableFilter {
+  public filterValue: string = ''
+
   constructor(
     public column: string,
-    public value: string,
     public operatorKey: FilterOperatorLabel = FILTER_OPERATOR_LABELS[0],
     public filterType: "base" | "and" | "or" = "base",
   ) {}

@@ -20,7 +20,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
 import TableConfigForm from "../../components/forms/TableConfigForm";
-import TableFiltering from "../../components/forms/TableFiltering";
+import TableFiltering from "../../components/filters";
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();

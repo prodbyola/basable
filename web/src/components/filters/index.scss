@@ -1,0 +1,34 @@
+.showFilterList {
+    min-height: 288px;
+
+    .noFilter {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .filterList {
+        .filterItem {
+            display: inline-flex;
+            width: 100%;
+            column-gap: 6px;
+            align-items: center;
+            padding: 0 8px;
+            box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+            margin-bottom: 12px;
+            
+            p {
+                font-weight: bold;
+                color: rgb(68, 68, 68);
+            }
+        }
+    }
+
+}
+
+.formAction {
+    float: right;
+}
