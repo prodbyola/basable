@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Serialize, Default)]
 pub enum FilterExpression {
     Eq(String),
     NotEq(String),
@@ -79,12 +79,12 @@ impl Display for FilterExpression {
 //     }
 // }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub enum FilterCombinator {
     BASE, AND, OR
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Filter {
     pub combinator: FilterCombinator,
     pub column: String,
@@ -147,5 +147,22 @@ impl Display for FilterChain {
         let values = values.join(",");
 
         write!(f, "{values}")
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use super::Filter;
+
+    #[test]
+    pub fn test_serialize_filter() {
+        let filter = Filter {
+            combinator: super::FilterCombinator::BASE,
+            column: "test_column".to_string(),
+            expression: super::FilterExpression::Gte("310".to_string())
+        };
+
+        let s = serde_json::to_string(&filter).unwrap();
+        println!("{s}")
     }
 }
