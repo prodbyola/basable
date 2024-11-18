@@ -1,9 +1,9 @@
-import { BasableFilter } from "../../utils";
+import { BasableFilter, FilterInput } from "../../utils";
 import FilterList from "./FilterList";
 import { NoFilter } from "./NoFilter";
 
 type ShowListProps = {
-  filters: BasableFilter[];
+  filters: FilterInput[];
   onCreateFilter: () => void;
 };
 

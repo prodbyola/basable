@@ -10,21 +10,27 @@ import {
 import {
   BasableFilter,
   FILTER_OPERATOR_LABELS,
+  FilterInput,
   FilterOperatorLabel,
 } from "../../utils";
 import { ChangeEvent, useState } from "react";
-import AddIcon from '@mui/icons-material/Add';
+import AddIcon from "@mui/icons-material/Add";
 
 type FilterFormProps = {
   columnNames: string[];
-  onInsertFilter: (filter: BasableFilter) => void;
+  onInsertFilter: (filter: FilterInput) => void;
 };
 
 const FilterForm = ({ columnNames, onInsertFilter }: FilterFormProps) => {
-  const defaultFilter = new BasableFilter(columnNames[0]);
+  const defaultFilter: FilterInput = {
+    combinator: "base",
+    column: "",
+    operatorLabel: "EQUAL",
+    operatorValue: "",
+  };
   const [filter, setTableFilter] = useState(defaultFilter);
 
-  const updateFilter = (filter: BasableFilter) =>
+  const updateFilter = (filter: FilterInput) =>
     setTableFilter(JSON.parse(JSON.stringify(filter)));
 
   const changeFilterColumn = (evt: SelectChangeEvent<string>) => {
@@ -41,7 +47,7 @@ const FilterForm = ({ columnNames, onInsertFilter }: FilterFormProps) => {
       target: { value },
     } = evt;
 
-    filter.operatorKey = value as FilterOperatorLabel;
+    filter.operatorLabel = value as FilterOperatorLabel;
     updateFilter(filter);
   };
 
@@ -51,14 +57,14 @@ const FilterForm = ({ columnNames, onInsertFilter }: FilterFormProps) => {
     const target = evt.target as HTMLInputElement;
     const value = target.value;
 
-    filter.filterValue = value;
+    filter.operatorValue = value;
     updateFilter(filter);
   };
 
   const createFilter = () => {
-    onInsertFilter(filter)
-    updateFilter(defaultFilter)
-  }
+    onInsertFilter(filter);
+    updateFilter(defaultFilter);
+  };
 
   return (
     <>
@@ -84,7 +90,7 @@ const FilterForm = ({ columnNames, onInsertFilter }: FilterFormProps) => {
           id="opp-1"
           labelId="opp1"
           label="Operator"
-          value={filter.operatorKey}
+          value={filter.operatorLabel}
           onChange={changeFilterOperator}
         >
           {FILTER_OPERATOR_LABELS.map((label) => (
@@ -97,7 +103,7 @@ const FilterForm = ({ columnNames, onInsertFilter }: FilterFormProps) => {
       <TextField
         id="filter value"
         className="tableConfigField"
-        value={filter.filterValue}
+        value={filter.operatorValue}
         onChange={onValueChange}
         label="Filter Value"
         fullWidth
@@ -107,7 +113,7 @@ const FilterForm = ({ columnNames, onInsertFilter }: FilterFormProps) => {
           variant="contained"
           size="large"
           startIcon={<AddIcon />}
-          onClick={ createFilter }
+          onClick={createFilter}
         >
           Create Filter
         </Button>

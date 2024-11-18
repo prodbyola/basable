@@ -7,10 +7,10 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import { BasableFilter } from "../../utils";
+import { BasableFilter, FilterInput } from "../../utils";
 
 type FilterListProps = {
-  filters: BasableFilter[];
+  filters: FilterInput[];
 };
 
 const FilterList = ({ filters }: FilterListProps) => {
@@ -34,10 +34,10 @@ const FilterList = ({ filters }: FilterListProps) => {
               sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
             >
                 <TableCell>{ index + 1 }</TableCell>
-                <TableCell>{ filter.filterType.toUpperCase() }</TableCell>
+                <TableCell>{ filter.combinator.toUpperCase() }</TableCell>
                 <TableCell>{ filter.column }</TableCell>
-                <TableCell>{ filter.operatorKey }</TableCell>
-                <TableCell>{ filter.filterValue }</TableCell>
+                <TableCell>{ filter.operatorLabel }</TableCell>
+                <TableCell>{ filter.operatorValue }</TableCell>
             </TableRow>
           ))}
         </TableBody>

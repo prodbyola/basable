@@ -71,27 +71,83 @@ export type UpdateTableData = {
 };
 
 export const TABLE_FILTER_OPERATORS = {
-  EQUAL: "=",
-  NOT_EQUAL: "!=",
-  GREATER_THAN: ">",
-  LESS_THAN: "<",
-  GREATER_OR_EQUAL: ">=",
-  LESS_OR_EQUAL: "<=",
-  LIKE: "LIKE",
-  NOT_LIKE: "NOT LIKE",
-  LIKE_SINGLE: "LIKE",
-  NOT_LIKE_SINGLE: "NOT LIKE",
-  REGEX: "REGEXP",
-  NOT_REGEX: "NOT REGEXP",
-  RANGE: "BETWEEN",
-  NOT_RANGE: "NOT BETWEEN",
-  CONTAINS: "IN",
-  NOT_CONTAINS: "NOT IN",
-  NULL: "IS NULL",
-  NOT_NULL: "IS NOT NULL",
+  EQUAL: {
+    symbol: "=",
+    key: "Eq",
+  },
+  NOT_EQUAL: {
+    symbol: "!=",
+    key: "NotEq",
+  },
+  GREATER_THAN: {
+    symbol: ">",
+    key: "Gt",
+  },
+  LESS_THAN: {
+    symbol: "<",
+    key: "Lt",
+  },
+  GREATER_OR_EQUAL: {
+    symbol: ">=",
+    key: "Gte",
+  },
+  LESS_OR_EQUAL: {
+    symbol: "<=",
+    key: "Lte",
+  },
+  LIKE: {
+    symbol: "LIKE",
+    key: "Like",
+  },
+  NOT_LIKE: {
+    symbol: "NOT LIKE",
+    key: "NotLike",
+  },
+  LIKE_SINGLE: {
+    symbol: "LIKE",
+    key: "LikeSingle",
+  },
+  NOT_LIKE_SINGLE: {
+    symbol: "NOT LIKE",
+    key: "NotLikeSingle",
+  },
+  REGEX: {
+    symbol: "REGEXP",
+    key: "Regex",
+  },
+  NOT_REGEX: {
+    symbol: "NOT REGEXP",
+    key: "NotRegex",
+  },
+  RANGE: {
+    symbol: "BETWEEN",
+    key: "Btw",
+  },
+  NOT_RANGE: {
+    symbol: "NOT BETWEEN",
+    key: "NotBtw",
+  },
+  CONTAINS: {
+    symbol: "IN",
+    key: "Contains",
+  },
+  NOT_CONTAINS: {
+    symbol: "NOT IN",
+    key: "NotContains",
+  },
+  NULL: {
+    symbol: "IS NULL",
+    key: "Null",
+  },
+  NOT_NULL: {
+    symbol: "IS NOT NULL",
+    key: "NotNull",
+  },
 };
 
 export type FilterOperatorLabel = keyof typeof TABLE_FILTER_OPERATORS;
+
+export type FilterCombinator = "base" | "and" | "or"
 
 /**
  * A list of labels for each filter operator
@@ -103,32 +159,16 @@ export const FILTER_OPERATOR_LABELS = Object.keys(
 /**
  * Abstraction of query filtering in Basable
  */
-export class BasableFilter {
-  public filterValue: string = ''
-  public endValue: string = ''
+export type BasableFilter = {
+  combinator: FilterCombinator;
+  column: string;
+  expression: { [key: string]: string };
+};
 
-  constructor(
-    public column: string,
-    public operatorKey: FilterOperatorLabel = FILTER_OPERATOR_LABELS[0],
-    public filterType: "base" | "and" | "or" = "base",
-  ) {}
-
-  
-  public get operatorValue() : typeof TABLE_FILTER_OPERATORS[FilterOperatorLabel] {
-    return TABLE_FILTER_OPERATORS[this.operatorKey]
-  }
-  
-  public get buildQuery(){
-    const key = this.operatorKey
-    let value = this.filterValue
-
-    if(['LIKE', 'NOT_LIKE'].includes(key)) value = `${value}%`
-    else if(['LIKE_SINGLE', 'NOT_LIKE_SINGLE'].includes(key)) value = `_${value}%`
-    else if(['RANGE', 'NOT_RANGE'].includes(key)) value = `('${value}' AND '${this.endValue}')`
-
-    if(['and', 'or'].includes(this.filterType)) value = `${this.filterType.toUpperCase()} ${value}`
-
-    console.log('ready', `${this.column} ${this.operatorValue} '${value}'`)
-    return `${this.column} ${this.operatorValue} '${value}'`
-  }
+export type FilterInput = {
+  column: string,
+  combinator: FilterCombinator,
+  operatorLabel: FilterOperatorLabel,
+  operatorValue: string
+  endValue?: string
 }

@@ -12,7 +12,7 @@ import {
   Tab,
   Tabs,
 } from "@mui/material";
-import { BasableFilter } from "../../utils";
+import { BasableFilter, FilterInput } from "../../utils";
 import { useState } from "react";
 import ShowFilterList from "./ShowFilterList";
 import FilterForm from "../forms/FilterForm";
@@ -42,9 +42,9 @@ function TabPanel(props: TabPanelProps) {
 type RowFilteringProps = {
   open: boolean;
   columnNames: string[];
-  tableFilters: BasableFilter[]
+  tableFilters: FilterInput[]
   onHideDialog: () => void;
-  onUpdateFilters: (filters: BasableFilter[]) => void
+  onUpdateFilters: (filters: FilterInput[]) => void
 };
 
 const a11yProps = (index: number) => ({
@@ -59,12 +59,12 @@ const TableFiltering = ({
   onHideDialog,
   onUpdateFilters
 }: RowFilteringProps) => {
-  const [filters, setFilters] = useState<BasableFilter[]>(tableFilters);
+  const [filters, setFilters] = useState<FilterInput[]>(tableFilters);
   const [tabValue, setTabValue] = useState(0);
   const changeTabValue = (_: React.SyntheticEvent, newValue: number) =>
     setTabValue(newValue);
 
-  const insertFilter = (filter: BasableFilter) => {
+  const insertFilter = (filter: FilterInput) => {
     filters.push(filter);
     setFilters([...filters]);
     setTabValue(0);

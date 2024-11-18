@@ -10,6 +10,7 @@ import {
   UpdateTableData,
   BasableFilter,
   TABLE_FILTER_OPERATORS,
+  FilterInput,
 } from "../../utils";
 import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
@@ -25,19 +26,25 @@ import TableConfigForm from "../../components/forms/TableConfigForm";
 import TableFiltering from "../../components/filters";
 import { isAxiosError } from "axios";
 
-const buildFilterQuery = (filter: BasableFilter) => {
-  const key = filter.operatorKey
-    let value = filter.filterValue
+const buildFilterQuery = (ft: FilterInput): BasableFilter => {
+  const label = ft.operatorLabel;
+  let value = ft.operatorValue;
 
-    if(['LIKE', 'NOT_LIKE'].includes(key)) value = `${value}%`
-    else if(['LIKE_SINGLE', 'NOT_LIKE_SINGLE'].includes(key)) value = `_${value}%`
-    else if(['RANGE', 'NOT_RANGE'].includes(key)) value = `('${value}' AND '${filter.endValue}')`
+  if (["LIKE", "NOT_LIKE"].includes(label)) value = `${value}%`;
+  else if (["LIKE_SINGLE", "NOT_LIKE_SINGLE"].includes(label))
+    value = `_${value}%`;
+  else if (["RANGE", "NOT_RANGE"].includes(label))
+    value = `('${value}' AND '${ft.endValue}')`;
 
-    if(['and', 'or'].includes(filter.filterType)) value = `${filter.filterType.toUpperCase()} ${value}`
-
-    const operator = TABLE_FILTER_OPERATORS[filter.operatorKey]
-    return `\`${filter.column}\` ${operator} \`${value}\``
-}
+  const operator = TABLE_FILTER_OPERATORS[label];
+  return  {
+    column: ft.column,
+    combinator: ft.combinator,
+    expression: {
+      [operator.key]: operator.symbol
+    }
+  };
+};
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
@@ -54,7 +61,7 @@ const DatabaseTable = () => {
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
 
   const [openFiltering, setOpenFiltering] = React.useState(false);
-  const [filters, setFilters] = React.useState<BasableFilter[]>([]);
+  const [filters, setFilters] = React.useState<FilterInput[]>([]);
 
   const [filteredColumns, setFilteredColumns] = React.useState<TableColumn[]>(
     []
@@ -200,7 +207,7 @@ const DatabaseTable = () => {
       if (filters.length) {
         const fs = filters.map((f) => buildFilterQuery(f));
         const fj = fs.join(",");
-        console.log(fs, fj)
+        console.log(fs, fj);
         dataQuery = dataQuery + `&filters=${fj}`;
       }
 
@@ -214,12 +221,12 @@ const DatabaseTable = () => {
     } catch (err: any) {
       setTableLoading(false);
 
-      let msg = err.message
-      if(isAxiosError(err)) {
-        msg = err.response?.data
+      let msg = err.message;
+      if (isAxiosError(err)) {
+        msg = err.response?.data;
       }
 
-      showAlert('error', msg)
+      showAlert("error", msg);
     }
   };
 
