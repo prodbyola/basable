@@ -70,15 +70,15 @@ const TableFiltering = ({
   };
 
   const removeFilter = (index: number) => {
-    filters.splice(index, 1)
+    filters.splice(index, 1);
 
-    if(filters.length) {
-      const first = filters[0]
-      if(first.combinator !== 'base') first.combinator = 'base'
+    if (filters.length) {
+      const first = filters[0];
+      if (first.combinator !== "base") first.combinator = "base";
     }
 
-    setFilters([...filters])
-  }
+    setFilters([...filters]);
+  };
 
   const [defaultFilter, setDefaultFilter] = useState<FilterInput>(sampleFilter);
 
@@ -123,14 +123,25 @@ const TableFiltering = ({
       </DialogContent>
       {tabValue === 0 && (
         <DialogActions>
+          {filters.length > 0 && (
+            <Button
+              onClick={() => {
+                setFilters([]);
+              }}
+              variant="outlined"
+              size="large"
+            >
+              Clear Filter
+            </Button>
+          )}
           <Button
             onClick={() => {
-              onUpdateFilters(filters)
+              onUpdateFilters(filters);
             }}
-            variant="outlined"
+            variant="contained"
             size="large"
           >
-            Save
+            Update Filter
           </Button>
         </DialogActions>
       )}
