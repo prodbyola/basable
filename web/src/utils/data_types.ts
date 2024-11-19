@@ -120,3 +120,9 @@ export type FilterInput = {
   operatorValue: string
   endValue?: string
 }
+
+export const COLUMN_TYPES = ['NULL', 'Text', 'Int', 'UInt', 'Float', 'Double', 'Date', 'Time'] as const
+export type ColumnType = typeof COLUMN_TYPES[number]
+export type ColumnTypeObject = {
+  [key: string]: ColumnType
+}

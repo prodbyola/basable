@@ -11,6 +11,9 @@ import {
   BasableFilter,
   TABLE_FILTER_OPERATORS,
   FilterInput,
+  ColumnTypeObject,
+  buildFilterQuery,
+  extractColumnTypes,
 } from "../../utils";
 import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
@@ -34,27 +37,6 @@ type TableQueryOpts = {
   columns?: string[]
 }
 
-const buildFilterQuery = (ft: FilterInput): BasableFilter => {
-  const label = ft.operatorLabel;
-  let value = ft.operatorValue;
-
-  if (["LIKE", "NOT_LIKE"].includes(label)) value = `${value}%`;
-  else if (["LIKE_SINGLE", "NOT_LIKE_SINGLE"].includes(label))
-    value = `_${value}%`;
-  else if (["RANGE", "NOT_RANGE"].includes(label))
-    value = `('${value}' AND '${ft.endValue}')`;
-
-  const operator = TABLE_FILTER_OPERATORS[label];
-  const combinator = ft.combinator.toUpperCase()
-  return  {
-    column: ft.column,
-    combinator,
-    expression: {
-      [operator]: value
-    }
-  };
-};
-
 const DatabaseTable = () => {
   const request = useNetworkRequest();
   const { tableID } = useParams();
@@ -77,6 +59,7 @@ const DatabaseTable = () => {
   );
   const [allColumns, setAllColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
+  const [columnTypes, setColumnTypes] = React.useState<ColumnTypeObject[]>([])
 
   const defaultUTD: UpdateTableData = {
     columns: [],
@@ -229,6 +212,8 @@ const DatabaseTable = () => {
         data: dataQuery
       })) as TableRow[];
 
+      const cts = extractColumnTypes(rows[0])
+      setColumnTypes(cts)
       setRows(rows);
       setTableLoading(false);
     } catch (err: any) {
@@ -342,6 +327,7 @@ const DatabaseTable = () => {
         open={openFiltering}
         columnNames={allColumns.map((col) => col.name)}
         tableFilters={filters}
+        columnTypes={columnTypes}
         onHideDialog={() => setOpenFiltering(false)}
         onUpdateFilters={(newFilters) => {
           setOpenFiltering(false)

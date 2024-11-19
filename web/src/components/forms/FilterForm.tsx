@@ -8,6 +8,8 @@ import {
   TextField,
 } from "@mui/material";
 import {
+  ColumnType,
+  ColumnTypeObject,
   FILTER_OPERATOR_LABELS,
   FilterInput,
   FilterOperatorLabel,
@@ -17,20 +19,40 @@ import AddIcon from "@mui/icons-material/Add";
 
 type FilterFormProps = {
   columnNames: string[];
-  defaultFilter: FilterInput,
+  defaultFilter: FilterInput;
+  columnTypes: ColumnTypeObject[];
   onInsertFilter: (filter: FilterInput) => void;
 };
 
-const FilterForm = ({ columnNames, defaultFilter, onInsertFilter }: FilterFormProps) => {
+const FilterForm = ({
+  columnNames,
+  defaultFilter,
+  columnTypes,
+  onInsertFilter,
+}: FilterFormProps) => {
   const [filter, setTableFilter] = useState(defaultFilter);
+  const [fieldType, setFieldType] = useState("text");
 
   const updateFilter = (filter: FilterInput) =>
     setTableFilter(JSON.parse(JSON.stringify(filter)));
+
+  const getColumnType = (columnName: string) => {
+    const ct = columnTypes.find((ct) => ct[columnName] !== undefined);
+    if (ct) return ct[columnName];
+  };
+
+  const getFieldType = (ct: ColumnType) => {
+    if (["Int", "UInt"].includes(ct)) return "number";
+    return "text";
+  };
 
   const changeFilterColumn = (evt: SelectChangeEvent<string>) => {
     const {
       target: { value },
     } = evt;
+
+    const columnType = getColumnType(value);
+    if (columnType) setFieldType(getFieldType(columnType));
 
     filter.column = value;
     updateFilter(filter);
@@ -100,6 +122,7 @@ const FilterForm = ({ columnNames, defaultFilter, onInsertFilter }: FilterFormPr
         value={filter.operatorValue}
         onChange={onValueChange}
         label="Filter Value"
+        type={fieldType}
         fullWidth
       />
       <div className="formAction">

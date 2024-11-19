@@ -12,7 +12,7 @@ import {
   Tab,
   Tabs,
 } from "@mui/material";
-import { FilterInput, sampleFilter } from "../../utils";
+import { ColumnTypeObject, FilterInput, sampleFilter } from "../../utils";
 import { useState } from "react";
 import ShowFilterList from "./ShowFilterList";
 import FilterForm from "../forms/FilterForm";
@@ -43,6 +43,7 @@ type RowFilteringProps = {
   open: boolean;
   columnNames: string[];
   tableFilters: FilterInput[];
+  columnTypes: ColumnTypeObject[]
   onHideDialog: () => void;
   onUpdateFilters: (filters: FilterInput[]) => void;
 };
@@ -56,6 +57,7 @@ const TableFiltering = ({
   open,
   columnNames,
   tableFilters,
+  columnTypes,
   onHideDialog,
   onUpdateFilters,
 }: RowFilteringProps) => {
@@ -118,6 +120,7 @@ const TableFiltering = ({
             columnNames={columnNames}
             onInsertFilter={insertFilter}
             defaultFilter={defaultFilter}
+            columnTypes={columnTypes}
           />
         </TabPanel>
       </DialogContent>
