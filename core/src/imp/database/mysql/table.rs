@@ -148,6 +148,8 @@ impl TableCRUD for MySqlTable {
         let query = opts.try_into()?;
         let sql = db.generate_sql(query)?;
 
+        println!("sql {sql}");
+
         let conn = self.connector();
         let rows = conn.exec_query(&sql)?;
 

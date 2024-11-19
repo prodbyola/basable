@@ -20,6 +20,8 @@ pub enum FilterExpression {
     Lt(String),
     Gte(String),
     Lte(String),
+    Contains(String),
+    NotContains(String),
     Like(String),
     NotLike(String),
     LikeSingle(String),
@@ -28,8 +30,8 @@ pub enum FilterExpression {
     NotRegex(String),
     Btw(String, String),
     NotBtw(String, String),
-    Contains(Vec<String>),
-    NotContains(Vec<String>),
+    Includes(Vec<String>),
+    NotInclude(Vec<String>),
 
     #[default]
     Null,
@@ -46,6 +48,8 @@ impl Display for FilterExpression {
             FilterExpression::Lt(v) => format!("< '{}'", escape_special_characters(v)),
             FilterExpression::Gte(v) => format!(">= '{}'", escape_special_characters(v)),
             FilterExpression::Lte(v) => format!("<= '{}'", escape_special_characters(v)),
+            FilterExpression::Contains(v) => format!("REGEXP \\b{}\\b", escape_special_characters(v)),
+            FilterExpression::NotContains(v) => format!("NOT REGEXP \\b{}\\b", escape_special_characters(v)),
             FilterExpression::Like(v) => format!("LIKE '{}%'", escape_special_characters(v)),
             FilterExpression::NotLike(v) => format!("NOT LIKE '{}%'", escape_special_characters(v)),
             FilterExpression::LikeSingle(v) => format!("LIKE '_{}%'", escape_special_characters(v)),
@@ -54,13 +58,13 @@ impl Display for FilterExpression {
             FilterExpression::NotRegex(v) => format!("NOT REGEXP '{}'", escape_special_characters(v)),
             FilterExpression::Btw(start, end) => format!("BETWEEN ('{}' AND '{}')", escape_special_characters(start), escape_special_characters(end)),
             FilterExpression::NotBtw(start, end) => format!("NOT BETWEEN ('{}' AND '{}')", escape_special_characters(start), escape_special_characters(end)),
-            FilterExpression::Contains(values) => {
+            FilterExpression::Includes(values) => {
                 let v: Vec<String> = values.iter().map(|v| escape_special_characters(v)).collect();
                 let v = v.join(", ");
 
                 format!("IN ({v})")
             }
-            FilterExpression::NotContains(values) => {
+            FilterExpression::NotInclude(values) => {
                 let v: Vec<String> = values.iter().map(|v| escape_special_characters(v)).collect();
                 let v = v.join(", ");
 
@@ -94,7 +98,7 @@ impl Display for Filter {
             FilterCombinator::BASE => ""
         };
 
-        write!(f, "{comb} {} {}", self.column, self.expression)
+        write!(f, "{comb} `{}` {}", self.column, self.expression)
     }
 }
 

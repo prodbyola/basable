@@ -4,20 +4,21 @@ import { FilterInput, sampleFilter } from "../../utils";
 type FilterListProps = {
   filters: FilterInput[];
   onAddNewFilter: (filter: FilterInput) => void;
+  onRemoveFilter: (index: number) => void
 };
 
-const FilterList = ({ filters, onAddNewFilter }: FilterListProps) => {
+const FilterList = ({ filters, onAddNewFilter, onRemoveFilter }: FilterListProps) => {
   return (
     <>
       <div className="filterList">
         {filters.map((filter, index) => (
-          <div className="filterItem">
+          <div key={index} className="filterItem">
             <p>{index + 1}</p>
+            <p>{filter.combinator.toUpperCase()}</p>
             <p>{filter.column}</p>
             <p className="filterOperator">{filter.operatorLabel}</p>
             <p>{filter.operatorValue}</p>
-            <p>{filter.combinator.toUpperCase()}</p>
-            <div className="deleteIcon">
+            <div className="deleteIcon" onClick={ () => onRemoveFilter(index) }>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 height="24px"
@@ -36,17 +37,17 @@ const FilterList = ({ filters, onAddNewFilter }: FilterListProps) => {
         <ButtonGroup sx={{ float: "inline-end" }}>
           <Button
             onClick={() =>
-              onAddNewFilter({ ...sampleFilter, combinator: "and" })
-            }
-          >
-            AND
-          </Button>
-          <Button
-            onClick={() =>
               onAddNewFilter({ ...sampleFilter, combinator: "or" })
             }
           >
             OR
+          </Button>
+          <Button
+            onClick={() =>
+              onAddNewFilter({ ...sampleFilter, combinator: "and" })
+            }
+          >
+            AND
           </Button>
         </ButtonGroup>
       </div>

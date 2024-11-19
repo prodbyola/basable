@@ -50,7 +50,7 @@ const buildFilterQuery = (ft: FilterInput): BasableFilter => {
     column: ft.column,
     combinator,
     expression: {
-      [operator.key]: value
+      [operator]: value
     }
   };
 };
@@ -245,7 +245,7 @@ const DatabaseTable = () => {
 
   React.useEffect(() => {
     if (tableID) loadData();
-  }, [request, tableID]);
+  }, [request, tableID, filters]);
 
   if (tableLoading) return <div>Loading</div>;
 
@@ -346,8 +346,7 @@ const DatabaseTable = () => {
         onUpdateFilters={(newFilters) => {
           setOpenFiltering(false)
           if (newFilters !== filters) {
-            setFilters([...newFilters]);
-            loadData();
+            setFilters(newFilters);
           }
         }}
       />

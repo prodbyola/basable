@@ -71,78 +71,26 @@ export type UpdateTableData = {
 };
 
 export const TABLE_FILTER_OPERATORS = {
-  EQUAL: {
-    symbol: "=",
-    key: "Eq",
-  },
-  NOT_EQUAL: {
-    symbol: "!=",
-    key: "NotEq",
-  },
-  GREATER_THAN: {
-    symbol: ">",
-    key: "Gt",
-  },
-  LESS_THAN: {
-    symbol: "<",
-    key: "Lt",
-  },
-  GREATER_OR_EQUAL: {
-    symbol: ">=",
-    key: "Gte",
-  },
-  LESS_OR_EQUAL: {
-    symbol: "<=",
-    key: "Lte",
-  },
-  LIKE: {
-    symbol: "LIKE",
-    key: "Like",
-  },
-  NOT_LIKE: {
-    symbol: "NOT LIKE",
-    key: "NotLike",
-  },
-  LIKE_SINGLE: {
-    symbol: "LIKE",
-    key: "LikeSingle",
-  },
-  NOT_LIKE_SINGLE: {
-    symbol: "NOT LIKE",
-    key: "NotLikeSingle",
-  },
-  REGEX: {
-    symbol: "REGEXP",
-    key: "Regex",
-  },
-  NOT_REGEX: {
-    symbol: "NOT REGEXP",
-    key: "NotRegex",
-  },
-  RANGE: {
-    symbol: "BETWEEN",
-    key: "Btw",
-  },
-  NOT_RANGE: {
-    symbol: "NOT BETWEEN",
-    key: "NotBtw",
-  },
-  CONTAINS: {
-    symbol: "IN",
-    key: "Contains",
-  },
-  NOT_CONTAINS: {
-    symbol: "NOT IN",
-    key: "NotContains",
-  },
-  NULL: {
-    symbol: "IS NULL",
-    key: "Null",
-  },
-  NOT_NULL: {
-    symbol: "IS NOT NULL",
-    key: "NotNull",
-  },
+  EQUAL: "Eq",
+  NOT_EQUAL: "NotEq",
+  GREATER_THAN: "Gt",
+  LESS_THAN: "Lt",
+  GREATER_OR_EQUAL: "Gte",
+  LESS_OR_EQUAL: "Lte",
+  INCLUDES: "Includes",
+  NOT_INCLUDE: "NotInclude",
+  LIKE: "Like",
+  NOT_LIKE: "NotLike",
+  LIKE_SINGLE: "LikeSingle",
+  NOT_LIKE_SINGLE: "NotLikeSingle",
+  REGEX: "Regex",
+  NOT_REGEX: "NotRegex",
+  RANGE: "Btw",
+  NOT_RANGE: "NotBtw",
+  CONTAINS: "Contains",
+  NOT_CONTAINS: "NotContains",
+  NULL: "Null",
+  NOT_NULL: "NotNull",
 };
 
 export type FilterOperatorLabel = keyof typeof TABLE_FILTER_OPERATORS;

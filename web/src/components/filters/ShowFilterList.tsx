@@ -6,13 +6,23 @@ type ShowListProps = {
   filters: FilterInput[];
   onCreateFilter: () => void;
   onRequestNewFilter: (filter: FilterInput) => void;
+  onRemoveFilter: (index: number) => void;
 };
 
-const ShowFilterList = ({ filters, onCreateFilter, onRequestNewFilter }: ShowListProps) => {
+const ShowFilterList = ({
+  filters,
+  onCreateFilter,
+  onRequestNewFilter,
+  onRemoveFilter,
+}: ShowListProps) => {
   return (
     <div className="showFilterList">
       {filters.length ? (
-        <FilterList filters={filters} onAddNewFilter={ onRequestNewFilter } />
+        <FilterList
+          filters={filters}
+          onAddNewFilter={onRequestNewFilter}
+          onRemoveFilter={onRemoveFilter}
+        />
       ) : (
         <NoFilter onCreateFilter={onCreateFilter} />
       )}
