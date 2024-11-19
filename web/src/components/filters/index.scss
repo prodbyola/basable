@@ -11,18 +11,28 @@
     }
 
     .filterList {
+        margin-bottom: 24px;
+        
         .filterItem {
             display: inline-flex;
             width: 100%;
-            column-gap: 6px;
+            column-gap: 12px;
             align-items: center;
             padding: 0 8px;
-            box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
+            border-bottom: solid rgb(190, 190, 190) 1px;
             margin-bottom: 12px;
             
             p {
+                color: rgb(88, 88, 88);
+            }
+
+            .filterOperator {
                 font-weight: bold;
-                color: rgb(68, 68, 68);
+            }
+
+            .deleteIcon {
+                margin-left: auto;
+                cursor: pointer;
             }
         }
     }

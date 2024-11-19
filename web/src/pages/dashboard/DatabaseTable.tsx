@@ -344,6 +344,7 @@ const DatabaseTable = () => {
         tableFilters={filters}
         onHideDialog={() => setOpenFiltering(false)}
         onUpdateFilters={(newFilters) => {
+          setOpenFiltering(false)
           if (newFilters !== filters) {
             setFilters([...newFilters]);
             loadData();
