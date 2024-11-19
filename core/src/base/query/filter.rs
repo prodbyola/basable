@@ -2,6 +2,16 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
+fn escape_special_characters(input: &str) -> String {
+    input
+        .replace('\\', "\\\\") // Escape backslashes
+        .replace('"', "\\\"") // Escape double quotes
+        .replace('\'', "\\\'") // Escape single quotes
+        .replace('\n', "\\n") // Escape newline
+        .replace('\t', "\\t") // Escape tab
+        .replace('\r', "\\r") // Escape carriage return
+}
+
 #[derive(Deserialize, Serialize, Default)]
 pub enum FilterExpression {
     Eq(String),
@@ -30,28 +40,28 @@ pub enum FilterExpression {
 impl Display for FilterExpression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let op = match self {
-            FilterExpression::Eq(v) => format!("= `{v}`"),
-            FilterExpression::NotEq(v) => format!("!= `{v}`"),
-            FilterExpression::Gt(v) => format!("> `{v}`"),
-            FilterExpression::Lt(v) => format!("< `{v}`"),
-            FilterExpression::Gte(v) => format!(">= `{v}`"),
-            FilterExpression::Lte(v) => format!("<= `{v}`"),
-            FilterExpression::Like(v) => format!("LIKE `{v}%`"),
-            FilterExpression::NotLike(v) => format!("NOT LIKE `{v}%`"),
-            FilterExpression::LikeSingle(v) => format!("LIKE `_{v}%`"),
-            FilterExpression::NotLikeSingle(v) => format!("NOT LIKE `_{v}%`"),
-            FilterExpression::Regex(v) => format!("REGEXP `{v}`"),
-            FilterExpression::NotRegex(v) => format!("NOT REGEXP `{v}`"),
-            FilterExpression::Btw(start, end) => format!("BETWEEN (`{start}` AND `{end}`)"),
-            FilterExpression::NotBtw(start, end) => format!("NOT BETWEEN (`{start}` AND `{end}`)"),
+            FilterExpression::Eq(v) => format!("= '{}'", escape_special_characters(v)),
+            FilterExpression::NotEq(v) => format!("!= '{}'", escape_special_characters(v)),
+            FilterExpression::Gt(v) => format!("> '{}'", escape_special_characters(v)),
+            FilterExpression::Lt(v) => format!("< '{}'", escape_special_characters(v)),
+            FilterExpression::Gte(v) => format!(">= '{}'", escape_special_characters(v)),
+            FilterExpression::Lte(v) => format!("<= '{}'", escape_special_characters(v)),
+            FilterExpression::Like(v) => format!("LIKE '{}%'", escape_special_characters(v)),
+            FilterExpression::NotLike(v) => format!("NOT LIKE '{}%'", escape_special_characters(v)),
+            FilterExpression::LikeSingle(v) => format!("LIKE '_{}%'", escape_special_characters(v)),
+            FilterExpression::NotLikeSingle(v) => format!("NOT LIKE '_{}%'", escape_special_characters(v)),
+            FilterExpression::Regex(v) => format!("REGEXP '{}'", escape_special_characters(v)),
+            FilterExpression::NotRegex(v) => format!("NOT REGEXP '{}'", escape_special_characters(v)),
+            FilterExpression::Btw(start, end) => format!("BETWEEN ('{}' AND '{}')", escape_special_characters(start), escape_special_characters(end)),
+            FilterExpression::NotBtw(start, end) => format!("NOT BETWEEN ('{}' AND '{}')", escape_special_characters(start), escape_special_characters(end)),
             FilterExpression::Contains(values) => {
-                let v: Vec<String> = values.iter().map(|v| v.to_string()).collect();
+                let v: Vec<String> = values.iter().map(|v| escape_special_characters(v)).collect();
                 let v = v.join(", ");
 
                 format!("IN ({v})")
             }
             FilterExpression::NotContains(values) => {
-                let v: Vec<String> = values.iter().map(|v| v.to_string()).collect();
+                let v: Vec<String> = values.iter().map(|v| escape_special_characters(v)).collect();
                 let v = v.join(", ");
 
                 format!("NOT IN ({v})")
@@ -63,21 +73,6 @@ impl Display for FilterExpression {
         write!(f, "{}", op)
     }
 }
-
-// /// [FilterPredicate] is useful for filtering query columns by comparing the value of
-// /// [FilterPredicate::column] to the value given to the [FilterPredicate::operator]. Please
-// /// see [FilterOperator] for different comparison operations.
-// #[derive(Clone, Default)]
-// pub struct FilterPredicate {
-//     pub column: String,
-//     pub operator: FilterExpression,
-// }
-
-// impl Display for FilterPredicate {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         write!(f, "`{}` {}", self.column, self.operator)
-//     }
-// }
 
 #[derive(Deserialize, Serialize)]
 pub enum FilterCombinator {
@@ -108,6 +103,14 @@ pub struct FilterChain(Vec<Filter>);
 impl FilterChain {
     pub fn new() -> Self {
         FilterChain(Vec::new())
+    }
+
+    pub fn empty() -> FilterChain {
+        FilterChain(Vec::with_capacity(0))
+    }
+    
+    pub fn prefill(filters: Vec<Filter>) -> FilterChain {
+        FilterChain(filters)
     }
 
     pub fn add_one(&mut self, filter: Filter) {

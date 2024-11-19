@@ -26,6 +26,14 @@ import TableConfigForm from "../../components/forms/TableConfigForm";
 import TableFiltering from "../../components/filters";
 import { isAxiosError } from "axios";
 
+type TableQueryOpts = {
+  table: string
+  offset: number
+  row_count: number
+  filters?: BasableFilter[]
+  columns?: string[]
+}
+
 const buildFilterQuery = (ft: FilterInput): BasableFilter => {
   const label = ft.operatorLabel;
   let value = ft.operatorValue;
@@ -37,11 +45,12 @@ const buildFilterQuery = (ft: FilterInput): BasableFilter => {
     value = `('${value}' AND '${ft.endValue}')`;
 
   const operator = TABLE_FILTER_OPERATORS[label];
+  const combinator = ft.combinator.toUpperCase()
   return  {
     column: ft.column,
-    combinator: ft.combinator,
+    combinator,
     expression: {
-      [operator.key]: operator.symbol
+      [operator.key]: value
     }
   };
 };
@@ -176,7 +185,12 @@ const DatabaseTable = () => {
       setAllColumns(cols);
 
       let fcols = cols;
-      let dataQuery = `?table=${tableID}`;
+      const dataQuery: TableQueryOpts = {
+        table: tableID as string,
+        offset: 0,
+        row_count: tableConfig.items_per_page ?? 100,
+        filters: []
+      };
 
       // Add excluded columns to query
       const tc = tableConfigs.find((c) => c.name === tableID);
@@ -184,9 +198,9 @@ const DatabaseTable = () => {
         const excluded = tc.exclude_columns;
         if (excluded && excluded.length) {
           fcols = cols.filter((col) => !excluded.includes(col.name));
-          const selection = cols.map((col) => col.name).join(",");
+          const selection = cols.map((col) => col.name);
 
-          dataQuery += "&columns=" + selection;
+          dataQuery.columns = selection;
         }
 
         // if there's a unique column, always shift it to leftmost
@@ -206,14 +220,13 @@ const DatabaseTable = () => {
       // Add filters to query param
       if (filters.length) {
         const fs = filters.map((f) => buildFilterQuery(f));
-        const fj = fs.join(",");
-        console.log(fs, fj);
-        dataQuery = dataQuery + `&filters=${fj}`;
+        dataQuery.filters = fs;
       }
 
       const rows = (await request({
-        method: "get",
-        path: `tables/data/${tableID}` + dataQuery,
+        method: "post",
+        path: `tables/load-data/${tableID}`,
+        data: dataQuery
       })) as TableRow[];
 
       setRows(rows);

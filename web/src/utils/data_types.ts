@@ -160,7 +160,7 @@ export const FILTER_OPERATOR_LABELS = Object.keys(
  * Abstraction of query filtering in Basable
  */
 export type BasableFilter = {
-  combinator: FilterCombinator;
+  combinator: string;
   column: string;
   expression: { [key: string]: string };
 };

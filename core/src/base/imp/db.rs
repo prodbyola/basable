@@ -51,13 +51,6 @@ pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
 }
 
 pub trait QuerySqlParser {
-    // fn parse_filter_operator(expression: &FilterExpression) -> String
-    // where
-    //     Self: Sized,
-    // {
-    //     expression.to_string()
-    // }
-
     fn parse_filter(filter: &Filter) -> String
     where
         Self: Sized,

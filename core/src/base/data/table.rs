@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-
-use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -145,67 +143,12 @@ pub struct TableQueryOpts {
     pub row_count: usize,
 
     /// Query filters
-    pub filters: Option<Vec<String>>,
+    pub filters: Option<Vec<Filter>>,
 
     /// The columns(s) you want selected in the query. If set to `None` all fields
     /// will be selected.
     pub columns: Option<Vec<String>>,
 }
-
-// impl FromQueryParams for TableQueryOpts {
-//     fn from_query_params(params: HashMap<String, String>) -> Result<Self, AppError>
-//     where
-//         Self: Sized,
-//     {
-//         let table = params.get("table");
-//         let row_count = params.get("row_count");
-//         let offset = params.get("offset");
-//         let filters = params.get("filters");
-//         let columns = params.get("columns");
-
-//         match table {
-//             Some(table) => {
-//                 let row_count = match row_count {
-//                     Some(c) => c.parse::<usize>().map_err(|err| {
-//                         AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-//                     })?,
-//                     None => DEFAULT_ROWS_PER_PAGE,
-//                 };
-
-//                 let offset = match offset {
-//                     Some(c) => c.parse::<usize>().map_err(|err| {
-//                         AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-//                     })?,
-//                     None => 0,
-//                 };
-
-//                 let filters: Option<Vec<String>> =
-//                     filters.map(|s| s.split(",").map(|s| s.to_string()).collect());
-
-//                 let columns: Option<Vec<String>> =
-//                     columns.map(|s| s.split(",").map(|s| s.to_string()).collect());
-
-//                 let tqf = TableQueryOpts {
-//                     table: table.to_string(),
-//                     row_count,
-//                     offset,
-//                     filters,
-//                     columns,
-//                 };
-
-//                 Ok(tqf)
-//             }
-//             None => {
-//                 let err = AppError::HttpError(
-//                     StatusCode::EXPECTATION_FAILED,
-//                     "Table name must be provided".to_string(),
-//                 );
-
-//                 Err(err)
-//             }
-//         }
-//     }
-// }
 
 impl TryFrom<TableQueryOpts> for BasableQuery {
     type Error = AppError;
@@ -220,16 +163,10 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
         } = opts;
 
         let operation = QueryOperation::SelectData(columns);
-        let mut filter_chain = FilterChain::new();
-        if let Some(filters) = filters {
-            for s in filters {
-                let f: Filter = serde_json::from_str(&s).map_err(|err| {
-                    AppError::HttpError(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-                })?;
-
-                filter_chain.add_one(f);
-            }
-        }
+        let filter_chain = filters
+            .map_or(FilterChain::empty(), |filters| {
+                FilterChain::prefill(filters)
+            });
 
         let bq = BasableQuery {
             table,
