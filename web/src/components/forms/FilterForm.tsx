@@ -8,7 +8,6 @@ import {
   TextField,
 } from "@mui/material";
 import {
-  BasableFilter,
   FILTER_OPERATOR_LABELS,
   FilterInput,
   FilterOperatorLabel,
@@ -18,16 +17,11 @@ import AddIcon from "@mui/icons-material/Add";
 
 type FilterFormProps = {
   columnNames: string[];
+  defaultFilter: FilterInput,
   onInsertFilter: (filter: FilterInput) => void;
 };
 
-const FilterForm = ({ columnNames, onInsertFilter }: FilterFormProps) => {
-  const defaultFilter: FilterInput = {
-    combinator: "base",
-    column: "",
-    operatorLabel: "EQUAL",
-    operatorValue: "",
-  };
+const FilterForm = ({ columnNames, defaultFilter, onInsertFilter }: FilterFormProps) => {
   const [filter, setTableFilter] = useState(defaultFilter);
 
   const updateFilter = (filter: FilterInput) =>

@@ -12,7 +12,7 @@ import {
   Tab,
   Tabs,
 } from "@mui/material";
-import { BasableFilter, FilterInput } from "../../utils";
+import { FilterInput, sampleFilter } from "../../utils";
 import { useState } from "react";
 import ShowFilterList from "./ShowFilterList";
 import FilterForm from "../forms/FilterForm";
@@ -42,9 +42,9 @@ function TabPanel(props: TabPanelProps) {
 type RowFilteringProps = {
   open: boolean;
   columnNames: string[];
-  tableFilters: FilterInput[]
+  tableFilters: FilterInput[];
   onHideDialog: () => void;
-  onUpdateFilters: (filters: FilterInput[]) => void
+  onUpdateFilters: (filters: FilterInput[]) => void;
 };
 
 const a11yProps = (index: number) => ({
@@ -57,7 +57,7 @@ const TableFiltering = ({
   columnNames,
   tableFilters,
   onHideDialog,
-  onUpdateFilters
+  onUpdateFilters,
 }: RowFilteringProps) => {
   const [filters, setFilters] = useState<FilterInput[]>(tableFilters);
   const [tabValue, setTabValue] = useState(0);
@@ -69,6 +69,8 @@ const TableFiltering = ({
     setFilters([...filters]);
     setTabValue(0);
   };
+
+  const [defaultFilter, setDefaultFilter] = useState<FilterInput>(sampleFilter);
 
   return (
     <Dialog open={open}>
@@ -94,15 +96,27 @@ const TableFiltering = ({
           <ShowFilterList
             filters={filters}
             onCreateFilter={() => setTabValue(1)}
+            onRequestNewFilter={(filter) => {
+              setDefaultFilter(filter);
+              setTabValue(1);
+            }}
           />
         </TabPanel>
         <TabPanel value={tabValue} index={1}>
-          <FilterForm columnNames={columnNames} onInsertFilter={insertFilter} />
+          <FilterForm
+            columnNames={columnNames}
+            onInsertFilter={insertFilter}
+            defaultFilter={defaultFilter}
+          />
         </TabPanel>
       </DialogContent>
       {tabValue === 0 && (
         <DialogActions>
-          <Button onClick={() => onUpdateFilters(filters)} variant="outlined" size="large">
+          <Button
+            onClick={() => onUpdateFilters(filters)}
+            variant="outlined"
+            size="large"
+          >
             Save
           </Button>
         </DialogActions>

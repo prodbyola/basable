@@ -1,11 +1,12 @@
 import { Button, ButtonGroup } from "@mui/material";
-import { FilterInput } from "../../utils";
+import { FilterInput, sampleFilter } from "../../utils";
 
 type FilterListProps = {
   filters: FilterInput[];
+  onAddNewFilter: (filter: FilterInput) => void;
 };
 
-const FilterList = ({ filters }: FilterListProps) => {
+const FilterList = ({ filters, onAddNewFilter }: FilterListProps) => {
   return (
     <>
       <div className="filterList">
@@ -33,8 +34,20 @@ const FilterList = ({ filters }: FilterListProps) => {
       </div>
       <div className="addMoreFilter">
         <ButtonGroup sx={{ float: "inline-end" }}>
-          <Button>AND</Button>
-          <Button>OR</Button>
+          <Button
+            onClick={() =>
+              onAddNewFilter({ ...sampleFilter, combinator: "and" })
+            }
+          >
+            AND
+          </Button>
+          <Button
+            onClick={() =>
+              onAddNewFilter({ ...sampleFilter, combinator: "or" })
+            }
+          >
+            OR
+          </Button>
         </ButtonGroup>
       </div>
     </>

@@ -16,7 +16,7 @@
         .filterItem {
             display: inline-flex;
             width: 100%;
-            column-gap: 12px;
+            column-gap: 18px;
             align-items: center;
             padding: 0 8px;
             border-bottom: solid rgb(190, 190, 190) 1px;
@@ -24,6 +24,8 @@
             
             p {
                 color: rgb(88, 88, 88);
+                font-size: 1.08rem;
+                flex: 1;
             }
 
             .filterOperator {

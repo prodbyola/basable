@@ -5,13 +5,14 @@ import { NoFilter } from "./NoFilter";
 type ShowListProps = {
   filters: FilterInput[];
   onCreateFilter: () => void;
+  onRequestNewFilter: (filter: FilterInput) => void;
 };
 
-const ShowFilterList = ({ filters, onCreateFilter }: ShowListProps) => {
+const ShowFilterList = ({ filters, onCreateFilter, onRequestNewFilter }: ShowListProps) => {
   return (
     <div className="showFilterList">
       {filters.length ? (
-        <FilterList filters={filters} />
+        <FilterList filters={filters} onAddNewFilter={ onRequestNewFilter } />
       ) : (
         <NoFilter onCreateFilter={onCreateFilter} />
       )}
