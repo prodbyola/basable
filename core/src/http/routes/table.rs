@@ -12,11 +12,10 @@ use crate::{
     base::{
         column::ColumnList,
         data::table::{TableConfig, TableQueryOpts, TableSummaries, UpdateTableData},
-        imp::table::Table,
         AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
-    imp::database::mysql::table::MySqlTable,
+    imp::database::mysql::ColumnValue,
     AppError,
 };
 
@@ -72,7 +71,7 @@ pub(crate) async fn load_data(
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
     Json(filter): Json<TableQueryOpts>,
-) -> Result<Json<Vec<HashMap<String, <MySqlTable as Table>::ColumnValue>>>, AppError> {
+) -> Result<Json<Vec<HashMap<String, ColumnValue>>>, AppError> {
     let data = table.query_data(filter, &db)?;
     Ok(Json(data))
 }

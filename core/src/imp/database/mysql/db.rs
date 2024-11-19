@@ -18,7 +18,7 @@ use crate::{
     AppError,
 };
 
-use super::{table::MySqlTable, MySqlValue};
+use super::table::MySqlTable;
 
 pub(crate) struct MySqlDB {
     pub connector: ConnectorType,
@@ -99,7 +99,7 @@ impl MySqlDB {
 
 impl DB for MySqlDB {
     type Row = mysql::Row;
-    type ColumnValue = MySqlValue;
+    // type ColumnValue = ColumnValue;
 
     fn id(&self) -> &Uuid {
         &self.id

@@ -5,14 +5,14 @@ use crate::{
         column::{Column, ColumnList},
         data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
         imp::{
-            table::{Table, TableCRUD, TableColumn},
+            table::{Table, TableCRUD},
             ConnectorType, SharedDB,
         },
     },
     AppError,
 };
 
-use super::MySqlValue;
+use super::ColumnValue;
 
 pub(crate) struct MySqlTable {
     pub name: String,
@@ -21,7 +21,6 @@ pub(crate) struct MySqlTable {
 
 impl Table for MySqlTable {
     type Row = mysql::Row;
-    type ColumnValue = MySqlValue;
 
     fn new(name: String, conn: ConnectorType) -> Self
     where
@@ -144,11 +143,9 @@ impl TableCRUD for MySqlTable {
         &self,
         opts: TableQueryOpts,
         db: &SharedDB,
-    ) -> DataQueryResult<TableColumn, AppError> {
+    ) -> DataQueryResult<ColumnValue, AppError> {
         let query = opts.try_into()?;
         let sql = db.generate_sql(query)?;
-
-        println!("sql {sql}");
 
         let conn = self.connector();
         let rows = conn.exec_query(&sql)?;
@@ -157,7 +154,7 @@ impl TableCRUD for MySqlTable {
         let data = rows
             .iter()
             .map(|r| {
-                let mut map: HashMap<String, TableColumn> = HashMap::new();
+                let mut map: HashMap<String, ColumnValue> = HashMap::new();
 
                 for col in &cols {
                     if let Some(v) = r.get::<mysql::Value, &str>(col.name.as_str()) {

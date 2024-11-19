@@ -14,7 +14,7 @@ pub(crate) mod table;
 /// Dynamic [`DB`] type to be implemented across the app.
 pub(crate) type DbType = dyn DB<
     Row = <MySqlDB as DB>::Row,
-    ColumnValue = <MySqlDB as DB>::ColumnValue,
+    // ColumnValue = <MySqlDB as DB>::ColumnValue,
 >;
 
 /// Dynamic [`Connector`] type implemented across the app.
@@ -23,7 +23,6 @@ pub(crate) type ConnectorType = Arc<dyn Connector<Row = <MysqlConnector as Conne
 /// Dynamic [`Table`] type implemented across the app.
 pub(crate) type TableType = dyn Table<
     Row = <MySqlTable as Table>::Row,
-    ColumnValue = <MySqlTable as Table>::ColumnValue,
 >;
 
 /// A thread-safe sharable DB instance

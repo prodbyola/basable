@@ -15,7 +15,7 @@ pub type DBQueryResult<R, E> = Result<Vec<R>, E>;
 /// An abstraction of database connection.
 pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
     type Row;
-    type ColumnValue;
+    // type ColumnValue;
 
     fn id(&self) -> &Uuid;
 

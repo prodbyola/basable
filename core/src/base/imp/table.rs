@@ -5,17 +5,14 @@ use crate::{
         column::ColumnList,
         data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
     },
-    imp::database::mysql::table::MySqlTable,
+    imp::database::mysql::{table::MySqlTable, ColumnValue},
     AppError,
 };
 
 use super::{ConnectorType, SharedDB};
 
-pub(crate) type TableColumn = <MySqlTable as Table>::ColumnValue;
-
 pub(crate) trait Table: TableCRUD + Sync + Send {
     type Row;
-    type ColumnValue;
 
     /// Create a new [`Table`] and assign the given [`ConnectorType`].
     ///
@@ -58,7 +55,7 @@ pub(crate) trait TableCRUD {
         &self,
         filter: TableQueryOpts,
         db: &SharedDB,
-    ) -> DataQueryResult<TableColumn, AppError>;
+    ) -> DataQueryResult<ColumnValue, AppError>;
 
     fn update_data(&self, input: UpdateTableData) -> Result<(), AppError>;
 
