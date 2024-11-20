@@ -310,13 +310,11 @@ const DatabaseTable = () => {
   // When `filters` is updated, update `queryOpts.filters` which then trigggers
   // `loadData` function.
   React.useEffect(() => {
-    if (filters.length) {
-      const fs = filters.map((f) => buildFilterQuery(f));
-      setQueryOpts({
-        ...queryOpts,
-        filters: fs,
-      });
-    }
+    const fs = filters.map((f) => buildFilterQuery(f));
+    setQueryOpts({
+      ...queryOpts,
+      filters: fs,
+    });
   }, [filters]);
 
   // Everytime we update `queryOpts`, we trigger `loadData` function.
