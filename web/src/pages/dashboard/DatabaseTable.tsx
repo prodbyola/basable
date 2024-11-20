@@ -424,6 +424,7 @@ const DatabaseTable = () => {
         columns={filteredColumns.map((col) => col.name)}
         onHideDialog={() => setOpenTableConfig(false)}
         onConfigUpdated={(config) => {
+          setOpenTableConfig(false)
           if (config !== tableConfig) updateConfigStates(config as TableConfig);
         }}
       />
