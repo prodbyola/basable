@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{Response, StatusCode},
     routing::{delete, get, patch, post},
     Json, Router,
 };
@@ -64,7 +64,7 @@ pub(crate) async fn get_columns(
 }
 
 #[debug_handler]
-pub(crate) async fn load_data(
+pub(crate) async fn query_data(
     Path(_): Path<String>,
     AuthExtractor(_): AuthExtractor,
     DbExtractor(db): DbExtractor,
@@ -74,6 +74,19 @@ pub(crate) async fn load_data(
 ) -> Result<Json<Vec<HashMap<String, ColumnValue>>>, AppError> {
     let data = table.query_data(filter, &db)?;
     Ok(Json(data))
+}
+
+#[debug_handler]
+pub(crate) async fn query_result_count(
+    Path(_): Path<String>,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(db): DbExtractor,
+    TableExtractor(table): TableExtractor,
+    State(_): State<AppState>,
+    Json(filter): Json<TableQueryOpts>,
+) -> Result<Json<usize>, AppError> {
+    let count = table.query_result_count(filter, &db)?;
+    Ok(Json(count))
 }
 
 #[debug_handler]
@@ -144,7 +157,8 @@ pub(super) fn table_routes() -> Router<AppState> {
         .route("/configurations/:table_name", get(get_configuration))
         .route("/configurations/:table_name", patch(save_configuration))
         .route("/columns/:table_name", get(get_columns))
-        .route("/load-data/:table_name", post(load_data))
+        .route("/query-data/:table_name", post(query_data))
+        .route("/query-result-count/:table_name", post(query_result_count))
         .route("/data/:table_name", post(insert_data))
         .route("/data/:table_name", patch(update_data))
         .route("/data/:table_name", delete(delete_data))

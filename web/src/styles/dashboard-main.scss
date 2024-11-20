@@ -143,9 +143,24 @@ $table_border: variables.$grey_200 solid 1px;
   }
 }
 
+.tableNavigation {
+  margin-top: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: 12px;
+  margin-bottom: 8px;
+
+  .queryCount {
+    font-size: 1.6rem;
+    margin: 0;
+  }
+}
+
 .displayTable.databaseTable {
   max-height: calc(100vh - 230px);
   overflow: scroll;
+  margin-top: 0;
 
   table {
     border-radius: 0px;

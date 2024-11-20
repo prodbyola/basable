@@ -57,6 +57,13 @@ pub(crate) trait TableCRUD {
         db: &SharedDB,
     ) -> DataQueryResult<ColumnValue, AppError>;
 
+    /// Get total size of returnable data based on [TableQueryOpts].
+    fn query_result_count(
+        &self,
+        filter: TableQueryOpts,
+        db: &SharedDB,
+    ) -> Result<usize, AppError>;
+
     fn update_data(&self, input: UpdateTableData) -> Result<(), AppError>;
 
     fn delete_data(&self, col: String, value: String) -> Result<(), AppError>;

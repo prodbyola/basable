@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     base::query::{
         filter::{Filter, FilterChain},
-        BasableQuery, QueryOperation,
+        BasableQuery, QueryCommand,
     },
     AppError,
 };
@@ -162,7 +162,7 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
             columns,
         } = opts;
 
-        let operation = QueryOperation::SelectData(columns);
+        let operation = QueryCommand::SelectData(columns);
         let filter_chain = filters
             .map_or(FilterChain::empty(), |filters| {
                 FilterChain::prefill(filters)
@@ -170,7 +170,7 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
 
         let bq = BasableQuery {
             table,
-            operation,
+            command: operation,
             row_count: Some(row_count),
             offset: Some(offset),
             filters: filter_chain,

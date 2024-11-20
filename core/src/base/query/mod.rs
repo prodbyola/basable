@@ -4,11 +4,11 @@ use filter::FilterChain;
 
 pub mod filter;
 
-pub enum QueryOperation {
+pub enum QueryCommand {
     SelectData(Option<Vec<String>>),
 }
 
-impl Default for QueryOperation {
+impl Default for QueryCommand {
     fn default() -> Self {
         Self::SelectData(None)
     }
@@ -33,7 +33,7 @@ impl Display for QueryOrder {
 #[derive(Default)]
 pub struct BasableQuery {
     pub table: String,
-    pub operation: QueryOperation,
+    pub command: QueryCommand,
     pub filters: FilterChain,
     pub row_count: Option<usize>,
     pub offset: Option<usize>,

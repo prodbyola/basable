@@ -8,6 +8,7 @@ use crate::{
             table::{Table, TableCRUD},
             ConnectorType, SharedDB,
         },
+        query::{filter::FilterChain, BasableQuery, QueryCommand},
     },
     AppError,
 };
@@ -167,6 +168,31 @@ impl TableCRUD for MySqlTable {
             .collect();
 
         Ok(data)
+    }
+
+    fn query_result_count(&self, opts: TableQueryOpts, db: &SharedDB) -> Result<usize, AppError> {
+        let query = BasableQuery {
+            table: opts.table,
+            command: QueryCommand::SelectData(Some(vec!["COUNT(*)".to_string()])),
+            filters: opts
+                .filters
+                .map_or(FilterChain::empty(), |fs| FilterChain::prefill(fs)),
+            ..Default::default()
+        };
+
+        let sql = db.generate_sql(query)?;
+
+        let conn = self.connector();
+        let rows = conn.exec_query(&sql)?;
+
+        let count = rows
+            .first()
+            .map(|row| row
+                .get::<usize, &str>("COUNT(*)")
+                .unwrap_or_default()
+            ).unwrap_or_default();
+
+        Ok(count)
     }
 
     fn insert_data(&self, input: HashMap<String, String>) -> Result<(), AppError> {

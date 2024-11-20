@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::base::data::table::TableSummaries;
 use crate::base::query::filter::{Filter, FilterChain};
-use crate::base::query::{BasableQuery, QueryOperation};
+use crate::base::query::{BasableQuery, QueryCommand};
 use crate::imp::database::mysql::db::MySqlDB;
 use crate::imp::database::DbServerDetails;
 use crate::AppError;
@@ -73,7 +73,7 @@ pub trait QuerySqlParser {
     fn generate_sql(&self, query: BasableQuery) -> Result<String, AppError> {
         let BasableQuery {
             table,
-            operation,
+            command: operation,
             filters,
             row_count,
             offset,
@@ -85,7 +85,7 @@ pub trait QuerySqlParser {
 
         // Parse query operation type
         let mut sql = match operation {
-            QueryOperation::SelectData(cols) => {
+            QueryCommand::SelectData(cols) => {
                 let select_cols = cols.map_or_else(
                     || "*".to_string(),
                     |list| {
@@ -93,7 +93,13 @@ pub trait QuerySqlParser {
                             return "*".to_string()
                         }
                         
-                        let s: Vec<String> = list.iter().map(|s| format!("`{s}`")).collect();
+                        let s: Vec<String> = list.iter().map(|s| {
+                            if s.to_lowercase() == "count(*)" {
+                                return format!("{s}")
+                            }
+
+                            format!("`{s}`")
+                        }).collect();
                         s.join(", ")
                     },
                 );
@@ -143,7 +149,7 @@ pub trait QuerySqlParser {
 #[cfg(test)]
 mod tests {
     use crate::{
-        base::query::{filter::FilterChain, BasableQuery, QueryOperation},
+        base::query::{filter::FilterChain, BasableQuery, QueryCommand},
         tests::common::create_test_db,
         AppError,
     };
@@ -154,7 +160,7 @@ mod tests {
 
         let query = BasableQuery {
             table: "vhchartz".to_string(),
-            operation: QueryOperation::SelectData(None),
+            command: QueryCommand::SelectData(None),
             filters,
             row_count: Some(100),
             ..Default::default()

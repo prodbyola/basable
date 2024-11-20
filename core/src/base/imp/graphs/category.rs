@@ -5,7 +5,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
-    base::query::{BasableQuery, QueryOperation},
+    base::query::{BasableQuery, QueryCommand},
     AppError,
 };
 
@@ -105,11 +105,11 @@ impl From<CategoryGraphOpts> for BasableQuery {
         } = value;
 
         let selections = vec!["COUNT(*) as COUNT".to_string(), target_column.clone()];
-        let operation = QueryOperation::SelectData(Some(selections));
+        let operation = QueryCommand::SelectData(Some(selections));
 
         BasableQuery {
             table,
-            operation,
+            command: operation,
             group_by: Some(vec![target_column]),
             row_count: limit,
             ..Default::default()

@@ -9,7 +9,6 @@ import {
   getTableLabel,
   UpdateTableData,
   BasableFilter,
-  TABLE_FILTER_OPERATORS,
   FilterInput,
   ColumnTypeObject,
   buildFilterQuery,
@@ -28,6 +27,7 @@ import TableRefresh from "../../components/common/icons/RefreshIcon";
 import TableConfigForm from "../../components/forms/TableConfigForm";
 import TableFiltering from "../../components/filters";
 import { isAxiosError } from "axios";
+import TableNavigator from "../../components/table/Navigator";
 
 type TableQueryOpts = {
   table: string;
@@ -55,6 +55,13 @@ const DatabaseTable = () => {
   };
 
   const [queryOpts, setQueryOpts] = React.useState(defaultQueryOpts);
+  const [queryCount, setQueryCount] = React.useState(0);
+  const [ navPage, setNavPage ] = React.useState(0)
+  const totalPages = React.useMemo(() => {
+    const ps = queryCount / queryOpts.row_count
+
+    return Math.ceil(ps)
+  }, [queryCount, queryOpts])
 
   const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
@@ -78,6 +85,23 @@ const DatabaseTable = () => {
   const [utd, setUTD] = React.useState(defaultUTD);
 
   const [tableLoading, setTableLoading] = React.useState(false);
+
+  const navigateTable = (to: 'prev' | 'next') => {
+    const rowCount = queryOpts.row_count 
+    const dest = to === 'next' ? navPage + 1 : navPage - 1
+    const offset = rowCount * dest
+
+    if(dest < 0 || (dest + 1) === totalPages) {
+      return
+    }
+
+    setQueryOpts({
+      ...queryOpts,
+      offset
+    })
+    
+    setNavPage(dest)
+  }
 
   const getColumnValue = (name: string, row: TableRow) => {
     const o = row[name];
@@ -223,12 +247,21 @@ const DatabaseTable = () => {
    */
   const loadData = async () => {
     setTableLoading(true);
-    console.log('loading data')
 
     try {
+      if(navPage === 0) {
+        const count = (await request({
+          method: "post",
+          path: `tables/query-result-count/${tableID}`,
+          data: queryOpts,
+        })) as number;
+  
+        setQueryCount(count)
+      }
+
       const rows = (await request({
         method: "post",
-        path: `tables/load-data/${tableID}`,
+        path: `tables/query-data/${tableID}`,
         data: queryOpts,
       })) as TableRow[];
 
@@ -238,7 +271,6 @@ const DatabaseTable = () => {
       setTableLoading(false);
     } catch (err: any) {
       setTableLoading(false);
-
       let msg = err.message;
       if (isAxiosError(err)) {
         msg = err.response?.data;
@@ -250,10 +282,11 @@ const DatabaseTable = () => {
 
   React.useEffect(() => {
     if (tableID) {
+      setNavPage(0)
       setTableLoading(true)
       loadColumns();
     }
-  }, [request, tableID]);
+  }, [tableID]);
 
   // Everytime `tableConfig` is updated, we update `queryOpts` and `filteredColumns`.
   React.useEffect(() => {
@@ -344,6 +377,8 @@ const DatabaseTable = () => {
           </Typography>
         </div>
       )}
+
+      <TableNavigator count={queryCount} totalPages={totalPages} currentPage={navPage} onNavigate={navigateTable} />
       <section className="displayTable dashboardDisplay databaseTable">
         <table>
           <thead>
