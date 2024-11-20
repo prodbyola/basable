@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use axum::{
     extract::{Path, Query, State},
-    http::{Response, StatusCode},
+    http::StatusCode,
     routing::{delete, get, patch, post},
     Json, Router,
 };
