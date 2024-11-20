@@ -73,6 +73,8 @@ export type UpdateTableData = {
 export const TABLE_FILTER_OPERATORS = {
   EQUAL: "Eq",
   NOT_EQUAL: "NotEq",
+  CONTAINS: "Contains",
+  NOT_CONTAINS: "NotContains",
   GREATER_THAN: "Gt",
   LESS_THAN: "Lt",
   GREATER_OR_EQUAL: "Gte",
@@ -87,8 +89,6 @@ export const TABLE_FILTER_OPERATORS = {
   NOT_REGEX: "NotRegex",
   RANGE: "Btw",
   NOT_RANGE: "NotBtw",
-  CONTAINS: "Contains",
-  NOT_CONTAINS: "NotContains",
   NULL: "Null",
   NOT_NULL: "NotNull",
 };

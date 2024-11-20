@@ -30,23 +30,32 @@ import TableFiltering from "../../components/filters";
 import { isAxiosError } from "axios";
 
 type TableQueryOpts = {
-  table: string
-  offset: number
-  row_count: number
-  filters?: BasableFilter[]
-  columns?: string[]
-}
+  table: string;
+  offset: number;
+  row_count: number;
+  filters?: BasableFilter[];
+  columns?: string[];
+};
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
   const { tableID } = useParams();
 
   const tableConfigs = useStore((state) => state.tableConfigs);
-  const showAlert = useStore((state) => state.showAlert);
-
   const [tableConfig, setTableConfig] = React.useState<Partial<TableConfig>>(
     {}
   );
+  const showAlert = useStore((state) => state.showAlert);
+
+  const defaultQueryOpts: TableQueryOpts = {
+    table: tableID as string,
+    offset: 0,
+    row_count: tableConfig.items_per_page ?? 100,
+    filters: [],
+  };
+
+  const [queryOpts, setQueryOpts] = React.useState(defaultQueryOpts);
+
   const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
@@ -59,7 +68,7 @@ const DatabaseTable = () => {
   );
   const [allColumns, setAllColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
-  const [columnTypes, setColumnTypes] = React.useState<ColumnTypeObject[]>([])
+  const [columnTypes, setColumnTypes] = React.useState<ColumnTypeObject[]>([]);
 
   const defaultUTD: UpdateTableData = {
     columns: [],
@@ -122,6 +131,10 @@ const DatabaseTable = () => {
     setUTD({ ...utd });
   };
 
+  /**
+   * Updates `tableCOnfig` and all related dependencies. 
+   * @param config - The new config value
+   */
   const updateConfigStates = (config: TableConfig) => {
     setTableConfig(config);
     setHasUniqueColumn(typeof config.pk_column === "string");
@@ -135,6 +148,10 @@ const DatabaseTable = () => {
     }
   };
 
+  /**
+   * Calls api endpoint for updating all data changes.
+   * @returns 
+   */
   const updateData = async () => {
     if (!utd.unique_values.length) return;
 
@@ -156,64 +173,63 @@ const DatabaseTable = () => {
     }
   };
 
+  /**
+   * The initial function we call to retrieve table columns and initialize
+   * state preludes.
+   */
+  const loadColumns = async () => {
+    const cols = (await request({
+      method: "get",
+      path: "tables/columns/" + tableID,
+    })) as TableColumn[];
+
+    setAllColumns(cols);
+
+    let fcols = cols;
+    // Add excluded columns to query
+    const tc = tableConfigs.find((c) => c.name === tableID);
+    if (tc) {
+      const excluded = tc.exclude_columns;
+      if (excluded && excluded.length) {
+        fcols = cols.filter((col) => !excluded.includes(col.name));
+        const selection = cols.map((col) => col.name);
+
+        setQueryOpts({
+          ...defaultQueryOpts,
+          columns: selection,
+        });
+      }
+
+      // if there's a unique column, always shift it to leftmost
+      if (tc.pk_column) {
+        const pkc = fcols.find((col) => col.name === tc.pk_column);
+        if (pkc) {
+          const i = fcols.indexOf(pkc);
+          fcols.splice(i, 1);
+          fcols.splice(0, 0, pkc);
+        }
+      }
+
+      updateConfigStates(tc);
+    }
+    setFilteredColumns(fcols);
+  };
+
+  /**
+   * This function loads table data based on options set for `queryOpts`.
+   */
   const loadData = async () => {
     setTableLoading(true);
 
     try {
-      const cols = (await request({
-        method: "get",
-        path: "tables/columns/" + tableID,
-      })) as TableColumn[];
-
-      setAllColumns(cols);
-
-      let fcols = cols;
-      const dataQuery: TableQueryOpts = {
-        table: tableID as string,
-        offset: 0,
-        row_count: tableConfig.items_per_page ?? 100,
-        filters: []
-      };
-
-      // Add excluded columns to query
-      const tc = tableConfigs.find((c) => c.name === tableID);
-      if (tc) {
-        const excluded = tc.exclude_columns;
-        if (excluded && excluded.length) {
-          fcols = cols.filter((col) => !excluded.includes(col.name));
-          const selection = cols.map((col) => col.name);
-
-          dataQuery.columns = selection;
-        }
-
-        // if there's a unique column, always shift it to leftmost
-        if (tc.pk_column) {
-          const pkc = fcols.find((col) => col.name === tc.pk_column);
-          if (pkc) {
-            const i = fcols.indexOf(pkc);
-            fcols.splice(i, 1);
-            fcols.splice(0, 0, pkc);
-          }
-        }
-
-        updateConfigStates(tc);
-      }
-      setFilteredColumns(fcols);
-
-      // Add filters to query param
-      if (filters.length) {
-        const fs = filters.map((f) => buildFilterQuery(f));
-        dataQuery.filters = fs;
-      }
-
       const rows = (await request({
         method: "post",
         path: `tables/load-data/${tableID}`,
-        data: dataQuery
+        data: queryOpts,
       })) as TableRow[];
 
-      const cts = extractColumnTypes(rows[0])
-      setColumnTypes(cts)
+      const cts = extractColumnTypes(rows[0]);
+      setColumnTypes(cts);
       setRows(rows);
       setTableLoading(false);
     } catch (err: any) {
@@ -229,8 +245,46 @@ const DatabaseTable = () => {
   };
 
   React.useEffect(() => {
-    if (tableID) loadData();
-  }, [request, tableID, filters]);
+    if (tableID) {
+      loadColumns();
+    }
+  }, [request, tableID]);
+
+  // Everytime `tableConfig` is updated, we update `queryOpts` and `filteredColumns`.
+  React.useEffect(() => {
+    const tc = tableConfig;
+    const cols = allColumns;
+
+    const excluded = tc.exclude_columns;
+    if (excluded && excluded.length) {
+      const fcols = cols.filter((col) => !excluded.includes(col.name));
+      const selection = cols.map((col) => col.name);
+
+      setQueryOpts({
+        ...queryOpts,
+        columns: selection,
+      });
+
+      setFilteredColumns([...fcols]);
+    }
+  }, [tableConfig]);
+
+  // When `filters` is updated, update `queryOpts.filters` which then trigggers
+  // `loadData` function.
+  React.useEffect(() => {
+    if (filters.length) {
+      const fs = filters.map((f) => buildFilterQuery(f));
+      setQueryOpts({
+        ...queryOpts,
+        filters: fs,
+      });
+    }
+  }, [filters]);
+
+  // Everytime we update `queryOpts`, we trigger `loadData` function.
+  React.useEffect(() => {
+    loadData();
+  }, [queryOpts]);
 
   if (tableLoading) return <div>Loading</div>;
 
@@ -320,7 +374,7 @@ const DatabaseTable = () => {
         columns={allColumns.map((col) => col.name)}
         onHideDialog={() => setOpenTableConfig(false)}
         onConfigUpdated={(config) => {
-          if (config !== tableConfig) loadData();
+          if (config !== tableConfig) updateConfigStates(config as TableConfig);
         }}
       />
       <TableFiltering
@@ -330,7 +384,7 @@ const DatabaseTable = () => {
         columnTypes={columnTypes}
         onHideDialog={() => setOpenFiltering(false)}
         onUpdateFilters={(newFilters) => {
-          setOpenFiltering(false)
+          setOpenFiltering(false);
           if (newFilters !== filters) {
             setFilters(newFilters);
           }
