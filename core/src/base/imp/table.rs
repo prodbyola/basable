@@ -5,7 +5,7 @@ use crate::{
         column::ColumnList,
         data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
     },
-    imp::database::mysql::{table::MySqlTable, ColumnValue},
+    imp::database::mysql::ColumnValue,
     AppError,
 };
 
@@ -58,11 +58,7 @@ pub(crate) trait TableCRUD {
     ) -> DataQueryResult<ColumnValue, AppError>;
 
     /// Get total size of returnable data based on [TableQueryOpts].
-    fn query_result_count(
-        &self,
-        filter: TableQueryOpts,
-        db: &SharedDB,
-    ) -> Result<usize, AppError>;
+    fn query_result_count(&self, filter: TableQueryOpts, db: &SharedDB) -> Result<usize, AppError>;
 
     fn update_data(&self, input: UpdateTableData) -> Result<(), AppError>;
 
@@ -92,7 +88,6 @@ mod tests {
 
         Ok(())
     }
-    
 }
 
 #[cfg(test)]
