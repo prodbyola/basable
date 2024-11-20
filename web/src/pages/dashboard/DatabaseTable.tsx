@@ -188,17 +188,20 @@ const DatabaseTable = () => {
     let fcols = cols;
     // Add excluded columns to query
     const tc = tableConfigs.find((c) => c.name === tableID);
+
     if (tc) {
       const excluded = tc.exclude_columns;
+      let selection: string[] = []
+
       if (excluded && excluded.length) {
         fcols = cols.filter((col) => !excluded.includes(col.name));
-        const selection = cols.map((col) => col.name);
-
-        setQueryOpts({
-          ...defaultQueryOpts,
-          columns: selection,
-        });
+        selection = cols.map((col) => col.name);
       }
+
+      setQueryOpts({
+        ...defaultQueryOpts,
+        columns: selection,
+      });
 
       // if there's a unique column, always shift it to leftmost
       if (tc.pk_column) {
@@ -246,6 +249,7 @@ const DatabaseTable = () => {
 
   React.useEffect(() => {
     if (tableID) {
+      setTableLoading(true)
       loadColumns();
     }
   }, [request, tableID]);

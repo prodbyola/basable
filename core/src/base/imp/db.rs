@@ -89,6 +89,10 @@ pub trait QuerySqlParser {
                 let select_cols = cols.map_or_else(
                     || "*".to_string(),
                     |list| {
+                        if list.is_empty() {
+                            return "*".to_string()
+                        }
+                        
                         let s: Vec<String> = list.iter().map(|s| format!("`{s}`")).collect();
                         s.join(", ")
                     },
