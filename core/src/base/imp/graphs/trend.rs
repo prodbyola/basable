@@ -6,8 +6,8 @@ use strum_macros::EnumIter;
 
 use crate::{
     base::query::{
-        filter::{Filter, FilterChain, FilterComparator, FilterOperator},
-        BasableQuery, QueryOperation, QueryOrder,
+        filter::{Filter, FilterChain, FilterCombinator, FilterExpression},
+        BasableQuery, QueryCommand, QueryOrder,
     },
     AppError,
 };
@@ -202,7 +202,7 @@ impl TryFrom<TrendGraphOpts> for BasableQuery {
 
         match analysis_type {
             TrendGraphType::IntraModel => {
-                let operation = QueryOperation::SelectData(Some(vec![xcol, ycol.clone()]));
+                let operation = QueryCommand::SelectData(Some(vec![xcol, ycol.clone()]));
 
                 let order = match order {
                     Some(order) => match order {
@@ -216,7 +216,7 @@ impl TryFrom<TrendGraphOpts> for BasableQuery {
 
                 let q = BasableQuery {
                     table,
-                    operation,
+                    command: operation,
                     order_by,
                     row_count: limit,
                     ..Default::default()
@@ -237,14 +237,15 @@ impl TryFrom<TrendGraphOpts> for BasableQuery {
                         format!("COUNT(y.{ycol}) AS {ycol}"),
                     ];
 
-                    let operation = QueryOperation::SelectData(Some(select_columns));
+                    let operation = QueryCommand::SelectData(Some(select_columns));
                     let left_join = format!("{foreign_table} y ON x.{target_col} = y.{ycol}");
 
                     let mut having = FilterChain::new();
-                    having.add_one(Filter::BASE(FilterComparator {
+                    having.add_one(Filter{
+                        combinator: FilterCombinator::BASE,
                         column: ycol.clone(),
-                        operator: FilterOperator::Gt("0".to_string()),
-                    }));
+                        expression: FilterExpression::Gt("0".to_string())
+                    });
 
                     let order = match order {
                         Some(order) => match order {
@@ -257,7 +258,7 @@ impl TryFrom<TrendGraphOpts> for BasableQuery {
                     let order_by = Some(order);
 
                     let q = BasableQuery {
-                        operation,
+                        command: operation,
                         having,
                         table: format!("{table} x"),
                         left_join: Some(left_join),

@@ -10,7 +10,7 @@ pub(crate) mod graphs;
 ///
 /// The `Value` is also used as a parameter to a prepared statement.
 #[derive(Clone, PartialEq, PartialOrd, Deserialize, Serialize)]
-pub(crate) enum MySqlValue {
+pub(crate) enum ColumnValue {
     NULL,
     Text(String),
     Int(i64),
@@ -23,20 +23,20 @@ pub(crate) enum MySqlValue {
     Time(bool, u32, u8, u8, u8, u32),
 }
 
-impl From<Value> for MySqlValue {
+impl From<Value> for ColumnValue {
     fn from(value: Value) -> Self {
         match value {
-            Value::NULL => MySqlValue::NULL,
+            Value::NULL => ColumnValue::NULL,
             Value::Bytes(buf) => {
                 let s = String::from_utf8(buf).unwrap();
-                MySqlValue::Text(s)
+                ColumnValue::Text(s)
             },
-            Value::Int(v) => MySqlValue::Int(v),
-            Value::UInt(v) => MySqlValue::UInt(v),
-            Value::Float(v) => MySqlValue::Float(v),
-            Value::Double(v) => MySqlValue::Double(v),
-            Value::Date(y, m, d, h, min, sec, ms) => MySqlValue::Date(y, m, d, h, min, sec, ms),
-            Value::Time(neg, d, h, min, sec, ms) => MySqlValue::Time(neg, d, h, min, sec, ms),
+            Value::Int(v) => ColumnValue::Int(v),
+            Value::UInt(v) => ColumnValue::UInt(v),
+            Value::Float(v) => ColumnValue::Float(v),
+            Value::Double(v) => ColumnValue::Double(v),
+            Value::Date(y, m, d, h, min, sec, ms) => ColumnValue::Date(y, m, d, h, min, sec, ms),
+            Value::Time(neg, d, h, min, sec, ms) => ColumnValue::Time(neg, d, h, min, sec, ms),
         }
     }
 }

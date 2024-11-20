@@ -8,6 +8,11 @@ import {
   useStore,
   getTableLabel,
   UpdateTableData,
+  BasableFilter,
+  FilterInput,
+  ColumnTypeObject,
+  buildFilterQuery,
+  extractColumnTypes,
 } from "../../utils";
 import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
@@ -20,23 +25,61 @@ import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
 import TableConfigForm from "../../components/forms/TableConfigForm";
+import TableFiltering from "../../components/filters";
+import { isAxiosError } from "axios";
+import TableNavigator from "../../components/table/Navigator";
+
+type TableQueryOpts = {
+  table: string;
+  offset: number;
+  row_count: number;
+  filters?: BasableFilter[];
+  columns?: string[];
+};
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
   const { tableID } = useParams();
 
   const tableConfigs = useStore((state) => state.tableConfigs);
-  const showAlert = useStore((state) => state.showAlert);
-
   const [tableConfig, setTableConfig] = React.useState<Partial<TableConfig>>(
     {}
   );
+  const showAlert = useStore((state) => state.showAlert);
+
+  const defaultQueryOpts: TableQueryOpts = {
+    table: tableID as string,
+    offset: 0,
+    row_count: tableConfig.items_per_page ?? 100,
+    filters: [],
+  };
+
+  const [queryOpts, setQueryOpts] = React.useState<TableQueryOpts | undefined>(
+    undefined
+  );
+  const [queryCount, setQueryCount] = React.useState(0);
+  const [navPage, setNavPage] = React.useState(0);
+  const totalPages = React.useMemo(() => {
+    const ps = queryOpts ? (queryCount / queryOpts.row_count) : 0;
+
+    return Math.ceil(ps);
+  }, [queryCount, queryOpts]);
+
   const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
 
-  const [columns, setColumns] = React.useState<TableColumn[]>([]);
+  const [openFiltering, setOpenFiltering] = React.useState(false);
+  const [filters, setFilters] = React.useState<FilterInput[] | undefined>(
+    undefined
+  );
+
+  const [filteredColumns, setFilteredColumns] = React.useState<TableColumn[]>(
+    []
+  );
+  const [allColumns, setAllColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
+  const [columnTypes, setColumnTypes] = React.useState<ColumnTypeObject[]>([]);
 
   const defaultUTD: UpdateTableData = {
     columns: [],
@@ -46,6 +89,23 @@ const DatabaseTable = () => {
   const [utd, setUTD] = React.useState(defaultUTD);
 
   const [tableLoading, setTableLoading] = React.useState(false);
+
+  const navigateTable = (to: "prev" | "next") => {
+    const rowCount = queryOpts ? queryOpts.row_count : 0;
+    const dest = to === "next" ? navPage + 1 : navPage - 1;
+    const offset = rowCount * dest;
+
+    if (dest < 0 || dest + 1 === totalPages) {
+      return;
+    }
+
+    setQueryOpts({
+      ...queryOpts as TableQueryOpts,
+      offset,
+    });
+
+    setNavPage(dest);
+  };
 
   const getColumnValue = (name: string, row: TableRow) => {
     const o = row[name];
@@ -99,10 +159,46 @@ const DatabaseTable = () => {
     setUTD({ ...utd });
   };
 
-  const updateConfigStates = (config: TableConfig) => {
-    setTableConfig(config);
+  /**
+   * Updates `tableCOnfig` and all related dependencies.
+   * @param config - The new config value.
+   * @param isInit - Indicates the function is being called on component init.
+   */
+  const updateConfigStates = (config: TableConfig, isInit = false) => {
     setHasUniqueColumn(typeof config.pk_column === "string");
     setTableLabel(getTableLabel(config as TableConfig));
+    setNavPage(0);
+
+    let fcols = allColumns;
+    const excluded = config.exclude_columns;
+    let selection: string[] = [];
+
+    if (excluded && excluded.length) {
+      fcols = fcols.filter((col) => !excluded.includes(col.name));
+      selection = allColumns.map((col) => col.name);
+
+      // Move unique column to left most
+      if (config.pk_column) {
+        const pkc = fcols.find((col) => col.name === config.pk_column);
+        if (pkc) {
+          const i = fcols.indexOf(pkc);
+          fcols.splice(i, 1);
+          fcols.splice(0, 0, pkc);
+        }
+      }
+    }
+
+    setFilteredColumns([...fcols]);
+    setTableConfig(config);
+
+    if (!isInit) {
+      const row_count = config.items_per_page ?? 100;
+      setQueryOpts({
+        ...queryOpts as TableQueryOpts,
+        columns: selection,
+        row_count,
+      });
+    }
 
     if (typeof config.pk_column === "string") {
       setUTD({
@@ -112,6 +208,10 @@ const DatabaseTable = () => {
     }
   };
 
+  /**
+   * Calls api endpoint for updating all data changes.
+   * @returns
+   */
   const updateData = async () => {
     if(!utd.unique_values.length) return
 
@@ -133,43 +233,106 @@ const DatabaseTable = () => {
     }
   };
 
-  React.useEffect(() => {
-    const loadData = async () => {
-      setTableLoading(true);
-      const cols = (await request({
-        method: "get",
-        path: "tables/columns/" + tableID,
-      })) as TableColumn[];
+  /**
+   * The initial function we call to retrieve table columns and initialize
+   * state preludes.
+   */
+  const loadColumns = async () => {
+    setTableLoading(true);
 
-      const tc = tableConfigs.find((c) => c.name === tableID);
-      if (tc) {
-        // if there's a unique column, always shift it to leftmost
-        if(tc.pk_column) {
-          for(let i = 0; i < cols.length; i++) {
-            const col = cols[i]
-            if(col.name === tc.pk_column) {
-              cols.splice(i, 1)
-              cols.splice(0, 0, col)
-              break;
-            }
-          }
-        }
+    const cols = (await request({
+      method: "get",
+      path: "tables/columns/" + tableID,
+    })) as TableColumn[];
 
-        updateConfigStates(tc);
+    setAllColumns(cols);
+  };
+
+  /**
+   * This function loads table data based on options set for `queryOpts`.
+   */
+  const loadData = async () => {
+    setTableLoading(true);
+
+    try {      
+      // Get row count
+      if (navPage === 0) {
+        const count = (await request({
+          method: "post",
+          path: `tables/query-result-count/${tableID}`,
+          data: queryOpts,
+        })) as number;
+
+        setQueryCount(count);
       }
-      setColumns(cols);
 
+      // get rows
       const rows = (await request({
-        method: "get",
-        path: `tables/data/${tableID}?table=${tableID}`,
+        method: "post",
+        path: `tables/query-data/${tableID}`,
+        data: queryOpts,
       })) as TableRow[];
+
+      const cts = extractColumnTypes(rows[0]);
+      setColumnTypes(cts);
       setRows(rows);
-
       setTableLoading(false);
-    };
+    } catch (err: any) {
+      setTableLoading(false);
+      let msg = err.message;
+      if (isAxiosError(err)) {
+        msg = err.response?.data;
+      }
 
-    if (tableID) loadData();
-  }, [request, tableID]);
+      showAlert("error", msg);
+    }
+  };
+
+  // function we call page reload
+  React.useEffect(() => {
+    if (tableID) {
+      // reset states
+      setQueryOpts(undefined)
+      setFilters(undefined)
+      setNavPage(0);
+
+      // load columns
+      loadColumns();
+    }
+  }, [tableID]);
+
+  // When `filters` is updated, update `queryOpts.filters` which then trigggers
+  // `loadData` function.
+  React.useEffect(() => {
+    if (filters) {
+      const fs = filters.map((f) => buildFilterQuery(f));
+      setQueryOpts({
+        ...queryOpts as TableQueryOpts,
+        filters: fs,
+      });
+    }
+  }, [filters]);
+
+  // The effect should be triggered at component initiation after all columns is loaded.
+  React.useEffect(() => {
+    const tc = tableConfigs.find((c) => c.name === tableID);
+    if (allColumns.length && tc && tableID) {
+      setQueryOpts({
+        ...defaultQueryOpts,
+        table: tableID,
+        row_count: tc.items_per_page ?? 100
+      })
+
+      updateConfigStates(tc, true)
+    };
+  }, [allColumns]);
+
+  // Everytime we update `queryOpts`, we trigger `loadData` function.
+  React.useEffect(() => {
+    if(queryOpts) {
+      loadData()
+    };
+  }, [queryOpts]);
 
   if (tableLoading) return <div>Loading</div>;
 
@@ -192,13 +355,13 @@ const DatabaseTable = () => {
           <IconButton>
             <DownloadIcon />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => loadData()}>
             <TableRefresh />
           </IconButton>
           <IconButton>
             <SearchIcon />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => setOpenFiltering(true)}>
             <FilterAltIcon />
           </IconButton>
           <IconButton sx={{
@@ -213,17 +376,24 @@ const DatabaseTable = () => {
         <div className="tableHeaderWarning">
           <ReportIcon />
           <Typography>
-            No <strong>unique column</strong> is found for this table. Table
+            No <strong>unique column</strong> is found for filter table. Table
             modification is impossible. You can manually set unique column by
             clicking the settings button above.
           </Typography>
         </div>
       )}
+
+      <TableNavigator
+        count={queryCount}
+        totalPages={totalPages}
+        currentPage={navPage}
+        onNavigate={navigateTable}
+      />
       <section className="displayTable dashboardDisplay databaseTable">
         <table>
           <thead>
             <tr>
-              {columns.map((col) => (
+              {filteredColumns.map((col) => (
                 <th key={col.name}>{col.name}</th>
               ))}
             </tr>
@@ -231,7 +401,7 @@ const DatabaseTable = () => {
           <tbody>
             {rows.map((row, index) => (
               <tr className="editableRow" key={index}>
-                {columns.map((col) => (
+                {filteredColumns.map((col) => (
                   <td key={col.name}>
                     {
                       <input
@@ -251,9 +421,25 @@ const DatabaseTable = () => {
       <TableConfigForm
         config={tableConfig}
         open={openTableConfig}
-        columns={columns.map((col) => col.name)}
+        columns={filteredColumns.map((col) => col.name)}
         onHideDialog={() => setOpenTableConfig(false)}
-        onConfigUpdated={(config) => updateConfigStates(config as TableConfig)}
+        onConfigUpdated={(config) => {
+          if (config !== tableConfig) updateConfigStates(config as TableConfig);
+        }}
+      />
+      <TableFiltering
+        open={openFiltering}
+        columnNames={allColumns.map((col) => col.name)}
+        tableFilters={filters ?? []}
+        columnTypes={columnTypes}
+        onHideDialog={() => setOpenFiltering(false)}
+        onUpdateFilters={(newFilters) => {
+          setOpenFiltering(false);
+          if (newFilters !== filters) {
+            setFilters(newFilters);
+            setNavPage(0);
+          }
+        }}
       />
     </ThemeProvider>
   );

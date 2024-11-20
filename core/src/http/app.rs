@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 
 use axum::extract::connect_info::IntoMakeServiceWithConnectInfo;
 use axum::http::HeaderName;
+use axum::routing::get_service;
 use axum::{
     async_trait,
     extract::{FromRef, FromRequestParts, MatchedPath, Request},
@@ -15,6 +16,7 @@ use axum::{
 
 use tower::ServiceBuilder;
 use tower_http::cors::Any;
+use tower_http::services::ServeDir;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::base::AppState;
@@ -38,7 +40,9 @@ where
 }
 
 pub fn app() -> Result<BasableHttpService, AppError> {
-    let wl = "http://localhost:5173".parse::<HeaderValue>().map_err(|err| AppError::InitError(err.to_string()))?;
+    let wl = "http://localhost:5173"
+        .parse::<HeaderValue>()
+        .map_err(|err| AppError::InitError(err.to_string()))?;
     // We add CORS middleware to enable connection from Vue/React Development client
     let cors = CorsLayer::new()
         .allow_origin(wl)
@@ -57,6 +61,7 @@ pub fn app() -> Result<BasableHttpService, AppError> {
     let routes = core_routes();
 
     let r = Router::new()
+        .nest_service("/web", get_service(ServeDir::new("./web")))
         .nest("/core", routes)
         .layer(
             ServiceBuilder::new()

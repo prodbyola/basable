@@ -1,8 +1,8 @@
 use uuid::Uuid;
 
 use crate::base::data::table::TableSummaries;
-use crate::base::query::filter::{Filter, FilterChain, FilterComparator, FilterOperator};
-use crate::base::query::{BasableQuery, QueryOperation};
+use crate::base::query::filter::{Filter, FilterChain};
+use crate::base::query::{BasableQuery, QueryCommand};
 use crate::imp::database::mysql::db::MySqlDB;
 use crate::imp::database::DbServerDetails;
 use crate::AppError;
@@ -15,7 +15,7 @@ pub type DBQueryResult<R, E> = Result<Vec<R>, E>;
 /// An abstraction of database connection.
 pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
     type Row;
-    type ColumnValue;
+    // type ColumnValue;
 
     fn id(&self) -> &Uuid;
 
@@ -51,58 +51,11 @@ pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
 }
 
 pub trait QuerySqlParser {
-    fn parse_filter_operator(fo: &FilterOperator) -> String
-    where
-        Self: Sized,
-    {
-        match fo {
-            FilterOperator::Eq(v) => format!("= '{v}'"),
-            FilterOperator::NotEq(v) => format!("!= '{v}'"),
-            FilterOperator::Gt(v) => format!("> '{v}'"),
-            FilterOperator::Lt(v) => format!("< '{v}'"),
-            FilterOperator::Gte(v) => format!(">= '{v}'"),
-            FilterOperator::Lte(v) => format!("<= '{v}'"),
-            FilterOperator::Like(v) => format!("LIKE '{v}%'"),
-            FilterOperator::NotLike(v) => format!("NOT LIKE '{v}%'"),
-            FilterOperator::LikeSingle(v) => format!("LIKE '_{v}%'"),
-            FilterOperator::NotLikeSingle(v) => format!("NOT LIKE '_{v}%'"),
-            FilterOperator::Regex(v) => format!("REGEXP '{v}'"),
-            FilterOperator::NotRegex(v) => format!("NOT REGEXP '{v}'"),
-            FilterOperator::Btw(start, end) => format!("BETWEEN '{start}' AND '{end}'"),
-            FilterOperator::NotBtw(start, end) => format!("NOT BETWEEN '{start}' AND '{end}'"),
-            FilterOperator::Contains(values) => {
-                let v: Vec<String> = values.iter().map(|v| v.to_string()).collect();
-                let v = v.join(", ");
-
-                format!("IN ({v})")
-            }
-            FilterOperator::NotContains(values) => {
-                let v: Vec<String> = values.iter().map(|v| v.to_string()).collect();
-                let v = v.join(", ");
-
-                format!("NOT IN ({v})")
-            }
-            FilterOperator::Null => "IS NULL".to_string(),
-            FilterOperator::NotNull => "IS NOT NULL".to_string(),
-        }
-    }
-
-    fn parse_filter_condition(c: &FilterComparator) -> String
-    where
-        Self: Sized,
-    {
-        format!("{} {}", c.column, Self::parse_filter_operator(&c.operator))
-    }
-
     fn parse_filter(filter: &Filter) -> String
     where
         Self: Sized,
     {
-        match filter {
-            Filter::BASE(c) => Self::parse_filter_condition(c),
-            Filter::AND(c) => format!("AND {}", Self::parse_filter_condition(c)),
-            Filter::OR(c) => format!("OR {}", Self::parse_filter_condition(c)),
-        }
+        filter.to_string()
     }
 
     fn parse_filter_chain(filters: &FilterChain) -> String
@@ -120,7 +73,7 @@ pub trait QuerySqlParser {
     fn generate_sql(&self, query: BasableQuery) -> Result<String, AppError> {
         let BasableQuery {
             table,
-            operation,
+            command: operation,
             filters,
             row_count,
             offset,
@@ -132,11 +85,21 @@ pub trait QuerySqlParser {
 
         // Parse query operation type
         let mut sql = match operation {
-            QueryOperation::SelectData(cols) => {
+            QueryCommand::SelectData(cols) => {
                 let select_cols = cols.map_or_else(
                     || "*".to_string(),
                     |list| {
-                        let s: Vec<String> = list.iter().map(|s| format!("`{s}`")).collect();
+                        if list.is_empty() {
+                            return "*".to_string()
+                        }
+                        
+                        let s: Vec<String> = list.iter().map(|s| {
+                            if s.to_lowercase() == "count(*)" {
+                                return format!("{s}")
+                            }
+
+                            format!("`{s}`")
+                        }).collect();
                         s.join(", ")
                     },
                 );
@@ -186,33 +149,18 @@ pub trait QuerySqlParser {
 #[cfg(test)]
 mod tests {
     use crate::{
-        base::query::{
-            filter::{Filter, FilterChain, FilterComparator, FilterOperator},
-            BasableQuery, QueryOperation,
-        },
+        base::query::{filter::FilterChain, BasableQuery, QueryCommand},
         tests::common::create_test_db,
         AppError,
     };
 
     #[test]
     fn test_generate_sql() -> Result<(), AppError> {
-        let mut filters = FilterChain::new();
-
-        let c1 = FilterComparator {
-            column: "publisher".to_string(),
-            operator: FilterOperator::Eq("Rockstar Games".to_string()),
-        };
-
-        let c2 = FilterComparator {
-            column: "release_date".to_string(),
-            operator: FilterOperator::Btw("2010-09-01".to_string(), "2010-11-30".to_string()),
-        };
-
-        filters.add_multiple(vec![Filter::BASE(c1), Filter::AND(c2)]);
+        let filters = FilterChain::new();
 
         let query = BasableQuery {
             table: "vhchartz".to_string(),
-            operation: QueryOperation::SelectData(None),
+            command: QueryCommand::SelectData(None),
             filters,
             row_count: Some(100),
             ..Default::default()

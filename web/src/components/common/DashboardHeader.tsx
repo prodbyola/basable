@@ -11,6 +11,8 @@ import { ThemeProvider } from "@mui/material/styles";
 import theme from "../../theme";
 import Logo from "../../assets/images/Basale-logo-white.svg";
 import SearchBar from "../bar/SearchBar";
+
+// @ts-ignore
 import useStyles from "../../styles/styles.js";
 import { Avatar, Box, IconButton } from "@mui/material";
 import { AppNotification } from "../bar/Notification";

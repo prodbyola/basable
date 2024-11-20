@@ -105,7 +105,11 @@ const TableConfigForm = ({
     const id = target.id;
 
     const key = id.split("-")[1];
-    const value = target.value;
+    let value: string | number = target.value;
+
+    if(key === 'items_per_page') {
+      value = parseInt(value)
+    }
 
     setFormData({
       ...formData,

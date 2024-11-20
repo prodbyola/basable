@@ -69,3 +69,60 @@ export type UpdateTableData = {
   unique_values: string[];
   input: { [key: string]: string }[];
 };
+
+export const TABLE_FILTER_OPERATORS = {
+  EQUAL: "Eq",
+  NOT_EQUAL: "NotEq",
+  CONTAINS: "Contains",
+  NOT_CONTAINS: "NotContains",
+  GREATER_THAN: "Gt",
+  LESS_THAN: "Lt",
+  GREATER_OR_EQUAL: "Gte",
+  LESS_OR_EQUAL: "Lte",
+  INCLUDES: "Includes",
+  NOT_INCLUDE: "NotInclude",
+  LIKE: "Like",
+  NOT_LIKE: "NotLike",
+  LIKE_SINGLE: "LikeSingle",
+  NOT_LIKE_SINGLE: "NotLikeSingle",
+  REGEX: "Regex",
+  NOT_REGEX: "NotRegex",
+  RANGE: "Btw",
+  NOT_RANGE: "NotBtw",
+  NULL: "Null",
+  NOT_NULL: "NotNull",
+};
+
+export type FilterOperatorLabel = keyof typeof TABLE_FILTER_OPERATORS;
+
+export type FilterCombinator = "base" | "and" | "or"
+
+/**
+ * A list of labels for each filter operator
+ */
+export const FILTER_OPERATOR_LABELS = Object.keys(
+  TABLE_FILTER_OPERATORS
+) as FilterOperatorLabel[];
+
+/**
+ * Abstraction of query filtering in Basable
+ */
+export type BasableFilter = {
+  combinator: string;
+  column: string;
+  expression: { [key: string]: string };
+};
+
+export type FilterInput = {
+  column: string,
+  combinator: FilterCombinator,
+  operatorLabel: FilterOperatorLabel,
+  operatorValue: string
+  endValue?: string
+}
+
+export const COLUMN_TYPES = ['NULL', 'Text', 'Int', 'UInt', 'Float', 'Double', 'Date', 'Time'] as const
+export type ColumnType = typeof COLUMN_TYPES[number]
+export type ColumnTypeObject = {
+  [key: string]: ColumnType
+}

@@ -5,14 +5,15 @@ use crate::{
         column::{Column, ColumnList},
         data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
         imp::{
-            table::{Table, TableCRUD, TableColumn},
+            table::{Table, TableCRUD},
             ConnectorType, SharedDB,
         },
+        query::{filter::FilterChain, BasableQuery, QueryCommand},
     },
     AppError,
 };
 
-use super::MySqlValue;
+use super::ColumnValue;
 
 pub(crate) struct MySqlTable {
     pub name: String,
@@ -21,7 +22,6 @@ pub(crate) struct MySqlTable {
 
 impl Table for MySqlTable {
     type Row = mysql::Row;
-    type ColumnValue = MySqlValue;
 
     fn new(name: String, conn: ConnectorType) -> Self
     where
@@ -144,7 +144,7 @@ impl TableCRUD for MySqlTable {
         &self,
         opts: TableQueryOpts,
         db: &SharedDB,
-    ) -> DataQueryResult<TableColumn, AppError> {
+    ) -> DataQueryResult<ColumnValue, AppError> {
         let query = opts.try_into()?;
         let sql = db.generate_sql(query)?;
 
@@ -155,7 +155,7 @@ impl TableCRUD for MySqlTable {
         let data = rows
             .iter()
             .map(|r| {
-                let mut map: HashMap<String, TableColumn> = HashMap::new();
+                let mut map: HashMap<String, ColumnValue> = HashMap::new();
 
                 for col in &cols {
                     if let Some(v) = r.get::<mysql::Value, &str>(col.name.as_str()) {
@@ -168,6 +168,31 @@ impl TableCRUD for MySqlTable {
             .collect();
 
         Ok(data)
+    }
+
+    fn query_result_count(&self, opts: TableQueryOpts, db: &SharedDB) -> Result<usize, AppError> {
+        let query = BasableQuery {
+            table: opts.table,
+            command: QueryCommand::SelectData(Some(vec!["COUNT(*)".to_string()])),
+            filters: opts
+                .filters
+                .map_or(FilterChain::empty(), |fs| FilterChain::prefill(fs)),
+            ..Default::default()
+        };
+
+        let sql = db.generate_sql(query)?;
+
+        let conn = self.connector();
+        let rows = conn.exec_query(&sql)?;
+
+        let count = rows
+            .first()
+            .map(|row| row
+                .get::<usize, &str>("COUNT(*)")
+                .unwrap_or_default()
+            ).unwrap_or_default();
+
+        Ok(count)
     }
 
     fn insert_data(&self, input: HashMap<String, String>) -> Result<(), AppError> {
