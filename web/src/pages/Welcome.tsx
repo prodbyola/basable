@@ -22,9 +22,7 @@ const roles = [
   'Data Scientist'
 ];
 
-const Welcome: React.FC<ForgotPasswordFormProps> = ({
-  showEmailVerification
-}) => {
+const Welcome = () => {
   const [company, setCompany] = useState('');
   const [role, setRole] = useState('');
 
