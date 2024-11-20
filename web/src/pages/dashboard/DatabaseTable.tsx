@@ -54,21 +54,25 @@ const DatabaseTable = () => {
     filters: [],
   };
 
-  const [queryOpts, setQueryOpts] = React.useState(defaultQueryOpts);
+  const [queryOpts, setQueryOpts] = React.useState<TableQueryOpts | undefined>(
+    undefined
+  );
   const [queryCount, setQueryCount] = React.useState(0);
-  const [ navPage, setNavPage ] = React.useState(0)
+  const [navPage, setNavPage] = React.useState(0);
   const totalPages = React.useMemo(() => {
-    const ps = queryCount / queryOpts.row_count
+    const ps = queryOpts ? (queryCount / queryOpts.row_count) : 0;
 
-    return Math.ceil(ps)
-  }, [queryCount, queryOpts])
+    return Math.ceil(ps);
+  }, [queryCount, queryOpts]);
 
   const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
 
   const [openFiltering, setOpenFiltering] = React.useState(false);
-  const [filters, setFilters] = React.useState<FilterInput[]>([]);
+  const [filters, setFilters] = React.useState<FilterInput[] | undefined>(
+    undefined
+  );
 
   const [filteredColumns, setFilteredColumns] = React.useState<TableColumn[]>(
     []
@@ -86,22 +90,22 @@ const DatabaseTable = () => {
 
   const [tableLoading, setTableLoading] = React.useState(false);
 
-  const navigateTable = (to: 'prev' | 'next') => {
-    const rowCount = queryOpts.row_count 
-    const dest = to === 'next' ? navPage + 1 : navPage - 1
-    const offset = rowCount * dest
+  const navigateTable = (to: "prev" | "next") => {
+    const rowCount = queryOpts ? queryOpts.row_count : 0;
+    const dest = to === "next" ? navPage + 1 : navPage - 1;
+    const offset = rowCount * dest;
 
-    if(dest < 0 || (dest + 1) === totalPages) {
-      return
+    if (dest < 0 || dest + 1 === totalPages) {
+      return;
     }
 
     setQueryOpts({
-      ...queryOpts,
-      offset
-    })
-    
-    setNavPage(dest)
-  }
+      ...queryOpts as TableQueryOpts,
+      offset,
+    });
+
+    setNavPage(dest);
+  };
 
   const getColumnValue = (name: string, row: TableRow) => {
     const o = row[name];
@@ -156,13 +160,45 @@ const DatabaseTable = () => {
   };
 
   /**
-   * Updates `tableCOnfig` and all related dependencies. 
-   * @param config - The new config value
+   * Updates `tableCOnfig` and all related dependencies.
+   * @param config - The new config value.
+   * @param isInit - Indicates the function is being called on component init.
    */
-  const updateConfigStates = (config: TableConfig) => {
-    setTableConfig(config);
+  const updateConfigStates = (config: TableConfig, isInit = false) => {
     setHasUniqueColumn(typeof config.pk_column === "string");
     setTableLabel(getTableLabel(config as TableConfig));
+    setNavPage(0);
+
+    let fcols = allColumns;
+    const excluded = config.exclude_columns;
+    let selection: string[] = [];
+
+    if (excluded && excluded.length) {
+      fcols = fcols.filter((col) => !excluded.includes(col.name));
+      selection = allColumns.map((col) => col.name);
+
+      // Move unique column to left most
+      if (config.pk_column) {
+        const pkc = fcols.find((col) => col.name === config.pk_column);
+        if (pkc) {
+          const i = fcols.indexOf(pkc);
+          fcols.splice(i, 1);
+          fcols.splice(0, 0, pkc);
+        }
+      }
+    }
+
+    setFilteredColumns([...fcols]);
+    setTableConfig(config);
+
+    if (!isInit) {
+      const row_count = config.items_per_page ?? 100;
+      setQueryOpts({
+        ...queryOpts as TableQueryOpts,
+        columns: selection,
+        row_count,
+      });
+    }
 
     if (typeof config.pk_column === "string") {
       setUTD({
@@ -174,7 +210,7 @@ const DatabaseTable = () => {
 
   /**
    * Calls api endpoint for updating all data changes.
-   * @returns 
+   * @returns
    */
   const updateData = async () => {
     if (!utd.unique_values.length) return;
@@ -202,44 +238,14 @@ const DatabaseTable = () => {
    * state preludes.
    */
   const loadColumns = async () => {
+    setTableLoading(true);
+
     const cols = (await request({
       method: "get",
       path: "tables/columns/" + tableID,
     })) as TableColumn[];
 
     setAllColumns(cols);
-
-    let fcols = cols;
-    // Add excluded columns to query
-    const tc = tableConfigs.find((c) => c.name === tableID);
-
-    if (tc) {
-      const excluded = tc.exclude_columns;
-      let selection: string[] = []
-
-      if (excluded && excluded.length) {
-        fcols = cols.filter((col) => !excluded.includes(col.name));
-        selection = cols.map((col) => col.name);
-      }
-
-      setQueryOpts({
-        ...defaultQueryOpts,
-        columns: selection,
-      });
-
-      // if there's a unique column, always shift it to leftmost
-      if (tc.pk_column) {
-        const pkc = fcols.find((col) => col.name === tc.pk_column);
-        if (pkc) {
-          const i = fcols.indexOf(pkc);
-          fcols.splice(i, 1);
-          fcols.splice(0, 0, pkc);
-        }
-      }
-
-      updateConfigStates(tc);
-    }
-    setFilteredColumns(fcols);
   };
 
   /**
@@ -248,17 +254,19 @@ const DatabaseTable = () => {
   const loadData = async () => {
     setTableLoading(true);
 
-    try {
-      if(navPage === 0) {
+    try {      
+      // Get row count
+      if (navPage === 0) {
         const count = (await request({
           method: "post",
           path: `tables/query-result-count/${tableID}`,
           data: queryOpts,
         })) as number;
-  
-        setQueryCount(count)
+
+        setQueryCount(count);
       }
 
+      // get rows
       const rows = (await request({
         method: "post",
         path: `tables/query-data/${tableID}`,
@@ -280,46 +288,50 @@ const DatabaseTable = () => {
     }
   };
 
+  // function we call page reload
   React.useEffect(() => {
     if (tableID) {
-      setNavPage(0)
-      setTableLoading(true)
+      // reset states
+      setQueryOpts(undefined)
+      setFilters(undefined)
+      setNavPage(0);
+
+      // load columns
       loadColumns();
     }
   }, [tableID]);
 
-  // Everytime `tableConfig` is updated, we update `queryOpts` and `filteredColumns`.
-  React.useEffect(() => {
-    const tc = tableConfig;
-    const cols = allColumns;
-
-    const excluded = tc.exclude_columns;
-    if (excluded && excluded.length) {
-      const fcols = cols.filter((col) => !excluded.includes(col.name));
-      const selection = cols.map((col) => col.name);
-
-      setQueryOpts({
-        ...queryOpts,
-        columns: selection,
-      });
-
-      setFilteredColumns([...fcols]);
-    }
-  }, [tableConfig]);
-
   // When `filters` is updated, update `queryOpts.filters` which then trigggers
   // `loadData` function.
   React.useEffect(() => {
-    const fs = filters.map((f) => buildFilterQuery(f));
-    setQueryOpts({
-      ...queryOpts,
-      filters: fs,
-    });
+    if (filters) {
+      const fs = filters.map((f) => buildFilterQuery(f));
+      setQueryOpts({
+        ...queryOpts as TableQueryOpts,
+        filters: fs,
+      });
+    }
   }, [filters]);
+
+  // The effect should be triggered at component initiation after all columns is loaded.
+  React.useEffect(() => {
+    const tc = tableConfigs.find((c) => c.name === tableID);
+    if (allColumns.length && tc && tableID) {
+      setQueryOpts({
+        ...defaultQueryOpts,
+        table: tableID,
+        row_count: tc.items_per_page ?? 100
+      })
+
+      updateConfigStates(tc, true)
+    };
+  }, [allColumns]);
 
   // Everytime we update `queryOpts`, we trigger `loadData` function.
   React.useEffect(() => {
-    loadData();
+    if(queryOpts) {
+      loadData()
+    };
   }, [queryOpts]);
 
   if (tableLoading) return <div>Loading</div>;
@@ -343,7 +355,7 @@ const DatabaseTable = () => {
           <IconButton>
             <DownloadIcon />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => loadData()}>
             <TableRefresh />
           </IconButton>
           <IconButton>
@@ -376,7 +388,12 @@ const DatabaseTable = () => {
         </div>
       )}
 
-      <TableNavigator count={queryCount} totalPages={totalPages} currentPage={navPage} onNavigate={navigateTable} />
+      <TableNavigator
+        count={queryCount}
+        totalPages={totalPages}
+        currentPage={navPage}
+        onNavigate={navigateTable}
+      />
       <section className="displayTable dashboardDisplay databaseTable">
         <table>
           <thead>
@@ -418,13 +435,14 @@ const DatabaseTable = () => {
       <TableFiltering
         open={openFiltering}
         columnNames={allColumns.map((col) => col.name)}
-        tableFilters={filters}
+        tableFilters={filters ?? []}
         columnTypes={columnTypes}
         onHideDialog={() => setOpenFiltering(false)}
         onUpdateFilters={(newFilters) => {
           setOpenFiltering(false);
           if (newFilters !== filters) {
             setFilters(newFilters);
+            setNavPage(0);
           }
         }}
       />
