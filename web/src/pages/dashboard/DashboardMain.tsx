@@ -39,7 +39,7 @@ function DashboardMain() {
         const resp: ServerDetails = await request({
           method: 'get',
           path: 'server'
-        })
+        }) as ServerDetails
   
         updatedDetails[1].value = resp.db_size.toLocaleString() + 'MB'
         updatedDetails[2].value = resp.os + ' ' + resp.comment

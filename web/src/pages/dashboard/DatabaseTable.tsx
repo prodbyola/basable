@@ -223,6 +223,7 @@ const DatabaseTable = () => {
    */
   const loadData = async () => {
     setTableLoading(true);
+    console.log('loading data')
 
     try {
       const rows = (await request({
