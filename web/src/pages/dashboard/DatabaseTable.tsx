@@ -60,7 +60,7 @@ const DatabaseTable = () => {
   const [queryCount, setQueryCount] = React.useState(0);
   const [navPage, setNavPage] = React.useState(0);
   const totalPages = React.useMemo(() => {
-    const ps = queryOpts ? (queryCount / queryOpts.row_count) : 0;
+    const ps = queryOpts ? queryCount / queryOpts.row_count : 0;
 
     return Math.ceil(ps);
   }, [queryCount, queryOpts]);
@@ -95,12 +95,12 @@ const DatabaseTable = () => {
     const dest = to === "next" ? navPage + 1 : navPage - 1;
     const offset = rowCount * dest;
 
-    if (dest < 0 || dest + 1 === totalPages) {
+    if (dest < 0 || dest === totalPages) {
       return;
     }
 
     setQueryOpts({
-      ...queryOpts as TableQueryOpts,
+      ...(queryOpts as TableQueryOpts),
       offset,
     });
 
@@ -194,7 +194,7 @@ const DatabaseTable = () => {
     if (!isInit) {
       const row_count = config.items_per_page ?? 100;
       setQueryOpts({
-        ...queryOpts as TableQueryOpts,
+        ...(queryOpts as TableQueryOpts),
         columns: selection,
         row_count,
       });
@@ -254,7 +254,7 @@ const DatabaseTable = () => {
   const loadData = async () => {
     setTableLoading(true);
 
-    try {      
+    try {
       // Get row count
       if (navPage === 0) {
         const count = (await request({
@@ -292,8 +292,8 @@ const DatabaseTable = () => {
   React.useEffect(() => {
     if (tableID) {
       // reset states
-      setQueryOpts(undefined)
-      setFilters(undefined)
+      setQueryOpts(undefined);
+      setFilters(undefined);
       setNavPage(0);
 
       // load columns
@@ -307,7 +307,7 @@ const DatabaseTable = () => {
     if (filters) {
       const fs = filters.map((f) => buildFilterQuery(f));
       setQueryOpts({
-        ...queryOpts as TableQueryOpts,
+        ...(queryOpts as TableQueryOpts),
         filters: fs,
       });
     }
@@ -320,18 +320,18 @@ const DatabaseTable = () => {
       setQueryOpts({
         ...defaultQueryOpts,
         table: tableID,
-        row_count: tc.items_per_page ?? 100
-      })
+        row_count: tc.items_per_page ?? 100,
+      });
 
-      updateConfigStates(tc, true)
-    };
+      updateConfigStates(tc, true);
+    }
   }, [allColumns]);
 
   // Everytime we update `queryOpts`, we trigger `loadData` function.
   React.useEffect(() => {
-    if(queryOpts) {
-      loadData()
-    };
+    if (queryOpts) {
+      loadData();
+    }
   }, [queryOpts]);
 
   if (tableLoading) return <div>Loading</div>;
@@ -424,8 +424,10 @@ const DatabaseTable = () => {
         columns={filteredColumns.map((col) => col.name)}
         onHideDialog={() => setOpenTableConfig(false)}
         onConfigUpdated={(config) => {
-          setOpenTableConfig(false)
-          if (config !== tableConfig) updateConfigStates(config as TableConfig);
+          if (config !== tableConfig) {
+            setOpenTableConfig(false);
+            updateConfigStates(config as TableConfig);
+          }
         }}
       />
       <TableFiltering

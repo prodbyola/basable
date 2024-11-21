@@ -6,10 +6,9 @@ import {
   IconButton,
   InputAdornment,
   Typography,
-  Link
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const AuthForm: React.FC = () => {
   const [name, setName] = useState('');
@@ -92,20 +91,24 @@ const AuthForm: React.FC = () => {
       </Button>
       <Typography variant="caption" color="textSecondary">
         By signing up, you agree to our{' '}
-        <Link href="#">
+        <Link to="#">
           Terms and <br /> Service
         </Link>{' '}
-        and <Link href="#">Privacy Policy</Link>.
+        and <Link to="#">Privacy Policy</Link>.
       </Typography>
 
       <Typography variant="body2" color="black" sx={{ mt: 3 }}>
         Already have an account?{' '}
         <Link
-          href="/login"
-          color="primary"
-          sx={{ color: '#00008b', textDecoration: 'none' }}
+          to="/login"
         >
           Login
+        </Link>
+        {' or '}
+        <Link
+          to="/connect"
+        >
+          Login as Guest
         </Link>
       </Typography>
     </form>

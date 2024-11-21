@@ -10,6 +10,8 @@ fn escape_special_characters(input: &str) -> String {
         .replace('\n', "\\n") // Escape newline
         .replace('\t', "\\t") // Escape tab
         .replace('\r', "\\r") // Escape carriage return
+        .replace('&', "\\&") // Escape ampersand
+        .replace('_', "\\_") // Escape underscore
 }
 
 #[derive(Deserialize, Serialize, Default)]
@@ -22,10 +24,10 @@ pub enum FilterExpression {
     Lte(String),
     Contains(String),
     NotContains(String),
-    Like(String),
-    NotLike(String),
-    LikeSingle(String),
-    NotLikeSingle(String),
+    // Like(String),
+    // NotLike(String),
+    // LikeSingle(String),
+    // NotLikeSingle(String),
     Regex(String),
     NotRegex(String),
     Btw(String, String),
@@ -48,12 +50,12 @@ impl Display for FilterExpression {
             FilterExpression::Lt(v) => format!("< '{}'", escape_special_characters(v)),
             FilterExpression::Gte(v) => format!(">= '{}'", escape_special_characters(v)),
             FilterExpression::Lte(v) => format!("<= '{}'", escape_special_characters(v)),
-            FilterExpression::Contains(v) => format!("REGEXP \\b{}\\b", escape_special_characters(v)),
-            FilterExpression::NotContains(v) => format!("NOT REGEXP \\b{}\\b", escape_special_characters(v)),
-            FilterExpression::Like(v) => format!("LIKE '{}%'", escape_special_characters(v)),
-            FilterExpression::NotLike(v) => format!("NOT LIKE '{}%'", escape_special_characters(v)),
-            FilterExpression::LikeSingle(v) => format!("LIKE '_{}%'", escape_special_characters(v)),
-            FilterExpression::NotLikeSingle(v) => format!("NOT LIKE '_{}%'", escape_special_characters(v)),
+            FilterExpression::Contains(v) => format!("LIKE '%{}%'", escape_special_characters(v)),
+            FilterExpression::NotContains(v) => format!("NOT REGEXP '%{}%'", escape_special_characters(v)),
+            // FilterExpression::Like(v) => format!("LIKE '{}%'", escape_special_characters(v)),
+            // FilterExpression::NotLike(v) => format!("NOT LIKE '{}%'", escape_special_characters(v)),
+            // FilterExpression::LikeSingle(v) => format!("LIKE '_{}%'", escape_special_characters(v)),
+            // FilterExpression::NotLikeSingle(v) => format!("NOT LIKE '_{}%'", escape_special_characters(v)),
             FilterExpression::Regex(v) => format!("REGEXP '{}'", escape_special_characters(v)),
             FilterExpression::NotRegex(v) => format!("NOT REGEXP '{}'", escape_special_characters(v)),
             FilterExpression::Btw(start, end) => format!("BETWEEN ('{}' AND '{}')", escape_special_characters(start), escape_special_characters(end)),
