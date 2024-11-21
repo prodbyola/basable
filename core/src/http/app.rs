@@ -20,7 +20,7 @@ use axum::{
 use tower::service_fn;
 use tower::ServiceBuilder;
 use tower_http::cors::Any;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::base::AppState;
@@ -63,9 +63,13 @@ pub fn app() -> Result<BasableHttpService, AppError> {
     state.local_db.setup()?;
 
     let routes = core_routes();
+    let static_files_service = get_service(ServeDir::new("./web").not_found_service(ServeFile::new("web/index.html")));
+    let asset_files_service = get_service(ServeDir::new("./web/assets").not_found_service(ServeFile::new("web/index.html")));
 
     let r = Router::new()
-        .nest_service("/web", get_service(ServeDir::new("./web")))
+        .nest_service("/", static_files_service)
+        .nest_service("/assets", asset_files_service)
+        // .fallback_service(service_fn(serve_index_html))
         .nest("/core", routes)
         .layer(
             ServiceBuilder::new()
@@ -86,14 +90,12 @@ pub fn app() -> Result<BasableHttpService, AppError> {
                 )
                 .layer(cors),
         )
-        .fallback_service(service_fn(serve_index_html))
         .with_state(state)
         .into_make_service_with_connect_info::<SocketAddr>();
 
     Ok(r)
 }
 
-// Serve `index.html` for unknown routes
 // Serve `index.html` for unknown routes
 async fn serve_index_html(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let path = req.uri().path();
