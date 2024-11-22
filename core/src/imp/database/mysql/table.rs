@@ -22,7 +22,7 @@ pub(crate) struct MySqlTable {
 
 impl MySqlTable {
     fn search_index_name(&self, search_cols: &Vec<String>) -> String {
-        let name = format!("bsearch_{}", search_cols.join(","));
+        let name = format!("bsearch_{}", search_cols.join("_"));
         name.replace(" ", "_")
     }
 
@@ -36,6 +36,8 @@ impl MySqlTable {
             self.name,
             wrap_cols.join(", ")
         );
+
+        println!("create index {index_query}");
 
         let conn = self.connector();
         conn.exec_query(&index_query)?;
