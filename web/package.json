@@ -32,7 +32,7 @@
     "zustand": "^5.0.0"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "tsc && vite build",
     "serve": "vite preview"
   },
@@ -55,7 +55,7 @@
     ]
   },
   "devDependencies": {
-    "vite-plugin-svgr": "^4.2.0",
-    "ajv": "^8.17.1"
+    "ajv": "^8.17.1",
+    "vite-plugin-svgr": "^4.2.0"
   }
 }

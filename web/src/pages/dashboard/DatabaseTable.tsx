@@ -18,9 +18,9 @@ import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
 
 import ReportIcon from "@mui/icons-material/Report";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SettingsIcon from "@mui/icons-material/Settings";
-import SearchIcon from "@mui/icons-material/Search";
+import SearchIcon from '@mui/icons-material/Search';
 import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
@@ -155,7 +155,7 @@ const DatabaseTable = () => {
       utd.unique_values.push(uniqueValue);
       utd.input.push({ [column]: value });
     }
-
+    
     setUTD({ ...utd });
   };
 
@@ -213,7 +213,7 @@ const DatabaseTable = () => {
    * @returns
    */
   const updateData = async () => {
-    if (!utd.unique_values.length) return;
+    if(!utd.unique_values.length) return
 
     try {
       await request({
@@ -226,8 +226,8 @@ const DatabaseTable = () => {
 
       setUTD({
         ...defaultUTD,
-        unique_key: tableConfig.pk_column,
-      });
+        unique_key: tableConfig.pk_column
+      })
     } catch (err: any) {
       showAlert("error", err.message);
     }
@@ -364,15 +364,10 @@ const DatabaseTable = () => {
           <IconButton onClick={() => setOpenFiltering(true)}>
             <FilterAltIcon />
           </IconButton>
-          <IconButton
-            sx={{
-              backgroundColor: utd.unique_values.length
-                ? theme.palette.primary.main
-                : "",
-              color: utd.unique_values.length ? "white" : "",
-            }}
-            onClick={updateData}
-          >
+          <IconButton sx={{
+            backgroundColor: utd.unique_values.length ? theme.palette.primary.main : '',
+            color: utd.unique_values.length ? 'white' : ''
+          }} onClick={updateData}>
             <SaveIcon />
           </IconButton>
         </div>
@@ -426,7 +421,7 @@ const DatabaseTable = () => {
       <TableConfigForm
         config={tableConfig}
         open={openTableConfig}
-        columns={allColumns.map((col) => col.name)}
+        columns={filteredColumns.map((col) => col.name)}
         onHideDialog={() => setOpenTableConfig(false)}
         onConfigUpdated={(config) => {
           if (config !== tableConfig) {

@@ -10,9 +10,7 @@ Basable is an open-source software designed to provide comprehensive data manage
 
 - **Business Insight**: Basable offers tools for analyzing business data and extracting actionable insights. Whether you're tracking key performance indicators or identifying trends, Basable helps you make informed decisions.
 
-- **Manage Database Connections**: Basable simplifies the management of multiple database connections through a single account. Say goodbye to the hassle of juggling numerous Database credentials. With just one Basable account, you gain centralized control over your connections and data management projects.
-
-- **SDK**: We offer a comprehensive Software Development Toolkit (SDK) and APIs, enabling seamless integration of your client applications with your Basable instance. This accelerates and simplifies the development process while ensuring top-tier performance and reliability.
+- **Manage Database Connections**: Basable simplifies the management of multiple database connections through a single account. Say goodbye to the hassle of juggling numerous login credentials. With just one Basable account, you gain centralized control over your connections and data management projects.
 
 - **Data Security**: We offer a secure data management solution. Basable ensures the privacy of your data by abstaining from collection or inspection, and by implementing measures to restrict access to authenticated users only.
 
