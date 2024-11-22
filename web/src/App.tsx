@@ -2,7 +2,6 @@ import './App.scss';
 import './components/forms/index.scss'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import CreateGuest from './pages/CreateGuest';
-import ConnectionOverview from './pages/ConnectionOverview';
 import DashboardLayout from './layouts/DashboardLayout';
 import DashboardMain from './pages/dashboard/DashboardMain';
 import DatabaseTable from './pages/dashboard/DatabaseTable';
@@ -22,7 +21,6 @@ const App = () => {
           <Route path="/welcome" element={<Welcome />} />
 
           <Route path="/connect" element={<CreateGuest />} />
-          <Route path="/overview" element={<ConnectionOverview />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardMain />} />
             <Route
