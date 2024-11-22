@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     base::{
         column::ColumnList,
-        data::table::{DataQueryResult, TableConfig, TableQueryOpts, TableSearchOpts, UpdateTableData},
+        data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
     },
     imp::database::mysql::ColumnValue,
     AppError,

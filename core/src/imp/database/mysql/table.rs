@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use crate::{
     base::{
         column::{Column, ColumnList},
-        data::table::{
-            DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData,
-        },
+        data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
         imp::{
             table::{Table, TableCRUD},
             ConnectorType, SharedDB,
@@ -23,11 +21,15 @@ pub(crate) struct MySqlTable {
 }
 
 impl MySqlTable {
+    fn search_index_name(&self, search_cols: &Vec<String>) -> String {
+        let name = format!("bsearch_{}", search_cols.join(","));
+        name.replace(" ", "_")
+    }
+
     fn create_search_index(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
         let wrap_cols: Vec<String> = search_cols.iter().map(|col| format!("`{col}`")).collect();
 
-        let index_name = format!("{}_{}", self.name, search_cols.join(","));
-        let index_name = index_name.replace(" ", "_");
+        let index_name = self.search_index_name(&search_cols);
         let index_query = format!(
             "CREATE FULLTEXT INDEX {index_name} 
                 ON {} ({})",
@@ -42,8 +44,7 @@ impl MySqlTable {
     }
 
     fn search_index_exists(&self, search_cols: &Vec<String>) -> bool {
-        let index_name = format!("{}_{}", self.name, search_cols.join(","));
-        let index_name = index_name.replace(" ", "_");
+        let index_name = self.search_index_name(&search_cols);
 
         let index_query = format!("SHOW INDEX FROM {}", self.name);
         let conn = self.connector();
@@ -64,21 +65,19 @@ impl MySqlTable {
     }
 
     fn drop_search_index(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
-        let index_name = format!("{}_{}", self.name, search_cols.join(","));
-        let index_name = index_name.replace(" ", "_");
-        let index_query = format!("DROP INDEX {index_name} ON {};", self.name,);
+        if self.search_index_exists(&search_cols) {
+            let index_name = self.search_index_name(&search_cols);
+            let index_query = format!("DROP INDEX {index_name} ON {};", self.name,);
 
-        let conn = self.connector();
-        conn.exec_query(&index_query)?;
+            let conn = self.connector();
+            conn.exec_query(&index_query)?;
+        }
 
         Ok(())
     }
 
     fn search_prelude(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
-        if self.search_index_exists(&search_cols) {
-            self.drop_search_index(&search_cols)?;
-        }
-
+        self.drop_search_index(&search_cols)?;
         self.create_search_index(&search_cols)?;
         Ok(())
     }
@@ -232,6 +231,8 @@ impl TableCRUD for MySqlTable {
 
         let query = opts.try_into()?;
         let sql = db.generate_sql(query)?;
+
+        println!("sql {sql}");
 
         let conn = self.connector();
         let rows = conn.exec_query(&sql)?;

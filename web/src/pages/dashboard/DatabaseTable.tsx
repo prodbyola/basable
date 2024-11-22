@@ -106,6 +106,11 @@ const DatabaseTable = () => {
     setNavPage(dest);
   };
 
+  const getColumnType = (columnName: string) => {
+    const ct = columnTypes.find((ct) => ct[columnName] !== undefined);
+    if (ct) return ct[columnName];
+  };
+
   const getColumnValue = (name: string, row: TableRow) => {
     const o = row[name];
     if (row[name]) {
@@ -290,7 +295,6 @@ const DatabaseTable = () => {
       // Get row count
       let count = queryCount;
       if (navPage === 0 || !queryOpts?.offset) {
-        console.log('opts', queryOpts)
         count = (await request({
           method: "post",
           path: `tables/query-result-count/${tableID}`,
@@ -305,8 +309,11 @@ const DatabaseTable = () => {
         data: queryOpts,
       })) as TableRow[];
 
-      const cts = extractColumnTypes(rows[0]);
-      setColumnTypes(cts);
+      if (rows.length) {
+        const cts = extractColumnTypes(rows[0]);
+        setColumnTypes(cts);
+      }
+
       setRows(rows);
       setQueryCount(count);
     } catch (err: any) {
@@ -342,7 +349,7 @@ const DatabaseTable = () => {
       setQueryOpts({
         ...(queryOpts as TableQueryOpts),
         filters: fs,
-        search_opts: undefined
+        search_opts: undefined,
       });
     }
   }, [filters]);
@@ -440,12 +447,10 @@ const DatabaseTable = () => {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
-              <tr className="editableRow" key={index}>
-                {!rows.length ? (
-                  <td colSpan={filteredColumns.length}>No Data</td>
-                ) : (
-                  filteredColumns.map((col) => (
+            {rows.length ? (
+              rows.map((row, index) => (
+                <tr className="editableRow" key={index}>
+                  {filteredColumns.map((col) => (
                     <td key={col.name}>
                       {
                         <input
@@ -458,10 +463,18 @@ const DatabaseTable = () => {
                         />
                       }
                     </td>
-                  ))
-                )}
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr className="editableRow emptyData">
+                <td colSpan={filteredColumns.length}>
+                  <div className="emptyDataBox">
+                    <h3>No Data</h3>
+                  </div>
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </section>
@@ -495,11 +508,13 @@ const DatabaseTable = () => {
         open={openSearchForm}
         config={tableConfig}
         opts={queryOpts?.search_opts}
-        columns={allColumns.map((col) => col.name)}
+        columns={allColumns
+          .filter((col) => getColumnType(col.name) === "Text")
+          .map((col) => col.name)}
         onHideDialog={() => setOpenSearchForm(false)}
         onSearch={(opts) => {
-          setOpenSearchForm(false)
-          
+          setOpenSearchForm(false);
+
           if (opts !== queryOpts?.search_opts) {
             if (
               opts.search_cols &&
@@ -511,10 +526,19 @@ const DatabaseTable = () => {
               setQueryOpts({
                 ...(queryOpts as TableQueryOpts),
                 search_opts: opts as TableSearchOpts,
-                offset: 0
+                offset: 0,
               });
             }
           }
+        }}
+        onClearSearch={() => {
+          setOpenSearchForm(false);
+
+          setQueryOpts({
+            ...(queryOpts as TableQueryOpts),
+            search_opts: undefined,
+            offset: 0,
+          });
         }}
       />
     </ThemeProvider>

@@ -133,6 +133,18 @@ $table_border: variables.$grey_200 solid 1px;
         }
       }
 
+      tr.editableRow.emptyData {
+        height: calc(100vh - 410px);
+
+        .emptyDataBox {
+          display: flex;
+          height: 100%;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+      }
+
       tr:last-child {
         td {
           border-bottom: none;

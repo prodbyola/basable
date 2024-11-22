@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   OutlinedInput,
@@ -16,7 +17,9 @@ import {
   Theme,
   useTheme,
 } from "@mui/material";
-import { getTableLabel, TableConfig, TableSearchOpts } from "../../utils";
+import CloseIcon from "@mui/icons-material/Close";
+
+import { ColumnType, ColumnTypeObject, getTableLabel, TableConfig, TableSearchOpts } from "../../utils";
 import { ChangeEvent, useState } from "react";
 
 const ITEM_HEIGHT = 48;
@@ -50,9 +53,10 @@ type TableSearchProps = {
   config: Partial<TableConfig>;
   onHideDialog: () => void;
   onSearch: (opts: Partial<TableSearchOpts>) => void
+  onClearSearch: () => void
 };
 
-const TableSearchForm = ({ open, config, opts, columns, onHideDialog, onSearch }: TableSearchProps) => {
+const TableSearchForm = ({ open, config, opts, columns, onHideDialog, onSearch, onClearSearch }: TableSearchProps) => {
   const theme = useTheme();
   const [formData, setFormData] = useState(opts ?? {});
 
@@ -85,6 +89,18 @@ const TableSearchForm = ({ open, config, opts, columns, onHideDialog, onSearch }
   return (
     <Dialog open={open}>
       <DialogTitle>Search {getTableLabel(config as TableConfig)}</DialogTitle>
+      <IconButton
+        aria-label="close"
+        onClick={onHideDialog}
+        sx={(theme) => ({
+          position: "absolute",
+          right: 8,
+          top: 8,
+          color: theme.palette.grey[500],
+        })}
+      >
+        <CloseIcon />
+      </IconButton>
       <DialogContent sx={{ minWidth: "420px", paddingTop: "32px !important" }}>
         <FormControl className="tableConfigField" fullWidth>
           <InputLabel id="demo-multiple-chip-label">Columns</InputLabel>
@@ -125,7 +141,7 @@ const TableSearchForm = ({ open, config, opts, columns, onHideDialog, onSearch }
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onHideDialog}>Cancel</Button>
+        <Button onClick={onClearSearch}>Clear</Button>
         <Button
           onClick={() => onSearch(formData)}
           variant="contained"

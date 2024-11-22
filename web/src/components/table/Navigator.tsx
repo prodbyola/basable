@@ -25,12 +25,12 @@ const TableNavigator = ({
         aria-label="Basic button group"
         size="small"
       >
-        <Button onClick={() => onNavigate("prev")} disabled={currentPage === 0}>
+        <Button onClick={() => onNavigate("prev")} disabled={currentPage === 0 || (totalPages === 0)}>
           <ArrowBackIcon />
         </Button>
         <Button
           onClick={() => onNavigate("next")}
-          disabled={currentPage + 1 === totalPages}
+          disabled={currentPage + 1 === totalPages || (totalPages === 0)}
         >
           <ArrowForward />
         </Button>
