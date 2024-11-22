@@ -13,9 +13,9 @@ import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
 
 import ReportIcon from "@mui/icons-material/Report";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SettingsIcon from "@mui/icons-material/Settings";
-import SearchIcon from "@mui/icons-material/Search";
+import SearchIcon from '@mui/icons-material/Search';
 import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
@@ -35,8 +35,7 @@ const DatabaseTable = () => {
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
 
-  const [filteredColumns, setFilteredColumns] = React.useState<TableColumn[]>([]);
-  const [allColumns, setAllColumns] = React.useState<TableColumn[]>([]);
+  const [columns, setColumns] = React.useState<TableColumn[]>([]);
   const [rows, setRows] = React.useState<TableRow[]>([]);
 
   const defaultUTD: UpdateTableData = {
@@ -96,7 +95,7 @@ const DatabaseTable = () => {
       utd.unique_values.push(uniqueValue);
       utd.input.push({ [column]: value });
     }
-
+    
     setUTD({ ...utd });
   };
 
@@ -114,7 +113,7 @@ const DatabaseTable = () => {
   };
 
   const updateData = async () => {
-    if (!utd.unique_values.length) return;
+    if(!utd.unique_values.length) return
 
     try {
       await request({
@@ -127,58 +126,48 @@ const DatabaseTable = () => {
 
       setUTD({
         ...defaultUTD,
-        unique_key: tableConfig.pk_column,
-      });
+        unique_key: tableConfig.pk_column
+      })
     } catch (err: any) {
       showAlert("error", err.message);
     }
   };
 
-  const loadData = async () => {
-    setTableLoading(true);
-    const cols = (await request({
-      method: "get",
-      path: "tables/columns/" + tableID,
-    })) as TableColumn[];
-
-    setAllColumns(cols)
-
-    let fcols = cols
-    let dataQuery = `?table=${tableID}`;
-    const tc = tableConfigs.find((c) => c.name === tableID);
-    if (tc) {
-      const excluded = tc.exclude_columns;
-      if (excluded && excluded.length) {
-        fcols = cols.filter((col) => !excluded.includes(col.name));
-        const selection = cols.map((col) => col.name).join(",");
-
-        dataQuery += "&columns=" + selection;
-      }
-
-      // if there's a unique column, always shift it to leftmost
-      if (tc.pk_column) {
-        const pkc = fcols.find((col) => col.name === tc.pk_column);
-        if (pkc) {
-          const i = fcols.indexOf(pkc);
-          fcols.splice(i, 1);
-          fcols.splice(0, 0, pkc);
-        }
-      }
-
-      updateConfigStates(tc);
-    }
-    setFilteredColumns(fcols);
-
-    const rows = (await request({
-      method: "get",
-      path: `tables/data/${tableID}` + dataQuery,
-    })) as TableRow[];
-
-    setRows(rows);
-    setTableLoading(false);
-  };
-
   React.useEffect(() => {
+    const loadData = async () => {
+      setTableLoading(true);
+      const cols = (await request({
+        method: "get",
+        path: "tables/columns/" + tableID,
+      })) as TableColumn[];
+
+      const tc = tableConfigs.find((c) => c.name === tableID);
+      if (tc) {
+        // if there's a unique column, always shift it to leftmost
+        if(tc.pk_column) {
+          for(let i = 0; i < cols.length; i++) {
+            const col = cols[i]
+            if(col.name === tc.pk_column) {
+              cols.splice(i, 1)
+              cols.splice(0, 0, col)
+              break;
+            }
+          }
+        }
+
+        updateConfigStates(tc);
+      }
+      setColumns(cols);
+
+      const rows = (await request({
+        method: "get",
+        path: `tables/data/${tableID}?table=${tableID}`,
+      })) as TableRow[];
+      setRows(rows);
+
+      setTableLoading(false);
+    };
+
     if (tableID) loadData();
   }, [request, tableID]);
 
@@ -212,15 +201,10 @@ const DatabaseTable = () => {
           <IconButton>
             <FilterAltIcon />
           </IconButton>
-          <IconButton
-            sx={{
-              backgroundColor: utd.unique_values.length
-                ? theme.palette.primary.main
-                : "",
-              color: utd.unique_values.length ? "white" : "",
-            }}
-            onClick={updateData}
-          >
+          <IconButton sx={{
+            backgroundColor: utd.unique_values.length ? theme.palette.primary.main : '',
+            color: utd.unique_values.length ? 'white' : ''
+          }} onClick={updateData}>
             <SaveIcon />
           </IconButton>
         </div>
@@ -239,7 +223,7 @@ const DatabaseTable = () => {
         <table>
           <thead>
             <tr>
-              {filteredColumns.map((col) => (
+              {columns.map((col) => (
                 <th key={col.name}>{col.name}</th>
               ))}
             </tr>
@@ -247,7 +231,7 @@ const DatabaseTable = () => {
           <tbody>
             {rows.map((row, index) => (
               <tr className="editableRow" key={index}>
-                {filteredColumns.map((col) => (
+                {columns.map((col) => (
                   <td key={col.name}>
                     {
                       <input
@@ -267,11 +251,9 @@ const DatabaseTable = () => {
       <TableConfigForm
         config={tableConfig}
         open={openTableConfig}
-        columns={allColumns.map((col) => col.name)}
+        columns={columns.map((col) => col.name)}
         onHideDialog={() => setOpenTableConfig(false)}
-        onConfigUpdated={(config) => {
-          if (config !== tableConfig) loadData();
-        }}
+        onConfigUpdated={(config) => updateConfigStates(config as TableConfig)}
       />
     </ThemeProvider>
   );
