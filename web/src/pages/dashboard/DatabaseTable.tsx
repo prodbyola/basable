@@ -95,7 +95,7 @@ const DatabaseTable = () => {
     const dest = to === "next" ? navPage + 1 : navPage - 1;
     const offset = rowCount * dest;
 
-    if (dest < 0 || dest + 1 === totalPages) {
+    if (dest < 0 || dest === totalPages) {
       return;
     }
 
@@ -256,14 +256,13 @@ const DatabaseTable = () => {
 
     try {
       // Get row count
+      let count = queryCount
       if (navPage === 0) {
-        const count = (await request({
+        count = (await request({
           method: "post",
           path: `tables/query-result-count/${tableID}`,
           data: queryOpts,
         })) as number;
-
-        setQueryCount(count);
       }
 
       // get rows
@@ -276,6 +275,7 @@ const DatabaseTable = () => {
       const cts = extractColumnTypes(rows[0]);
       setColumnTypes(cts);
       setRows(rows);
+      setQueryCount(count);
       setTableLoading(false);
     } catch (err: any) {
       setTableLoading(false);

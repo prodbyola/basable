@@ -1,5 +1,5 @@
 // web/src/components/forms/AuthForm.tsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Checkbox,
@@ -8,23 +8,22 @@ import {
   IconButton,
   InputAdornment,
   Typography,
-  Link
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Link, useNavigate } from "react-router-dom";
 
 const AuthForm: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Email:', email, 'Password:', password);
+    console.log("Email:", email, "Password:", password);
 
-    navigate('/welcome');
+    navigate("/welcome");
   };
 
   return (
@@ -37,14 +36,14 @@ const AuthForm: React.FC = () => {
         fullWidth
         margin="normal"
         sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '10px' // makes the border circular
-          }
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "10px", // makes the border circular
+          },
         }}
       />
       <TextField
         label="Password"
-        type={showPassword ? 'text' : 'password'}
+        type={showPassword ? "text" : "password"}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         fullWidth
@@ -56,12 +55,12 @@ const AuthForm: React.FC = () => {
                 {showPassword ? <VisibilityOff /> : <Visibility />}
               </IconButton>
             </InputAdornment>
-          )
+          ),
         }}
         sx={{
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '10px' // makes the border circular
-          }
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "10px", // makes the border circular
+          },
         }}
       />
 
@@ -76,21 +75,21 @@ const AuthForm: React.FC = () => {
           <Checkbox
             color="primary"
             sx={{
-              '& .MuiSvgIcon-root': {
-                color: 'gray'
+              "& .MuiSvgIcon-root": {
+                color: "gray",
               },
-              '&.Mui-checked .MuiSvgIcon-root': {
-                color: 'primary.main' // Set checked color to primary
-              }
+              "&.Mui-checked .MuiSvgIcon-root": {
+                color: "primary.main", // Set checked color to primary
+              },
             }}
           />
           <Typography variant="body2">Remember me</Typography>
         </Box>
         <Link
-          href="/forgotpassword"
-          variant="body2"
+          to="/forgotpassword"
+          // variant="body2"
           color="primary"
-          underline="none"
+          // underline="none"
         >
           Forgot Password?
         </Link>
@@ -101,31 +100,29 @@ const AuthForm: React.FC = () => {
         variant="contained"
         fullWidth
         sx={{
-          backgroundColor: '#5a5fcf',
-          color: '#fff',
-          textTransform: 'none',
-          my: 2
+          backgroundColor: "#5a5fcf",
+          color: "#fff",
+          textTransform: "none",
+          my: 2,
         }}
       >
         Login
       </Button>
       <Typography variant="caption" color="textSecondary">
-        By signing up, you agree to our{' '}
-        <Link href="#">
+        By signing up, you agree to our{" "}
+        <Link to="#">
           Terms and <br /> Service
-        </Link>{' '}
-        and <Link href="#">Privacy Policy</Link>.
+        </Link>{" "}
+        and <Link to="#">Privacy Policy</Link>.
       </Typography>
 
       <Typography variant="body2" color="black" sx={{ mt: 3 }}>
-        Don't have an account yet?{' '}
-        <Link
-          href="/"
-          color="primary"
-          sx={{ color: '#00008b', textDecoration: 'none' }}
-        >
+        Don't have an account yet?{" "}
+        <Link to="/" color="primary">
           Sign up
         </Link>
+        {" or "}
+        <Link to="/connect">Login as Guest</Link>
       </Typography>
     </form>
   );

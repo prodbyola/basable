@@ -1,7 +1,10 @@
+use std::convert::Infallible;
 use std::net::SocketAddr;
+use std::path::PathBuf;
 
+use axum::body::Body;
 use axum::extract::connect_info::IntoMakeServiceWithConnectInfo;
-use axum::http::HeaderName;
+use axum::http::{HeaderName, Response};
 use axum::routing::get_service;
 use axum::{
     async_trait,
@@ -14,9 +17,10 @@ use axum::{
     Router,
 };
 
+use tower::service_fn;
 use tower::ServiceBuilder;
 use tower_http::cors::Any;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::base::AppState;
@@ -59,9 +63,13 @@ pub fn app() -> Result<BasableHttpService, AppError> {
     state.local_db.setup()?;
 
     let routes = core_routes();
+    let static_files_service = get_service(ServeDir::new("./web").not_found_service(ServeFile::new("web/index.html")));
+    let asset_files_service = get_service(ServeDir::new("./web/assets").not_found_service(ServeFile::new("web/index.html")));
 
     let r = Router::new()
-        .nest_service("/web", get_service(ServeDir::new("./web")))
+        .nest_service("/", static_files_service)
+        .nest_service("/assets", asset_files_service)
+        // .fallback_service(service_fn(serve_index_html))
         .nest("/core", routes)
         .layer(
             ServiceBuilder::new()
@@ -86,4 +94,32 @@ pub fn app() -> Result<BasableHttpService, AppError> {
         .into_make_service_with_connect_info::<SocketAddr>();
 
     Ok(r)
+}
+
+// Serve `index.html` for unknown routes
+async fn serve_index_html(req: Request<Body>) -> Result<Response<Body>, Infallible> {
+    let path = req.uri().path();
+
+    // Check if the path matches a file in the `dist` directory
+    let potential_file_path = format!("./{}", path);
+    if tokio::fs::metadata(&potential_file_path).await.is_ok() {
+        // Return 404 if a file was requested but not found
+        return Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::from("Not Found"))
+            .unwrap());
+    }
+
+    // Serve `index.html` for other cases
+    let index_path = PathBuf::from("./web/index.html");
+    match tokio::fs::read(index_path).await {
+        Ok(file) => Ok(Response::builder()
+            .header("Content-Type", "text/html")
+            .body(Body::from(file))
+            .unwrap()),
+        Err(_) => Ok(Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Body::from("Error loading index.html"))
+            .unwrap()),
+    }
 }
