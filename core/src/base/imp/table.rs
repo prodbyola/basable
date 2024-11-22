@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     base::{
         column::ColumnList,
-        data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
+        data::table::{DataQueryResult, TableConfig, TableQueryOpts, TableSearchOpts, UpdateTableData},
     },
     imp::database::mysql::ColumnValue,
     AppError,
@@ -63,6 +63,8 @@ pub(crate) trait TableCRUD {
     fn update_data(&self, input: UpdateTableData) -> Result<(), AppError>;
 
     fn delete_data(&self, col: String, value: String) -> Result<(), AppError>;
+
+    fn search(&self, opts: TableSearchOpts) -> DataQueryResult<ColumnValue, AppError>;
 }
 
 #[cfg(test)]

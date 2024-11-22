@@ -149,7 +149,14 @@ pub struct TableQueryOpts {
     /// will be selected.
     pub columns: Option<Vec<String>>,
 
-    pub order_by: Option<QueryOrder>
+    pub order_by: Option<QueryOrder>,
+    pub search_opts: Option<TableSearchOpts>
+}
+
+impl TableQueryOpts {
+    pub fn is_search_mode(&self) -> bool {
+        self.search_opts.is_some()
+    }
 }
 
 impl TryFrom<TableQueryOpts> for BasableQuery {
@@ -163,6 +170,7 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
             filters,
             columns,
             order_by,
+            search_opts,
         } = opts;
 
         let operation = QueryCommand::SelectData(columns);
@@ -178,11 +186,18 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
             offset: Some(offset),
             filters: filter_chain,
             order_by,
+            search_opts,
             ..Default::default()
         };
 
         Ok(bq)
     }
+}
+
+#[derive(Deserialize)]
+pub(crate) struct TableSearchOpts {
+    pub search_cols: Vec<String>,
+    pub query: String,
 }
 
 #[derive(Serialize)]

@@ -1,10 +1,5 @@
-use std::convert::Infallible;
-use std::net::SocketAddr;
-use std::path::PathBuf;
-
-use axum::body::Body;
 use axum::extract::connect_info::IntoMakeServiceWithConnectInfo;
-use axum::http::{HeaderName, Response};
+use axum::http::HeaderName;
 use axum::routing::get_service;
 use axum::{
     async_trait,
@@ -16,6 +11,7 @@ use axum::{
     },
     Router,
 };
+use std::net::SocketAddr;
 
 use tower::ServiceBuilder;
 use tower_http::cors::Any;
@@ -62,8 +58,11 @@ pub fn app() -> Result<BasableHttpService, AppError> {
     state.local_db.setup()?;
 
     let routes = core_routes();
-    let static_files_service = get_service(ServeDir::new("./web").not_found_service(ServeFile::new("web/index.html")));
-    let asset_files_service = get_service(ServeDir::new("./web/assets").not_found_service(ServeFile::new("web/index.html")));
+    let static_files_service =
+        get_service(ServeDir::new("./web").not_found_service(ServeFile::new("web/index.html")));
+    let asset_files_service = get_service(
+        ServeDir::new("./web/assets").not_found_service(ServeFile::new("web/index.html")),
+    );
 
     let r = Router::new()
         .nest_service("/", static_files_service)

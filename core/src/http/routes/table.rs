@@ -11,7 +11,7 @@ use axum_macros::debug_handler;
 use crate::{
     base::{
         column::ColumnList,
-        data::table::{TableConfig, TableQueryOpts, TableSummaries, UpdateTableData},
+        data::table::{TableConfig, TableQueryOpts, TableSearchOpts, TableSummaries, UpdateTableData},
         AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
@@ -70,9 +70,22 @@ pub(crate) async fn query_data(
     DbExtractor(db): DbExtractor,
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
-    Json(filter): Json<TableQueryOpts>,
+    Json(opts): Json<TableQueryOpts>,
 ) -> Result<Json<Vec<HashMap<String, ColumnValue>>>, AppError> {
-    let data = table.query_data(filter, &db)?;
+    let data = table.query_data(opts, &db)?;
+    Ok(Json(data))
+}
+
+#[debug_handler]
+pub(crate) async fn search(
+    Path(_): Path<String>,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(_): DbExtractor,
+    TableExtractor(table): TableExtractor,
+    State(_): State<AppState>,
+    Json(opts): Json<TableSearchOpts>,
+) -> Result<Json<Vec<HashMap<String, ColumnValue>>>, AppError> {
+    let data = table.search(opts)?;
     Ok(Json(data))
 }
 
@@ -158,6 +171,7 @@ pub(super) fn table_routes() -> Router<AppState> {
         .route("/configurations/:table_name", patch(save_configuration))
         .route("/columns/:table_name", get(get_columns))
         .route("/query-data/:table_name", post(query_data))
+        .route("/search/:table_name", post(search))
         .route("/query-result-count/:table_name", post(query_result_count))
         .route("/data/:table_name", post(insert_data))
         .route("/data/:table_name", patch(update_data))

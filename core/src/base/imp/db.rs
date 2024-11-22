@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::base::data::table::TableSummaries;
+use crate::base::data::table::{TableSearchOpts, TableSummaries};
 use crate::base::query::filter::{Filter, FilterChain};
 use crate::base::query::{BasableQuery, QueryCommand};
 use crate::imp::database::mysql::db::MySqlDB;
@@ -71,6 +71,8 @@ pub trait QuerySqlParser {
     }
 
     fn generate_sql(&self, query: BasableQuery) -> Result<String, AppError> {
+        let is_search_mode = query.is_search_mode();
+
         let BasableQuery {
             table,
             command: operation,
@@ -81,6 +83,7 @@ pub trait QuerySqlParser {
             group_by,
             left_join,
             having,
+            search_opts,
         } = query;
 
         // Parse query operation type
@@ -90,16 +93,19 @@ pub trait QuerySqlParser {
                     || "*".to_string(),
                     |list| {
                         if list.is_empty() {
-                            return "*".to_string()
+                            return "*".to_string();
                         }
-                        
-                        let s: Vec<String> = list.iter().map(|s| {
-                            if s.to_lowercase() == "count(*)" {
-                                return format!("{s}")
-                            }
 
-                            format!("`{s}`")
-                        }).collect();
+                        let s: Vec<String> = list
+                            .iter()
+                            .map(|s| {
+                                if s.to_lowercase() == "count(*)" {
+                                    return format!("{s}");
+                                }
+
+                                format!("`{s}`")
+                            })
+                            .collect();
                         s.join(", ")
                     },
                 );
@@ -114,9 +120,29 @@ pub trait QuerySqlParser {
         }
 
         // Parse query filters
-        if filters.not_empty() {
+        if filters.not_empty() && !is_search_mode {
             let filter_chain = <MySqlDB as QuerySqlParser>::parse_filter_chain(&filters);
             sql.push_str(format!(" WHERE {filter_chain}").as_str())
+        }
+
+        // parse fulltext search mode
+        if is_search_mode {
+            if let Some(opts) = search_opts {
+                let TableSearchOpts {
+                    search_cols, query, ..
+                } = opts;
+
+                let wrap_cols: Vec<String> =
+                    search_cols.iter().map(|col| format!("`{col}`")).collect();
+
+                let search_query = format!(
+                    " WHERE MATCH({}) AGAINST('{}')",
+                    wrap_cols.join(","),
+                    query
+                );
+
+                sql.push_str(&search_query);
+            }
         }
 
         // Parse GROUP BY

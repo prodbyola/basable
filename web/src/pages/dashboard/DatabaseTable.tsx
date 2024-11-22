@@ -8,12 +8,13 @@ import {
   useStore,
   getTableLabel,
   UpdateTableData,
-  BasableFilter,
   FilterInput,
   ColumnTypeObject,
   buildFilterQuery,
   extractColumnTypes,
   OrderByKey,
+  TableQueryOpts,
+  TableSearchOpts,
 } from "../../utils";
 import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
@@ -29,17 +30,7 @@ import TableConfigForm from "../../components/forms/TableConfigForm";
 import TableFiltering from "../../components/filters";
 import { isAxiosError } from "axios";
 import TableNavigator from "../../components/table/Navigator";
-
-type TableQueryOpts = {
-  table: string;
-  offset: number;
-  row_count: number;
-  filters?: BasableFilter[];
-  columns?: string[];
-  order_by?: {
-    [key: string]: string;
-  };
-};
+import TableSearchForm from "../../components/forms/TableSearchForm";
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
@@ -61,6 +52,9 @@ const DatabaseTable = () => {
   const [queryOpts, setQueryOpts] = React.useState<TableQueryOpts | undefined>(
     undefined
   );
+  const [searchOpts, setSearchOpts] = React.useState<Partial<TableSearchOpts>>(
+    {}
+  );
   const [queryCount, setQueryCount] = React.useState(0);
   const [navPage, setNavPage] = React.useState(0);
   const totalPages = React.useMemo(() => {
@@ -72,6 +66,7 @@ const DatabaseTable = () => {
   const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
+  const [openSearchForm, setOpenSearchForm] = React.useState(false);
 
   const [openFiltering, setOpenFiltering] = React.useState(false);
   const [filters, setFilters] = React.useState<FilterInput[] | undefined>(
@@ -92,7 +87,7 @@ const DatabaseTable = () => {
   };
   const [utd, setUTD] = React.useState(defaultUTD);
 
-  const [tableLoading, setTableLoading] = React.useState(false);
+  const [tableLoading, setTableLoading] = React.useState(true);
 
   const navigateTable = (to: "prev" | "next") => {
     const rowCount = queryOpts ? queryOpts.row_count : 0;
@@ -113,8 +108,12 @@ const DatabaseTable = () => {
 
   const getColumnValue = (name: string, row: TableRow) => {
     const o = row[name];
-    const k = Object.keys(row[name])[0];
-    return o[k] as string;
+    if (row[name]) {
+      const k = Object.keys(row[name])[0];
+      return o[k] as string;
+    }
+
+    return "NULL";
   };
 
   const getInputLabel = (row: TableRow) => {
@@ -290,7 +289,8 @@ const DatabaseTable = () => {
     try {
       // Get row count
       let count = queryCount;
-      if (navPage === 0) {
+      if (navPage === 0 || !queryOpts?.offset) {
+        console.log('opts', queryOpts)
         count = (await request({
           method: "post",
           path: `tables/query-result-count/${tableID}`,
@@ -309,9 +309,7 @@ const DatabaseTable = () => {
       setColumnTypes(cts);
       setRows(rows);
       setQueryCount(count);
-      setTableLoading(false);
     } catch (err: any) {
-      setTableLoading(false);
       let msg = err.message;
       if (isAxiosError(err)) {
         msg = err.response?.data;
@@ -319,6 +317,8 @@ const DatabaseTable = () => {
 
       showAlert("error", msg);
     }
+
+    setTableLoading(false);
   };
 
   // function we call page reload
@@ -342,6 +342,7 @@ const DatabaseTable = () => {
       setQueryOpts({
         ...(queryOpts as TableQueryOpts),
         filters: fs,
+        search_opts: undefined
       });
     }
   }, [filters]);
@@ -391,7 +392,7 @@ const DatabaseTable = () => {
           <IconButton onClick={() => loadData()}>
             <TableRefresh />
           </IconButton>
-          <IconButton>
+          <IconButton onClick={() => setOpenSearchForm(true)}>
             <SearchIcon />
           </IconButton>
           <IconButton onClick={() => setOpenFiltering(true)}>
@@ -441,18 +442,24 @@ const DatabaseTable = () => {
           <tbody>
             {rows.map((row, index) => (
               <tr className="editableRow" key={index}>
-                {filteredColumns.map((col) => (
-                  <td key={col.name}>
-                    {
-                      <input
-                        name={getInputLabel(row)}
-                        value={getColumnValue(col.name, row)}
-                        onChange={(evt) => updateRowCell(evt, col.name, index)}
-                        disabled={!hasUniqueColumn}
-                      />
-                    }
-                  </td>
-                ))}
+                {!rows.length ? (
+                  <td colSpan={filteredColumns.length}>No Data</td>
+                ) : (
+                  filteredColumns.map((col) => (
+                    <td key={col.name}>
+                      {
+                        <input
+                          name={getInputLabel(row)}
+                          value={getColumnValue(col.name, row)}
+                          onChange={(evt) =>
+                            updateRowCell(evt, col.name, index)
+                          }
+                          disabled={!hasUniqueColumn}
+                        />
+                      }
+                    </td>
+                  ))
+                )}
               </tr>
             ))}
           </tbody>
@@ -481,6 +488,32 @@ const DatabaseTable = () => {
           if (newFilters !== filters) {
             setFilters(newFilters);
             setNavPage(0);
+          }
+        }}
+      />
+      <TableSearchForm
+        open={openSearchForm}
+        config={tableConfig}
+        opts={queryOpts?.search_opts}
+        columns={allColumns.map((col) => col.name)}
+        onHideDialog={() => setOpenSearchForm(false)}
+        onSearch={(opts) => {
+          setOpenSearchForm(false)
+          
+          if (opts !== queryOpts?.search_opts) {
+            if (
+              opts.search_cols &&
+              opts.search_cols.length &&
+              opts.query &&
+              opts.query.length
+            ) {
+              setNavPage(0);
+              setQueryOpts({
+                ...(queryOpts as TableQueryOpts),
+                search_opts: opts as TableSearchOpts,
+                offset: 0
+              });
+            }
           }
         }}
       />

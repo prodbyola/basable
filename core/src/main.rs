@@ -114,8 +114,8 @@ async fn main() -> Result<(), AppError> {
             if dm.is_local() {
                 let url = format!("http://localhost:{port}");
                 match webbrowser::open(&url) {
-                    Ok(_) => println!("Browser launched successfully"),
-                    Err(err) => println!("Error launching browser: {err}"),
+                    Ok(_) => tracing::debug!("Browser launched successfully"),
+                    Err(err) => tracing::debug!("Unable to lauch browser: {err}"),
                 }
             }
         }

@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use crate::{
     base::{
         column::{Column, ColumnList},
-        data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
+        data::table::{
+            DataQueryResult, TableConfig, TableQueryOpts, TableSearchOpts, UpdateTableData,
+        },
         imp::{
             table::{Table, TableCRUD},
             ConnectorType, SharedDB,
@@ -18,6 +20,41 @@ use super::ColumnValue;
 pub(crate) struct MySqlTable {
     pub name: String,
     pub connector: ConnectorType,
+}
+
+impl MySqlTable {
+    pub fn create_search_index(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
+        let wrap_cols: Vec<String> = search_cols.iter().map(|col| format!("`{col}`")).collect();
+        
+        let index_name = format!("{}_{}", self.name, search_cols.join(","));
+        let index_name = index_name.replace(" ", "_");
+        let index_query = format!(
+            "CREATE FULLTEXT INDEX {index_name} 
+                ON {} ({})",
+            self.name,
+            wrap_cols.join(", ")
+        );
+
+        let conn = self.connector();
+        conn.exec_query(&index_query)?;
+
+        Ok(())
+    }
+
+    pub fn drop_search_index(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
+        
+        let index_name = format!("{}_{}", self.name, search_cols.join(","));
+        let index_name = index_name.replace(" ", "_");
+        let index_query = format!(
+            "DROP INDEX {index_name} ON {};",
+            self.name,
+        );
+
+        let conn = self.connector();
+        conn.exec_query(&index_query)?;
+
+        Ok(())
+    }
 }
 
 impl Table for MySqlTable {
@@ -145,27 +182,53 @@ impl TableCRUD for MySqlTable {
         opts: TableQueryOpts,
         db: &SharedDB,
     ) -> DataQueryResult<ColumnValue, AppError> {
+        let is_search_mode = opts.is_search_mode();
+        let mut search_cols = Vec::new();
+
+        if is_search_mode {
+            if let Some(search_opts) = &opts.search_opts {
+                search_cols = search_opts.search_cols.clone();
+
+                self.drop_search_index(&search_cols)?;
+                self.create_search_index(&search_cols)?;
+            }
+        }
+
+        let cols = opts
+            .columns
+            .clone()
+            .unwrap_or_else(|| match self.query_columns() {
+                Ok(cs) => cs.iter().map(|col| col.name.clone()).collect(),
+                Err(err) => {
+                    tracing::error!("error reading db column: {err}");
+                    vec![]
+                }
+            });
+
         let query = opts.try_into()?;
         let sql = db.generate_sql(query)?;
 
         let conn = self.connector();
         let rows = conn.exec_query(&sql)?;
 
-        let cols = self.query_columns()?;
         let data = rows
             .iter()
             .map(|r| {
                 let mut map: HashMap<String, ColumnValue> = HashMap::new();
 
                 for col in &cols {
-                    if let Some(v) = r.get::<mysql::Value, &str>(col.name.as_str()) {
-                        map.insert(col.name.clone(), v.into());
+                    if let Some(v) = r.get::<mysql::Value, &str>(col) {
+                        map.insert(col.clone(), v.into());
                     }
                 }
 
                 map
             })
             .collect();
+
+        if is_search_mode {
+            let _ = self.drop_search_index(&search_cols)?;
+        }
 
         Ok(data)
     }
@@ -181,16 +244,15 @@ impl TableCRUD for MySqlTable {
         };
 
         let sql = db.generate_sql(query)?;
+        println!("count: {sql}");
 
         let conn = self.connector();
         let rows = conn.exec_query(&sql)?;
 
         let count = rows
             .first()
-            .map(|row| row
-                .get::<usize, &str>("COUNT(*)")
-                .unwrap_or_default()
-            ).unwrap_or_default();
+            .map(|row| row.get::<usize, &str>("COUNT(*)").unwrap_or_default())
+            .unwrap_or_default();
 
         Ok(count)
     }
@@ -267,4 +329,58 @@ impl TableCRUD for MySqlTable {
 
         Ok(())
     }
+
+    fn search(&self, opts: TableSearchOpts) -> DataQueryResult<ColumnValue, AppError> {
+        let TableSearchOpts {
+            search_cols,
+            query,
+        } = opts;
+
+        let wrap_cols: Vec<String> = search_cols.iter().map(|col| format!("`{col}`")).collect();
+
+        let index_name = format!("{}_{}", self.name, search_cols.join(","));
+        let index_name = index_name.replace(" ", "_");
+        let index_query = format!(
+            "CREATE FULLTEXT INDEX {index_name} 
+                ON {} ({})",
+            self.name,
+            wrap_cols.join(", ")
+        );
+
+        println!("{index_query}");
+
+        let conn = self.connector();
+        conn.exec_query(&index_query)?;
+
+        let search_query = format!(
+            "
+                SELECT * FROM {} 
+                WHERE MATCH({}) AGAINST('{}');
+            ",
+            self.name,
+            wrap_cols.join(","),
+            query
+        );
+
+        let rows = conn.exec_query(&search_query)?;
+
+        let cols = self.query_columns()?;
+        let data = rows
+            .iter()
+            .map(|r| {
+                let mut map: HashMap<String, ColumnValue> = HashMap::new();
+
+                for col in &cols {
+                    if let Some(v) = r.get::<mysql::Value, &str>(col.name.as_str()) {
+                        map.insert(col.name.clone(), v.into());
+                    }
+                }
+
+                map
+            })
+            .collect();
+
+        Ok(data)
+    }
+
 }

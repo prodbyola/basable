@@ -117,6 +117,26 @@ export type FilterInput = {
   endValue?: string
 }
 
+/**
+ * Options for querying table
+ */
+export type TableQueryOpts = {
+  table: string;
+  offset: number;
+  row_count: number;
+  filters?: BasableFilter[];
+  columns?: string[];
+  order_by?: {
+    [key: string]: string;
+  };
+  search_opts?: TableSearchOpts
+};
+
+export type TableSearchOpts = {
+  search_cols: string[]
+  query: string,
+}
+
 export const COLUMN_TYPES = ['NULL', 'Text', 'Int', 'UInt', 'Float', 'Double', 'Date', 'Time'] as const
 export type ColumnType = typeof COLUMN_TYPES[number]
 export type ColumnTypeObject = {

@@ -3,6 +3,8 @@ use std::fmt::Display;
 use filter::FilterChain;
 use serde::Deserialize;
 
+use super::data::table::TableSearchOpts;
+
 pub mod filter;
 
 pub enum QueryCommand {
@@ -43,4 +45,11 @@ pub struct BasableQuery {
     pub group_by: Option<Vec<String>>,
     pub left_join: Option<String>,
     pub having: FilterChain,
+    pub search_opts: Option<TableSearchOpts>
+}
+
+impl BasableQuery {
+    pub fn is_search_mode(&self) -> bool {
+        self.search_opts.is_some()
+    }
 }
