@@ -63,8 +63,6 @@ pub(crate) trait TableCRUD {
     fn update_data(&self, input: UpdateTableData) -> Result<(), AppError>;
 
     fn delete_data(&self, col: String, value: String) -> Result<(), AppError>;
-
-    fn search(&self, opts: TableSearchOpts) -> DataQueryResult<ColumnValue, AppError>;
 }
 
 #[cfg(test)]

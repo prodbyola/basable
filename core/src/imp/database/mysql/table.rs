@@ -4,7 +4,7 @@ use crate::{
     base::{
         column::{Column, ColumnList},
         data::table::{
-            DataQueryResult, TableConfig, TableQueryOpts, TableSearchOpts, UpdateTableData,
+            DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData,
         },
         imp::{
             table::{Table, TableCRUD},
@@ -23,9 +23,9 @@ pub(crate) struct MySqlTable {
 }
 
 impl MySqlTable {
-    pub fn create_search_index(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
+    fn create_search_index(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
         let wrap_cols: Vec<String> = search_cols.iter().map(|col| format!("`{col}`")).collect();
-        
+
         let index_name = format!("{}_{}", self.name, search_cols.join(","));
         let index_name = index_name.replace(" ", "_");
         let index_query = format!(
@@ -41,18 +41,45 @@ impl MySqlTable {
         Ok(())
     }
 
-    pub fn drop_search_index(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
-        
+    fn search_index_exists(&self, search_cols: &Vec<String>) -> bool {
         let index_name = format!("{}_{}", self.name, search_cols.join(","));
         let index_name = index_name.replace(" ", "_");
-        let index_query = format!(
-            "DROP INDEX {index_name} ON {};",
-            self.name,
-        );
+
+        let index_query = format!("SHOW INDEX FROM {}", self.name);
+        let conn = self.connector();
+
+        if let Ok(rows) = conn.exec_query(&index_query) {
+            let exists = rows.iter().find(|row| {
+                if let Some(name) = row.get::<String, &str>("Key_name") {
+                    return name == index_name;
+                }
+
+                false
+            });
+
+            return exists.is_some();
+        }
+
+        false
+    }
+
+    fn drop_search_index(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
+        let index_name = format!("{}_{}", self.name, search_cols.join(","));
+        let index_name = index_name.replace(" ", "_");
+        let index_query = format!("DROP INDEX {index_name} ON {};", self.name,);
 
         let conn = self.connector();
         conn.exec_query(&index_query)?;
 
+        Ok(())
+    }
+
+    fn search_prelude(&self, search_cols: &Vec<String>) -> Result<(), AppError> {
+        if self.search_index_exists(&search_cols) {
+            self.drop_search_index(&search_cols)?;
+        }
+
+        self.create_search_index(&search_cols)?;
         Ok(())
     }
 }
@@ -188,9 +215,7 @@ impl TableCRUD for MySqlTable {
         if is_search_mode {
             if let Some(search_opts) = &opts.search_opts {
                 search_cols = search_opts.search_cols.clone();
-
-                self.drop_search_index(&search_cols)?;
-                self.create_search_index(&search_cols)?;
+                self.search_prelude(&search_cols)?;
             }
         }
 
@@ -234,9 +259,20 @@ impl TableCRUD for MySqlTable {
     }
 
     fn query_result_count(&self, opts: TableQueryOpts, db: &SharedDB) -> Result<usize, AppError> {
+        let is_search_mode = opts.is_search_mode();
+        let mut search_cols = Vec::new();
+
+        if is_search_mode {
+            if let Some(search_opts) = &opts.search_opts {
+                search_cols = search_opts.search_cols.clone();
+                self.search_prelude(&search_cols)?;
+            }
+        }
+
         let query = BasableQuery {
             table: opts.table,
             command: QueryCommand::SelectData(Some(vec!["COUNT(*)".to_string()])),
+            search_opts: opts.search_opts,
             filters: opts
                 .filters
                 .map_or(FilterChain::empty(), |fs| FilterChain::prefill(fs)),
@@ -253,6 +289,10 @@ impl TableCRUD for MySqlTable {
             .first()
             .map(|row| row.get::<usize, &str>("COUNT(*)").unwrap_or_default())
             .unwrap_or_default();
+
+        if is_search_mode {
+            let _ = self.drop_search_index(&search_cols)?;
+        }
 
         Ok(count)
     }
@@ -329,58 +369,4 @@ impl TableCRUD for MySqlTable {
 
         Ok(())
     }
-
-    fn search(&self, opts: TableSearchOpts) -> DataQueryResult<ColumnValue, AppError> {
-        let TableSearchOpts {
-            search_cols,
-            query,
-        } = opts;
-
-        let wrap_cols: Vec<String> = search_cols.iter().map(|col| format!("`{col}`")).collect();
-
-        let index_name = format!("{}_{}", self.name, search_cols.join(","));
-        let index_name = index_name.replace(" ", "_");
-        let index_query = format!(
-            "CREATE FULLTEXT INDEX {index_name} 
-                ON {} ({})",
-            self.name,
-            wrap_cols.join(", ")
-        );
-
-        println!("{index_query}");
-
-        let conn = self.connector();
-        conn.exec_query(&index_query)?;
-
-        let search_query = format!(
-            "
-                SELECT * FROM {} 
-                WHERE MATCH({}) AGAINST('{}');
-            ",
-            self.name,
-            wrap_cols.join(","),
-            query
-        );
-
-        let rows = conn.exec_query(&search_query)?;
-
-        let cols = self.query_columns()?;
-        let data = rows
-            .iter()
-            .map(|r| {
-                let mut map: HashMap<String, ColumnValue> = HashMap::new();
-
-                for col in &cols {
-                    if let Some(v) = r.get::<mysql::Value, &str>(col.name.as_str()) {
-                        map.insert(col.name.clone(), v.into());
-                    }
-                }
-
-                map
-            })
-            .collect();
-
-        Ok(data)
-    }
-
 }
