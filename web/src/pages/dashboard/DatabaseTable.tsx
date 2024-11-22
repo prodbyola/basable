@@ -13,14 +13,15 @@ import {
   ColumnTypeObject,
   buildFilterQuery,
   extractColumnTypes,
+  OrderByKey,
 } from "../../utils";
 import { IconButton, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
 
 import ReportIcon from "@mui/icons-material/Report";
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import SettingsIcon from "@mui/icons-material/Settings";
-import SearchIcon from '@mui/icons-material/Search';
+import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
@@ -35,6 +36,9 @@ type TableQueryOpts = {
   row_count: number;
   filters?: BasableFilter[];
   columns?: string[];
+  order_by?: {
+    [key: string]: string;
+  };
 };
 
 const DatabaseTable = () => {
@@ -121,7 +125,36 @@ const DatabaseTable = () => {
     return "edit-table-input";
   };
 
-  const onInputChange = (
+  const updateOrderBy = (columnName: string) => {
+    let key: OrderByKey = "ASC";
+
+    if (queryOpts) {
+      if (queryOpts.order_by) {
+        const ob = queryOpts.order_by;
+        key = Object.keys(ob)[0] as OrderByKey;
+        const currentColumn = ob[key];
+
+        if (currentColumn === columnName) {
+          key = key === "ASC" ? "DESC" : "ASC";
+        }
+      }
+
+      setQueryOpts({
+        ...queryOpts,
+        order_by: {
+          [key]: columnName,
+        },
+      });
+    }
+  };
+
+  /**
+   * Update a specific cell for a given row and column.
+   * @param evt - input event
+   * @param column - name of column where the cell belongs.
+   * @param rowIndex - index of current row being edited.
+   */
+  const updateRowCell = (
     evt: React.ChangeEvent<HTMLInputElement>,
     column: string,
     rowIndex: number
@@ -155,7 +188,7 @@ const DatabaseTable = () => {
       utd.unique_values.push(uniqueValue);
       utd.input.push({ [column]: value });
     }
-    
+
     setUTD({ ...utd });
   };
 
@@ -213,7 +246,7 @@ const DatabaseTable = () => {
    * @returns
    */
   const updateData = async () => {
-    if(!utd.unique_values.length) return
+    if (!utd.unique_values.length) return;
 
     try {
       await request({
@@ -226,8 +259,8 @@ const DatabaseTable = () => {
 
       setUTD({
         ...defaultUTD,
-        unique_key: tableConfig.pk_column
-      })
+        unique_key: tableConfig.pk_column,
+      });
     } catch (err: any) {
       showAlert("error", err.message);
     }
@@ -256,7 +289,7 @@ const DatabaseTable = () => {
 
     try {
       // Get row count
-      let count = queryCount
+      let count = queryCount;
       if (navPage === 0) {
         count = (await request({
           method: "post",
@@ -364,10 +397,15 @@ const DatabaseTable = () => {
           <IconButton onClick={() => setOpenFiltering(true)}>
             <FilterAltIcon />
           </IconButton>
-          <IconButton sx={{
-            backgroundColor: utd.unique_values.length ? theme.palette.primary.main : '',
-            color: utd.unique_values.length ? 'white' : ''
-          }} onClick={updateData}>
+          <IconButton
+            sx={{
+              backgroundColor: utd.unique_values.length
+                ? theme.palette.primary.main
+                : "",
+              color: utd.unique_values.length ? "white" : "",
+            }}
+            onClick={updateData}
+          >
             <SaveIcon />
           </IconButton>
         </div>
@@ -394,7 +432,9 @@ const DatabaseTable = () => {
           <thead>
             <tr>
               {filteredColumns.map((col) => (
-                <th key={col.name}>{col.name}</th>
+                <th key={col.name} onClick={() => updateOrderBy(col.name)}>
+                  {col.name}
+                </th>
               ))}
             </tr>
           </thead>
@@ -407,7 +447,7 @@ const DatabaseTable = () => {
                       <input
                         name={getInputLabel(row)}
                         value={getColumnValue(col.name, row)}
-                        onChange={(evt) => onInputChange(evt, col.name, index)}
+                        onChange={(evt) => updateRowCell(evt, col.name, index)}
                         disabled={!hasUniqueColumn}
                       />
                     }

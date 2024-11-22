@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     base::query::{
         filter::{Filter, FilterChain},
-        BasableQuery, QueryCommand,
+        BasableQuery, QueryCommand, QueryOrder,
     },
     AppError,
 };
@@ -148,6 +148,8 @@ pub struct TableQueryOpts {
     /// The columns(s) you want selected in the query. If set to `None` all fields
     /// will be selected.
     pub columns: Option<Vec<String>>,
+
+    pub order_by: Option<QueryOrder>
 }
 
 impl TryFrom<TableQueryOpts> for BasableQuery {
@@ -160,6 +162,7 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
             row_count,
             filters,
             columns,
+            order_by,
         } = opts;
 
         let operation = QueryCommand::SelectData(columns);
@@ -174,6 +177,7 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
             row_count: Some(row_count),
             offset: Some(offset),
             filters: filter_chain,
+            order_by,
             ..Default::default()
         };
 

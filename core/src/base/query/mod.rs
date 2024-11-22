@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use filter::FilterChain;
+use serde::Deserialize;
 
 pub mod filter;
 
@@ -14,6 +15,7 @@ impl Default for QueryCommand {
     }
 }
 
+#[derive(Deserialize)]
 pub enum QueryOrder {
     ASC(String),
     DESC(String),
@@ -22,8 +24,8 @@ pub enum QueryOrder {
 impl Display for QueryOrder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let order = match self {
-            QueryOrder::ASC(col) => format!("{col} ASC"),
-            QueryOrder::DESC(col) => format!("{col} DESC"),
+            QueryOrder::ASC(col) => format!("`{col}` ASC"),
+            QueryOrder::DESC(col) => format!("`{col}` DESC"),
         };
 
         write!(f, "{order}")

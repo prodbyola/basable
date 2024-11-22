@@ -168,6 +168,10 @@ $table_border: variables.$grey_200 solid 1px;
       tr {
         position: sticky;
         top: 0;
+
+        th {
+          cursor: pointer;
+        }
       }
     }
   }

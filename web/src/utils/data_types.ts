@@ -81,10 +81,6 @@ export const TABLE_FILTER_OPERATORS = {
   LESS_OR_EQUAL: "Lte",
   INCLUDES: "Includes",
   NOT_INCLUDE: "NotInclude",
-  // LIKE: "Like",
-  // NOT_LIKE: "NotLike",
-  // LIKE_SINGLE: "LikeSingle",
-  // NOT_LIKE_SINGLE: "NotLikeSingle",
   REGEX: "Regex",
   NOT_REGEX: "NotRegex",
   RANGE: "Btw",
@@ -126,3 +122,5 @@ export type ColumnType = typeof COLUMN_TYPES[number]
 export type ColumnTypeObject = {
   [key: string]: ColumnType
 }
+
+export type OrderByKey = "ASC" | "DESC";
