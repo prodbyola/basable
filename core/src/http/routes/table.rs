@@ -11,7 +11,7 @@ use axum_macros::debug_handler;
 use crate::{
     base::{
         column::ColumnList,
-        data::table::{TableConfig, TableQueryOpts, TableSummaries, UpdateTableData},
+        data::table::{TableConfig, TableExportOpts, TableQueryOpts, TableSummaries, UpdateTableData},
         AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
@@ -139,6 +139,18 @@ pub(crate) async fn delete_data(
     }
 }
 
+pub(crate) async fn export(
+    Path(_): Path<String>,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(_): DbExtractor,
+    TableExtractor(table): TableExtractor,
+    State(_): State<AppState>,
+    Json(opts): Json<TableExportOpts>,
+) -> Result<String, AppError> {
+    table.export(opts)?;
+    Ok("Download ready!".to_string())
+}
+
 #[debug_handler]
 pub(crate) async fn load_tables(
     AuthExtractor(_): AuthExtractor,
@@ -162,4 +174,5 @@ pub(super) fn table_routes() -> Router<AppState> {
         .route("/data/:table_name", post(insert_data))
         .route("/data/:table_name", patch(update_data))
         .route("/data/:table_name", delete(delete_data))
+        .route("/data/export/:table_name", post(export))
 }

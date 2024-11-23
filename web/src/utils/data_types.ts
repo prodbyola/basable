@@ -91,7 +91,7 @@ export const TABLE_FILTER_OPERATORS = {
 
 export type FilterOperatorLabel = keyof typeof TABLE_FILTER_OPERATORS;
 
-export type FilterCombinator = "base" | "and" | "or"
+export type FilterCombinator = "base" | "and" | "or";
 
 /**
  * A list of labels for each filter operator
@@ -110,12 +110,12 @@ export type BasableFilter = {
 };
 
 export type FilterInput = {
-  column: string,
-  combinator: FilterCombinator,
-  operatorLabel: FilterOperatorLabel,
-  operatorValue: string
-  endValue?: string
-}
+  column: string;
+  combinator: FilterCombinator;
+  operatorLabel: FilterOperatorLabel;
+  operatorValue: string;
+  endValue?: string;
+};
 
 /**
  * Options for querying table
@@ -129,18 +129,38 @@ export type TableQueryOpts = {
   order_by?: {
     [key: string]: string;
   };
-  search_opts?: TableSearchOpts
+  search_opts?: TableSearchOpts;
 };
 
 export type TableSearchOpts = {
-  search_cols: string[]
-  query: string,
-}
+  search_cols: string[];
+  query: string;
+};
 
-export const COLUMN_TYPES = ['NULL', 'Text', 'Int', 'UInt', 'Float', 'Double', 'Date', 'Time'] as const
-export type ColumnType = typeof COLUMN_TYPES[number]
+export const COLUMN_TYPES = [
+  "NULL",
+  "Text",
+  "Int",
+  "UInt",
+  "Float",
+  "Double",
+  "Date",
+  "Time",
+] as const;
+export type ColumnType = (typeof COLUMN_TYPES)[number];
 export type ColumnTypeObject = {
-  [key: string]: ColumnType
-}
+  [key: string]: ColumnType;
+};
 
 export type OrderByKey = "ASC" | "DESC";
+
+export const downloadFormats = [
+  "CSV",
+  "TSV",
+  "PSV",
+  "TEXT",
+  "JSON",
+  "HTML",
+  "XML",
+] as const;
+ export type DownloadFormat = typeof downloadFormats[number]

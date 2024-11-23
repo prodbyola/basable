@@ -1,9 +1,14 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, env, path::Path};
+
+use uuid::Uuid;
 
 use crate::{
     base::{
         column::{Column, ColumnList},
-        data::table::{DataQueryResult, TableConfig, TableQueryOpts, UpdateTableData},
+        data::table::{
+            DataQueryResult, TableConfig, TableDownloadFormat, TableExportOpts, TableQueryOpts,
+            UpdateTableData,
+        },
         imp::{
             table::{Table, TableCRUD},
             ConnectorType, SharedDB,
@@ -19,8 +24,24 @@ pub(crate) struct MySqlTable {
     pub name: String,
     pub connector: ConnectorType,
 }
-
 impl MySqlTable {
+    fn mysql_variable(&self, variable_name: &str) -> Option<String> {
+        let conn = self.connector();
+        if let Ok(rows) = conn.exec_query(&format!("SHOW VARIABLES LIKE '{variable_name}'")) {
+            for row in rows {
+                if let Some(name) = row.get::<String, &str>("Variable_name") {
+                    if name == variable_name {
+                        if let Some(value) = row.get::<String, &str>("Value") {
+                            return Some(value);
+                        }
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
     fn search_index_name(&self, search_cols: &Vec<String>) -> String {
         let name = format!("bsearch_{}", search_cols.join("_"));
         name.replace(" ", "_")
@@ -364,6 +385,76 @@ impl TableCRUD for MySqlTable {
     fn delete_data(&self, col: String, value: String) -> Result<(), AppError> {
         let query = format!("DELETE FROM {} WHERE {} = '{}'", self.name, col, value);
         let conn = self.connector();
+        conn.exec_query(&query)?;
+
+        Ok(())
+    }
+
+    fn export(&self, opts: TableExportOpts) -> Result<(), AppError> {
+        let TableExportOpts { columns, format } = opts;
+
+        let cols = columns
+            .clone()
+            .take_if(|cols| !cols.is_empty())
+            .unwrap_or_else(|| match self.query_columns() {
+                Ok(cs) => cs.iter().map(|col| col.name.clone()).collect(),
+                Err(err) => {
+                    tracing::error!("error reading db column: {err}");
+                    vec![]
+                }
+            });
+
+        // extract column selections
+        let selection = if cols.is_empty() {
+            "*".to_string()
+        } else {
+            match format {
+                TableDownloadFormat::JSON => {
+                    let wrapped: Vec<String> = cols
+                        .iter()
+                        .map(|col| format!("\"{col}\": \"', `{col}`, '\""))
+                        .collect();
+                    format!("CONCAT('{{{}}}')", wrapped.join(","))
+                }
+                _ => {
+                    let wrappped: Vec<String> = cols.iter().map(|col| format!("`{col}`")).collect();
+                    wrappped.join(", ")
+                }
+            }
+        };
+
+        let conn = self.connector();
+        let mut query = format!("SELECT {} \n", selection);
+
+        // set output file
+        let file_ext = format.file_extension()?;
+        let filename = format!("{}.{}", Uuid::new_v4(), file_ext);
+        let temp_dir = env::temp_dir();
+        let path = Path::new(&filename);
+
+        let path = temp_dir.join(path);
+        let path_str = path.to_str().unwrap_or_default();
+
+        let set_path_query = format!(
+            "SET GLOBAL secure_file_priv = '{}'",
+            temp_dir.to_str().unwrap_or_default()
+        );
+        if let Err(err) = conn.exec_query(&set_path_query) {
+            println!("err: {err}")
+        }
+
+        query.push_str(&format!("INTO OUTFILE '{path_str}' \n"));
+
+        // set field delimiter
+        if let Some(delimiter) = format.field_delimiter() {
+            query.push_str(&format!("FIELDS TERMINATED BY '{delimiter}' \n"));
+        }
+
+        query.push_str("LINES TERMINATED BY '\\n' \n");
+        query.push_str(&format!("FROM {};", self.name));
+
+        println!("sql {query}");
+
         conn.exec_query(&query)?;
 
         Ok(())

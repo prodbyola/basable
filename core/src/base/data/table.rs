@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use crate::{
     base::query::{
@@ -150,7 +151,7 @@ pub struct TableQueryOpts {
     pub columns: Option<Vec<String>>,
 
     pub order_by: Option<QueryOrder>,
-    pub search_opts: Option<TableSearchOpts>
+    pub search_opts: Option<TableSearchOpts>,
 }
 
 impl TableQueryOpts {
@@ -174,10 +175,9 @@ impl TryFrom<TableQueryOpts> for BasableQuery {
         } = opts;
 
         let operation = QueryCommand::SelectData(columns);
-        let filter_chain = filters
-            .map_or(FilterChain::empty(), |filters| {
-                FilterChain::prefill(filters)
-            });
+        let filter_chain = filters.map_or(FilterChain::empty(), |filters| {
+            FilterChain::prefill(filters)
+        });
 
         let bq = BasableQuery {
             table,
@@ -215,4 +215,53 @@ pub(crate) struct UpdateTableData {
     pub columns: Vec<String>,
     pub unique_values: Vec<String>,
     pub input: Vec<HashMap<String, String>>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub enum TableDownloadFormat {
+    CSV,
+    TSV,
+    PSV,
+    TEXT,
+    JSON,
+    HTML,
+    XML,
+}
+
+impl TableDownloadFormat {
+    pub fn file_extension(&self) -> Result<String, AppError> {
+        // get file extension
+        let file_ext = match self {
+            TableDownloadFormat::TEXT => "txt".to_string(),
+            _ => {
+                let fstr = serde_json::to_string(&self).map_err(|err| {
+                    AppError::HttpError(
+                        StatusCode::EXPECTATION_FAILED,
+                        format!("Unable to get download format: {err}"),
+                    )
+                })?;
+                fstr.to_lowercase()
+            }
+        };
+
+        Ok(file_ext)
+    }
+
+    pub fn field_delimiter(&self) -> Option<String> {
+        let dlm = match self {
+            TableDownloadFormat::CSV => Some(","),
+            TableDownloadFormat::TSV => Some("\\t"),
+            TableDownloadFormat::PSV => Some("|"),
+            TableDownloadFormat::TEXT => Some(";"),
+            _ => None
+        };
+
+        dlm.map(|dlm_str| dlm_str.to_string())
+    }
+}
+
+#[derive(Deserialize)]
+pub struct TableExportOpts {
+    pub format: TableDownloadFormat,
+    pub columns: Option<Vec<String>>,
 }

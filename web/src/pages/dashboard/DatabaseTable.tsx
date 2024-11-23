@@ -15,6 +15,7 @@ import {
   OrderByKey,
   TableQueryOpts,
   TableSearchOpts,
+  DownloadFormat,
 } from "../../utils";
 import {
   Button,
@@ -40,6 +41,7 @@ import TableFiltering from "../../components/filters";
 import { isAxiosError } from "axios";
 import TableNavigator from "../../components/table/Navigator";
 import TableSearchForm from "../../components/forms/TableSearchForm";
+import DownloadMenu from "../../components/table/DownloadMenu";
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
@@ -76,7 +78,8 @@ const DatabaseTable = () => {
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
   const [openSearchForm, setOpenSearchForm] = React.useState(false);
-  const [showDownloadMenu, setShowDownloadMenu] = React.useState(false);
+  const [downloadMenuTarget, setDownloadMenuTarget] =
+    React.useState<null | HTMLElement>(null);
 
   const [openFiltering, setOpenFiltering] = React.useState(false);
   const [filters, setFilters] = React.useState<FilterInput[] | undefined>(
@@ -338,6 +341,19 @@ const DatabaseTable = () => {
     setTableLoading(false);
   };
 
+  const initiateDownload = async (format: DownloadFormat) => {
+    const resp = await request({
+      method: "post",
+      path: `tables/data/export/${tableID}`,
+      data: {
+        columns: filteredColumns.map(col => col.name),
+        format
+      },
+    });
+
+    console.log(resp)
+  };
+
   // function we call page reload
   React.useEffect(() => {
     if (tableID) {
@@ -404,9 +420,20 @@ const DatabaseTable = () => {
         </div>
         {/* <div className="tableToolbar"> */}
         <ButtonGroup size="small">
-          <Button onClick={() => setShowDownloadMenu(true)}>
+          <Button
+            onClick={(event: React.MouseEvent<HTMLButtonElement>) =>
+              setDownloadMenuTarget(event.currentTarget)
+            }
+          >
             <DownloadIcon />
           </Button>
+          <DownloadMenu
+            anchorEl={downloadMenuTarget}
+            onClose={(format) => {
+              setDownloadMenuTarget(null);
+              if (format) initiateDownload(format);
+            }}
+          />
           <Button onClick={() => loadData()}>
             <TableRefresh color={theme.palette.primary.main} />
           </Button>
@@ -546,7 +573,7 @@ const DatabaseTable = () => {
         onClearSearch={() => {
           setOpenSearchForm(false);
 
-          setNavPage(0)
+          setNavPage(0);
           setQueryOpts({
             ...(queryOpts as TableQueryOpts),
             search_opts: undefined,

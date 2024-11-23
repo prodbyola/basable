@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, process::Command};
 
 use axum::{http::StatusCode, response::IntoResponse};
 use base::user::User;
@@ -85,6 +85,7 @@ impl From<String> for DeploymentMode {
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
     dotenv().ok();
+    grant_access_to_tmp()?;
 
     tracing_subscriber::registry()
         .with(
@@ -120,6 +121,15 @@ async fn main() -> Result<(), AppError> {
             }
         }
     }
+
+    Ok(())
+}
+
+/// Grant tmp folder ownership to mysql
+fn grant_access_to_tmp() -> Result<(), AppError> {
+    Command::new("chown").args(["mysql:mysql", "tmp"])
+        .spawn()
+        .map_err(|err| AppError::InitError(err.to_string()))?;
 
     Ok(())
 }
