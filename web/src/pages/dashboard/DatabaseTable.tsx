@@ -16,11 +16,20 @@ import {
   TableQueryOpts,
   TableSearchOpts,
 } from "../../utils";
-import { IconButton, ThemeProvider, Typography } from "@mui/material";
+import {
+  Button,
+  ButtonGroup,
+  Menu,
+  MenuItem,
+  Popover,
+  ThemeProvider,
+  Typography,
+} from "@mui/material";
 import theme from "../../theme";
 
 import ReportIcon from "@mui/icons-material/Report";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
@@ -67,6 +76,7 @@ const DatabaseTable = () => {
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
   const [openTableConfig, setOpenTableConfig] = React.useState(false);
   const [openSearchForm, setOpenSearchForm] = React.useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = React.useState(false);
 
   const [openFiltering, setOpenFiltering] = React.useState(false);
   const [filters, setFilters] = React.useState<FilterInput[] | undefined>(
@@ -213,15 +223,15 @@ const DatabaseTable = () => {
     if (excluded && excluded.length) {
       fcols = fcols.filter((col) => !excluded.includes(col.name));
       selection = allColumns.map((col) => col.name);
+    }
 
-      // Move unique column to left most
-      if (config.pk_column) {
-        const pkc = fcols.find((col) => col.name === config.pk_column);
-        if (pkc) {
-          const i = fcols.indexOf(pkc);
-          fcols.splice(i, 1);
-          fcols.splice(0, 0, pkc);
-        }
+    // Move unique column to left most
+    if (config.pk_column) {
+      const pkc = fcols.find((col) => col.name === config.pk_column);
+      if (pkc) {
+        const i = fcols.indexOf(pkc);
+        fcols.splice(i, 1);
+        fcols.splice(0, 0, pkc);
       }
     }
 
@@ -392,20 +402,21 @@ const DatabaseTable = () => {
           <SettingsIcon />
           <h3>{tableLabel}</h3>
         </div>
-        <div className="tableToolbar">
-          <IconButton>
+        {/* <div className="tableToolbar"> */}
+        <ButtonGroup size="small">
+          <Button onClick={() => setShowDownloadMenu(true)}>
             <DownloadIcon />
-          </IconButton>
-          <IconButton onClick={() => loadData()}>
-            <TableRefresh />
-          </IconButton>
-          <IconButton onClick={() => setOpenSearchForm(true)}>
+          </Button>
+          <Button onClick={() => loadData()}>
+            <TableRefresh color={theme.palette.primary.main} />
+          </Button>
+          <Button onClick={() => setOpenSearchForm(true)}>
             <SearchIcon />
-          </IconButton>
-          <IconButton onClick={() => setOpenFiltering(true)}>
+          </Button>
+          <Button onClick={() => setOpenFiltering(true)}>
             <FilterAltIcon />
-          </IconButton>
-          <IconButton
+          </Button>
+          <Button
             sx={{
               backgroundColor: utd.unique_values.length
                 ? theme.palette.primary.main
@@ -415,8 +426,9 @@ const DatabaseTable = () => {
             onClick={updateData}
           >
             <SaveIcon />
-          </IconButton>
-        </div>
+          </Button>
+        </ButtonGroup>
+        {/* </div> */}
       </div>
       {!hasUniqueColumn && (
         <div className="tableHeaderWarning">
@@ -534,6 +546,7 @@ const DatabaseTable = () => {
         onClearSearch={() => {
           setOpenSearchForm(false);
 
+          setNavPage(0)
           setQueryOpts({
             ...(queryOpts as TableQueryOpts),
             search_opts: undefined,

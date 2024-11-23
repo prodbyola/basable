@@ -1,12 +1,12 @@
 @use "./variables";
 @import url("./visualize.scss");
 
-$main_page_padding: 32px;
+$main_page_padding: 52px;
 
 .dashboardMainPage {
   padding-left: calc(18px + $main_page_padding);
   padding-right: $main_page_padding;
-  padding-top: calc(80px + $main_page_padding);
+  padding-top: calc(60px + $main_page_padding);
   font-family: "Exo", sans-serif;
 
   .sectionHeader {
@@ -195,8 +195,7 @@ $table_border: variables.$grey_200 solid 1px;
 
 .displayTableHeader {
   display: flex;
-  border: 1px variables.$primary solid;
-  padding: 0 32px;
+  // padding: 0 32px;
   column-gap: 8px;
   flex-wrap: wrap;
 

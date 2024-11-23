@@ -37,8 +37,6 @@ impl MySqlTable {
             wrap_cols.join(", ")
         );
 
-        println!("create index {index_query}");
-
         let conn = self.connector();
         conn.exec_query(&index_query)?;
 
@@ -223,6 +221,7 @@ impl TableCRUD for MySqlTable {
         let cols = opts
             .columns
             .clone()
+            .take_if(|cols| !cols.is_empty())
             .unwrap_or_else(|| match self.query_columns() {
                 Ok(cs) => cs.iter().map(|col| col.name.clone()).collect(),
                 Err(err) => {
@@ -233,8 +232,6 @@ impl TableCRUD for MySqlTable {
 
         let query = opts.try_into()?;
         let sql = db.generate_sql(query)?;
-
-        println!("sql {sql}");
 
         let conn = self.connector();
         let rows = conn.exec_query(&sql)?;
@@ -283,7 +280,6 @@ impl TableCRUD for MySqlTable {
         };
 
         let sql = db.generate_sql(query)?;
-        println!("count: {sql}");
 
         let conn = self.connector();
         let rows = conn.exec_query(&sql)?;

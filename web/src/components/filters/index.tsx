@@ -67,8 +67,10 @@ const TableFiltering = ({
     setTabValue(newValue);
 
   const insertFilter = (filter: FilterInput) => {
-    setFilters([...filters, filter]);
-    setTabValue(0);
+    if(filter.column.length && filter.operatorValue.length) {
+      setFilters([...filters, filter]);
+      setTabValue(0);
+    }
   };
 
   const removeFilter = (index: number) => {
@@ -102,7 +104,7 @@ const TableFiltering = ({
       <DialogContent sx={{ minWidth: "420px", paddingTop: "32px !important" }}>
         <Tabs value={tabValue} onChange={changeTabValue}>
           <Tab label="Filters" {...a11yProps(0)} />
-          <Tab label="Filtering" {...a11yProps(1)} />
+          <Tab label="Filtering" {...a11yProps(1)} disabled={filters.length > 0} />
         </Tabs>
         <TabPanel value={tabValue} index={0}>
           <ShowFilterList
