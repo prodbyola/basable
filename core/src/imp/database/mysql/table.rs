@@ -448,16 +448,50 @@ fn process_exports(
             format!("{headers} \n {body}")
         }
         TableExportFormat::JSON => {
-            let row_list: Vec<String> = rows.iter().map(|row|{
-                let values: Vec<String> = columns.iter().map(|col| {
-                    let val = row.get::<String, &str>(col).unwrap_or_default();
-                    format!("\t\"{}\":\"{}\"", col, val)
-                }).collect();
+            let row_list: Vec<String> = rows
+                .iter()
+                .map(|row| {
+                    let values: Vec<String> = columns
+                        .iter()
+                        .map(|col| {
+                            let val = row.get::<String, &str>(col).unwrap_or_default();
+                            format!("\t\"{}\":\"{}\"", col, val)
+                        })
+                        .collect();
 
-                format!("{{\n\t{}\n\t}}", values.join(",\n\t"))
-            }).collect();
+                    format!("{{\n\t{}\n\t}}", values.join(",\n\t"))
+                })
+                .collect();
 
             format!("[\n\t{}\n]", row_list.join(",\n\t"))
+        }
+        TableExportFormat::HTML => {
+            let col_list: Vec<String> = columns
+                .iter()
+                .map(|col| format!("<th>{col}</th>"))
+                .collect();
+            let header = format!(
+                "<thead>\n\t\t<tr>\n\t\t\t{}\n\t\t</tr>\n\t</thead>",
+                col_list.join("\n\t\t\t")
+            );
+
+            let row_list: Vec<String> = rows
+                .iter()
+                .map(|row| {
+                    let td_list: Vec<String> = columns
+                        .iter()
+                        .map(|col| {
+                            let val = row.get::<String, &str>(col).unwrap_or_default();
+                            format!("<td>{val}</td>")
+                        })
+                        .collect();
+
+                    format!("<tr>\n\t\t\t{}\n\t\t</tr>", td_list.join("\n\t\t\t"))
+                })
+                .collect();
+            let body = format!("<tbody>\n\t\t{}\n\t</tbody>", row_list.join("\n\t\t"));
+
+            format!("<table>\n\t{header}\n\t{body}\n<table>")
         }
         _ => "".to_string(),
     }
