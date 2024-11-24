@@ -1,0 +1,36 @@
+[package]
+name = "basable"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.7.4"
+axum-macros = "0.4.1"
+chrono = "0.4.34"
+dotenv = "0.15.0"
+jsonwebtoken = "9.3.0"
+mysql = "24.0.0"
+serde = "1.0.196"
+serde_json = "1.0.113"
+time = "0.3.36"
+tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
+tower = "0.4.13"
+tower-http = { version = "0.5.1", features = ["cors", "trace", "tracing", "fs"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rusqlite = { version = "0.31.0", features = ["bundled"] }
+r2d2_sqlite = { version = "0.24.0",  features = ["bundled"] }
+r2d2 = "0.8.10"
+webbrowser = "1.0.2"
+base = { path = "../base" }
+common = { path = "../common" }
+
+[dependencies.uuid]
+version = "1.8.0"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]
