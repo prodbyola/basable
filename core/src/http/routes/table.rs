@@ -7,11 +7,14 @@ use axum::{
     Json, Router,
 };
 use axum_macros::debug_handler;
+use uuid::Uuid;
 
 use crate::{
     base::{
         column::ColumnList,
-        data::table::{TableConfig, TableExportOpts, TableQueryOpts, TableSummaries, UpdateTableData},
+        data::table::{
+            TableConfig, TableExportOpts, TableExportResponse, TableQueryOpts, TableSummaries, UpdateTableData
+        },
         AppState,
     },
     http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
@@ -142,13 +145,20 @@ pub(crate) async fn delete_data(
 pub(crate) async fn export(
     Path(_): Path<String>,
     AuthExtractor(_): AuthExtractor,
-    DbExtractor(_): DbExtractor,
+    DbExtractor(db): DbExtractor,
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
     Json(opts): Json<TableExportOpts>,
-) -> Result<String, AppError> {
-    table.export(opts)?;
-    Ok("Download ready!".to_string())
+) -> Result<Json<TableExportResponse>, AppError> {
+    let format = opts.format.clone();
+    let data = table.export(opts, &db)?;
+    let resp = TableExportResponse {
+        data,
+        mimetype: format.as_mimetype(),
+        filename: format!("{}.{}", Uuid::new_v4(), format.as_extension())
+    };
+
+    Ok(Json(resp))
 }
 
 #[debug_handler]

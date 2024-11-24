@@ -1,4 +1,3 @@
-use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -217,8 +216,8 @@ pub(crate) struct UpdateTableData {
     pub input: Vec<HashMap<String, String>>,
 }
 
-#[derive(Deserialize, Serialize)]
-pub enum TableDownloadFormat {
+#[derive(Deserialize, Clone)]
+pub enum TableExportFormat {
     CSV,
     TSV,
     PSV,
@@ -228,31 +227,41 @@ pub enum TableDownloadFormat {
     XML,
 }
 
-impl TableDownloadFormat {
-    pub fn file_extension(&self) -> Result<String, AppError> {
-        // get file extension
-        let file_ext = match self {
-            TableDownloadFormat::TEXT => "txt".to_string(),
-            _ => {
-                let fstr = serde_json::to_string(&self).map_err(|err| {
-                    AppError::HttpError(
-                        StatusCode::EXPECTATION_FAILED,
-                        format!("Unable to get download format: {err}"),
-                    )
-                })?;
-                fstr.to_lowercase()
-            }
+impl TableExportFormat {
+    pub fn as_extension(&self) -> String {
+        let ext = match self {
+            TableExportFormat::CSV => "csv",
+            TableExportFormat::TSV => "tsv",
+            TableExportFormat::PSV => "psv",
+            TableExportFormat::TEXT => "txt",
+            TableExportFormat::JSON => "json",
+            TableExportFormat::HTML => "html",
+            TableExportFormat::XML => "xml",
         };
 
-        Ok(file_ext)
+        ext.to_string()
+    }
+
+    pub fn as_mimetype(&self) -> String {
+        let mime_type = match self {
+            TableExportFormat::CSV => "text/csv",
+            TableExportFormat::TSV => "text/tab-separated-values",
+            TableExportFormat::PSV => "text/plain", // No specific MIME type; plain text is the closest match
+            TableExportFormat::TEXT => "text/plain",
+            TableExportFormat::JSON => "application/json",
+            TableExportFormat::HTML => "text/html",
+            TableExportFormat::XML => "application/xml", // Or "text/xml" based on context
+        };
+        
+        mime_type.to_string()
     }
 
     pub fn field_delimiter(&self) -> Option<String> {
         let dlm = match self {
-            TableDownloadFormat::CSV => Some(","),
-            TableDownloadFormat::TSV => Some("\\t"),
-            TableDownloadFormat::PSV => Some("|"),
-            TableDownloadFormat::TEXT => Some(";"),
+            TableExportFormat::CSV => Some(","),
+            TableExportFormat::TSV => Some("\\t"),
+            TableExportFormat::PSV => Some("|"),
+            TableExportFormat::TEXT => Some(";"),
             _ => None
         };
 
@@ -261,7 +270,21 @@ impl TableDownloadFormat {
 }
 
 #[derive(Deserialize)]
+pub struct TableExportTrim {
+    pub offset: usize,
+    pub count: usize
+}
+
+#[derive(Deserialize)]
 pub struct TableExportOpts {
-    pub format: TableDownloadFormat,
-    pub columns: Option<Vec<String>>,
+    pub format: TableExportFormat,
+    pub query_opts: TableQueryOpts,
+    pub trim: Option<TableExportTrim>
+}
+
+#[derive(Serialize)]
+pub struct  TableExportResponse {
+    pub data: String,
+    pub mimetype: String,
+    pub filename: String
 }

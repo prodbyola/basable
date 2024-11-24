@@ -64,7 +64,7 @@ pub(crate) trait TableCRUD {
 
     fn delete_data(&self, col: String, value: String) -> Result<(), AppError>;
 
-    fn export(&self, opts: TableExportOpts) -> Result<(), AppError>;
+    fn export(&self, opts: TableExportOpts, db: &SharedDB) -> Result<String, AppError>;
 }
 
 #[cfg(test)]

@@ -1,12 +1,10 @@
-use std::{collections::HashMap, env, path::Path};
-
-use uuid::Uuid;
+use std::collections::HashMap;
 
 use crate::{
     base::{
         column::{Column, ColumnList},
         data::table::{
-            DataQueryResult, TableConfig, TableDownloadFormat, TableExportOpts, TableQueryOpts,
+            DataQueryResult, TableConfig, TableExportFormat, TableExportOpts, TableQueryOpts,
             UpdateTableData,
         },
         imp::{
@@ -25,23 +23,6 @@ pub(crate) struct MySqlTable {
     pub connector: ConnectorType,
 }
 impl MySqlTable {
-    fn mysql_variable(&self, variable_name: &str) -> Option<String> {
-        let conn = self.connector();
-        if let Ok(rows) = conn.exec_query(&format!("SHOW VARIABLES LIKE '{variable_name}'")) {
-            for row in rows {
-                if let Some(name) = row.get::<String, &str>("Variable_name") {
-                    if name == variable_name {
-                        if let Some(value) = row.get::<String, &str>("Value") {
-                            return Some(value);
-                        }
-                    }
-                }
-            }
-        }
-
-        None
-    }
-
     fn search_index_name(&self, search_cols: &Vec<String>) -> String {
         let name = format!("bsearch_{}", search_cols.join("_"));
         name.replace(" ", "_")
@@ -390,10 +371,15 @@ impl TableCRUD for MySqlTable {
         Ok(())
     }
 
-    fn export(&self, opts: TableExportOpts) -> Result<(), AppError> {
-        let TableExportOpts { columns, format } = opts;
+    fn export(&self, opts: TableExportOpts, db: &SharedDB) -> Result<String, AppError> {
+        let TableExportOpts {
+            query_opts,
+            format,
+            trim,
+        } = opts;
 
-        let cols = columns
+        let cols = query_opts
+            .columns
             .clone()
             .take_if(|cols| !cols.is_empty())
             .unwrap_or_else(|| match self.query_columns() {
@@ -404,59 +390,75 @@ impl TableCRUD for MySqlTable {
                 }
             });
 
-        // extract column selections
         let selection = if cols.is_empty() {
-            "*".to_string()
+            None
         } else {
-            match format {
-                TableDownloadFormat::JSON => {
-                    let wrapped: Vec<String> = cols
-                        .iter()
-                        .map(|col| format!("\"{col}\": \"', `{col}`, '\""))
-                        .collect();
-                    format!("CONCAT('{{{}}}')", wrapped.join(","))
-                }
-                _ => {
-                    let wrappped: Vec<String> = cols.iter().map(|col| format!("`{col}`")).collect();
-                    wrappped.join(", ")
-                }
-            }
+            Some(cols.clone())
         };
 
+        let filters = query_opts.filters.map_or(FilterChain::empty(), |filters| {
+            FilterChain::prefill(filters)
+        });
+
+        // get rows
+        let query = BasableQuery {
+            table: query_opts.table,
+            command: QueryCommand::SelectData(selection),
+            filters,
+            offset: trim.as_ref().map_or(None, |trim| Some(trim.offset)),
+            row_count: trim.map_or(None, |trim| Some(trim.count)),
+            ..Default::default()
+        };
+
+        let sql = db.generate_sql(query)?;
+
         let conn = self.connector();
-        let mut query = format!("SELECT {} \n", selection);
+        let rows = conn.exec_query(&sql)?;
+        let content = process_exports(format, cols, rows);
 
-        // set output file
-        let file_ext = format.file_extension()?;
-        let filename = format!("{}.{}", Uuid::new_v4(), file_ext);
-        let temp_dir = env::temp_dir();
-        let path = Path::new(&filename);
+        Ok(content)
+    }
+}
 
-        let path = temp_dir.join(path);
-        let path_str = path.to_str().unwrap_or_default();
+fn process_exports(
+    format: TableExportFormat,
+    columns: Vec<String>,
+    rows: Vec<mysql::Row>,
+) -> String {
+    match format {
+        TableExportFormat::CSV
+        | TableExportFormat::PSV
+        | TableExportFormat::TSV
+        | TableExportFormat::TEXT => {
+            let delimiter = format.field_delimiter().unwrap_or_default();
+            let headers = columns.join(&delimiter);
+            let row_list: Vec<String> = rows
+                .iter()
+                .map(|row| {
+                    let mut row_data = Vec::with_capacity(columns.len());
+                    for col in &columns {
+                        row_data.push(row.get::<String, &str>(col).unwrap_or_default());
+                    }
 
-        let set_path_query = format!(
-            "SET GLOBAL secure_file_priv = '{}'",
-            temp_dir.to_str().unwrap_or_default()
-        );
-        if let Err(err) = conn.exec_query(&set_path_query) {
-            println!("err: {err}")
+                    row_data.join(&delimiter)
+                })
+                .collect();
+
+            let body = row_list.join("\n");
+            format!("{headers} \n {body}")
         }
+        TableExportFormat::JSON => {
+            let row_list: Vec<String> = rows.iter().map(|row|{
+                let values: Vec<String> = columns.iter().map(|col| {
+                    let val = row.get::<String, &str>(col).unwrap_or_default();
+                    format!("\t\"{}\":\"{}\"", col, val)
+                }).collect();
 
-        query.push_str(&format!("INTO OUTFILE '{path_str}' \n"));
+                format!("{{\n\t{}\n\t}}", values.join(",\n\t"))
+            }).collect();
 
-        // set field delimiter
-        if let Some(delimiter) = format.field_delimiter() {
-            query.push_str(&format!("FIELDS TERMINATED BY '{delimiter}' \n"));
+            format!("[\n\t{}\n]", row_list.join(",\n\t"))
         }
-
-        query.push_str("LINES TERMINATED BY '\\n' \n");
-        query.push_str(&format!("FROM {};", self.name));
-
-        println!("sql {query}");
-
-        conn.exec_query(&query)?;
-
-        Ok(())
+        _ => "".to_string(),
     }
 }

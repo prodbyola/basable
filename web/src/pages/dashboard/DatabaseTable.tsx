@@ -16,6 +16,7 @@ import {
   TableQueryOpts,
   TableSearchOpts,
   DownloadFormat,
+  downloadExport,
 } from "../../utils";
 import {
   Button,
@@ -342,16 +343,16 @@ const DatabaseTable = () => {
   };
 
   const initiateDownload = async (format: DownloadFormat) => {
-    const resp = await request({
+    const { data, filename, mimetype } = (await request({
       method: "post",
       path: `tables/data/export/${tableID}`,
       data: {
-        columns: filteredColumns.map(col => col.name),
-        format
+        query_opts: queryOpts,
+        format,
       },
-    });
+    })) as any;
 
-    console.log(resp)
+    downloadExport(data, mimetype, filename);
   };
 
   // function we call page reload

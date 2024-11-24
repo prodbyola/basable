@@ -1,4 +1,11 @@
-import { BasableFilter, ColumnTypeObject, FilterInput, TABLE_FILTER_OPERATORS, TableConfig, TableRow } from "./data_types";
+import {
+  BasableFilter,
+  ColumnTypeObject,
+  FilterInput,
+  TABLE_FILTER_OPERATORS,
+  TableConfig,
+  TableRow,
+} from "./data_types";
 
 export * from "./cookies";
 export * from "./data_types";
@@ -16,16 +23,16 @@ export const sampleFilter: FilterInput = {
 };
 
 export const extractColumnTypes = (row: TableRow): ColumnTypeObject[] => {
-  const columnNames = Object.keys(row)
-  const types = columnNames.map(col => {
-    const f = row[col]
-    const t = Object.keys(f)[0]
+  const columnNames = Object.keys(row);
+  const types = columnNames.map((col) => {
+    const f = row[col];
+    const t = Object.keys(f)[0];
 
-    return { [col]: t } as ColumnTypeObject
-  })
+    return { [col]: t } as ColumnTypeObject;
+  });
 
-  return types
-}
+  return types;
+};
 
 export const buildFilterQuery = (ft: FilterInput): BasableFilter => {
   const label = ft.operatorLabel;
@@ -38,12 +45,25 @@ export const buildFilterQuery = (ft: FilterInput): BasableFilter => {
     value = `('${value}' AND '${ft.endValue}')`;
 
   const operator = TABLE_FILTER_OPERATORS[label];
-  const combinator = ft.combinator.toUpperCase()
-  return  {
+  const combinator = ft.combinator.toUpperCase();
+  return {
     column: ft.column,
     combinator,
     expression: {
-      [operator]: value
-    }
+      [operator]: value,
+    },
   };
+};
+
+export const downloadExport = (data: string, mimetype: string, filename: string) => {
+  const blob = new Blob([data], { type: mimetype });
+  const url = URL.createObjectURL(blob);
+  // Download the Blob as a file
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename; // Specify the file name
+  link.click();
+
+  // Clean up the Blob URL
+  URL.revokeObjectURL(url);
 };
