@@ -7,7 +7,7 @@ use axum::{
     Json, Router,
 };
 use axum_macros::debug_handler;
-use base::mysql_plugin::ColumnValue;
+use base::mysql::ColumnValue;
 use common::data::{columns::ColumnList, table::{TableConfig, TableExportOpts, TableExportResponse, TableQueryOpts, TableSummaries, UpdateTableData}};
 use uuid::Uuid;
 

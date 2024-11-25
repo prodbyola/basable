@@ -4,7 +4,7 @@ use common::{
 };
 use std::collections::HashMap;
 
-use crate::mysql_plugin::ColumnValue;
+use crate::mysql::ColumnValue;
 
 use super::{ConnectorType, SharedDB};
 

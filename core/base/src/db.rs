@@ -6,7 +6,7 @@ use common::data::table::{TableSearchOpts, TableSummaries};
 use common::query::filter::{Filter, FilterChain};
 use common::query::{BasableQuery, QueryCommand};
 
-use crate::mysql_plugin::db::MySqlDB;
+use crate::mysql::db::MySqlDB;
 
 use super::graphs::VisualizeDB;
 use super::{ConnectorType, SharedTable};

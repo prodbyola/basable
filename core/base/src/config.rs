@@ -8,7 +8,7 @@ use common::error::AppError;
 pub enum DatabaseType {
     Mysql,
     Postgres,
-    Oracle,
+    MarianDB,
     Mongo
 }
 
@@ -19,7 +19,7 @@ impl TryFrom<&str> for DatabaseType {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
             "postgres" => Ok(Self::Postgres),
-            "oracle" => Ok(Self::Oracle),
+            "mariandb" => Ok(Self::MarianDB),
             "mysql" => Ok(Self::Mysql),
             "mongo" => Ok(Self::Mongo),
             &_ => Err(AppError::HttpError(StatusCode::EXPECTATION_FAILED, "Invalid database source type".to_string())),

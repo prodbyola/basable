@@ -4,7 +4,7 @@ use connector::Connector;
 use db::DB;
 use table::Table;
 
-use mysql_plugin::{connector::MysqlConnector, db::MySqlDB, table::MySqlTable};
+use mysql::{connector::MysqlConnector, db::MySqlDB, table::MySqlTable};
 
 
 pub mod db;
@@ -15,8 +15,7 @@ pub mod config;
 mod globals;
 
 // we need to find a way to seperate mysql as an independent plugin
-pub mod mysql_plugin;
-
+pub mod mysql;
 
 /// Dynamic [`DB`] type to be implemented across the app.
 pub type DbType = dyn DB<
