@@ -14,6 +14,7 @@ time = "0.3.36"
 tracing = "0.1"
 strum = "0.26"
 strum_macros = "0.26"
+mysql_common = "0.33.0"
 
 [dependencies.uuid]
 version = "1.8.0"

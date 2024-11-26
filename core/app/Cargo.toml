@@ -23,6 +23,7 @@ rusqlite = { version = "0.31.0", features = ["bundled"] }
 r2d2_sqlite = { version = "0.24.0",  features = ["bundled"] }
 r2d2 = "0.8.10"
 webbrowser = "1.0.2"
+skytable = "0.8.11"
 base = { path = "../base" }
 common = { path = "../common" }
 
