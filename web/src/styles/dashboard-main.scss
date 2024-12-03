@@ -108,9 +108,12 @@ $table_border: variables.$grey_200 solid 1px;
         }
       }
 
-      tr:not(.editableRow):hover {
+      tr:hover {
         cursor: pointer;
         background-color: variables.$primary_100;
+      }
+      
+      tr:not(.editableRow):hover {
         transform: scale(1.05);
       }
 
@@ -125,14 +128,25 @@ $table_border: variables.$grey_200 solid 1px;
             outline: none;
             border: none;
             color: gray;
+            background-color: transparent;
           }
-        }
+        } 
 
         td:last-child {
           border-right: none;
         }
       }
-
+      
+      tr.selectedRow {
+        background-color: variables.$primary;
+        
+        td {
+          input {
+            color: white;
+          }
+        }
+      }
+      
       tr.editableRow.emptyData {
         height: calc(100vh - 410px);
 

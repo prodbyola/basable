@@ -64,9 +64,7 @@ const DatabaseTable = () => {
   const [queryOpts, setQueryOpts] = React.useState<TableQueryOpts | undefined>(
     undefined
   );
-  const [searchOpts, setSearchOpts] = React.useState<Partial<TableSearchOpts>>(
-    {}
-  );
+  const [selectedRows, setSelectedRows] = React.useState<number[]>([]);
   const [queryCount, setQueryCount] = React.useState(0);
   const [navPage, setNavPage] = React.useState(0);
   const totalPages = React.useMemo(() => {
@@ -102,6 +100,21 @@ const DatabaseTable = () => {
   const [utd, setUTD] = React.useState(defaultUTD);
 
   const [tableLoading, setTableLoading] = React.useState(true);
+
+  const selectRow = (event: React.MouseEvent, rowIndex: number) => {
+    if (event.ctrlKey || event.metaKey) {
+      if (selectedRows.includes(rowIndex)) {
+        const i = selectedRows.indexOf(rowIndex);
+        selectedRows.splice(i, 1);
+        setSelectedRows([...selectedRows]);
+        return;
+      }
+
+      setSelectedRows([...selectedRows, rowIndex]);
+    } else {
+      if(selectedRows.length) setSelectedRows([])
+    }
+  };
 
   const navigateTable = (to: "prev" | "next") => {
     const rowCount = queryOpts ? queryOpts.row_count : 0;
@@ -489,7 +502,11 @@ const DatabaseTable = () => {
           <tbody>
             {rows.length ? (
               rows.map((row, index) => (
-                <tr className="editableRow" key={index}>
+                <tr
+                  className={ `editableRow ${ selectedRows.includes(index) ? 'selectedRow' : '' }` }
+                  key={index}
+                  onClick={(evt) => selectRow(evt, index)}
+                >
                   {filteredColumns.map((col) => (
                     <td key={col.name}>
                       {
