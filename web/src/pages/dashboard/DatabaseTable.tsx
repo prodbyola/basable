@@ -18,24 +18,16 @@ import {
   DownloadFormat,
   downloadExport,
 } from "../../utils";
-import {
-  Button,
-  ButtonGroup,
-  Menu,
-  MenuItem,
-  Popover,
-  ThemeProvider,
-  Typography,
-} from "@mui/material";
+import { Button, ButtonGroup, ThemeProvider, Typography } from "@mui/material";
 import theme from "../../theme";
 
 import ReportIcon from "@mui/icons-material/Report";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
 import DownloadIcon from "@mui/icons-material/Download";
+import DeleteIcon from "@mui/icons-material/Delete";
 import TableRefresh from "../../components/common/icons/RefreshIcon";
 import TableConfigForm from "../../components/forms/TableConfigForm";
 import TableFiltering from "../../components/filters";
@@ -43,6 +35,7 @@ import { isAxiosError } from "axios";
 import TableNavigator from "../../components/table/Navigator";
 import TableSearchForm from "../../components/forms/TableSearchForm";
 import DownloadMenu from "../../components/table/DownloadMenu";
+import DeleteItemsDialog from "../../components/DeleteItems";
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
@@ -65,6 +58,7 @@ const DatabaseTable = () => {
     undefined
   );
   const [selectedRows, setSelectedRows] = React.useState<number[]>([]);
+  const [openDeleteDialog, setOpenDeleteDialog] = React.useState(false);
   const [queryCount, setQueryCount] = React.useState(0);
   const [navPage, setNavPage] = React.useState(0);
   const totalPages = React.useMemo(() => {
@@ -112,7 +106,7 @@ const DatabaseTable = () => {
 
       setSelectedRows([...selectedRows, rowIndex]);
     } else {
-      if(selectedRows.length) setSelectedRows([])
+      if (selectedRows.length) setSelectedRows([]);
     }
   };
 
@@ -434,6 +428,11 @@ const DatabaseTable = () => {
         </div>
         {/* <div className="tableToolbar"> */}
         <ButtonGroup size="small">
+          {selectedRows.length && (
+            <Button onClick={ () => setOpenDeleteDialog(true) }>
+              <DeleteIcon />
+            </Button>
+          )}
           <Button
             onClick={(event: React.MouseEvent<HTMLButtonElement>) =>
               setDownloadMenuTarget(event.currentTarget)
@@ -503,7 +502,9 @@ const DatabaseTable = () => {
             {rows.length ? (
               rows.map((row, index) => (
                 <tr
-                  className={ `editableRow ${ selectedRows.includes(index) ? 'selectedRow' : '' }` }
+                  className={`editableRow ${
+                    selectedRows.includes(index) ? "selectedRow" : ""
+                  }`}
                   key={index}
                   onClick={(evt) => selectRow(evt, index)}
                 >
@@ -598,6 +599,13 @@ const DatabaseTable = () => {
             offset: 0,
           });
         }}
+      />
+      <DeleteItemsDialog
+        open={openDeleteDialog}
+        title="Delete Items"
+        content={`Delete ${selectedRows.length} item${ selectedRows.length > 1 ? 's' : '' } from ${tableID}? This operation is irreversible.`}
+        onHideDialog={ () => setOpenDeleteDialog(false) }
+        onDelete={() => console.log(selectedRows)}
       />
     </ThemeProvider>
   );

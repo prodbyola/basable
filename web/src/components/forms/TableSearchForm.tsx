@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
-import { ColumnType, ColumnTypeObject, getTableLabel, TableConfig, TableSearchOpts } from "../../utils";
+import { getTableLabel, TableConfig, TableSearchOpts } from "../../utils";
 import { ChangeEvent, useState } from "react";
 
 const ITEM_HEIGHT = 48;
