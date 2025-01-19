@@ -350,8 +350,19 @@ impl TableCRUD for MySqlTable {
         Ok(())
     }
 
-    fn delete_data(&self, col: String, value: String) -> Result<(), AppError> {
-        let query = format!("DELETE FROM {} WHERE {} = '{}'", self.name, col, value);
+    fn delete_data(&self, col: &str, values: Vec<&str>) -> Result<(), AppError> {
+        let query_prefix = format!("DELETE FROM {} WHERE", self.name);
+        let query_suffix = if values.len() == 1 {
+            match values.first() {
+                Some(value) => Ok(format!("{col} = '{value}'")),
+                None => Err(AppError::ServerError("a value must be provided".to_string()))
+            }?
+        } else {
+            let vl = values.join(", ");
+            format!("{col} IN ({vl})")
+        };
+
+        let query = format!("{query_prefix} {query_suffix}");
         let conn = self.connector();
         conn.exec_query(&query)?;
 

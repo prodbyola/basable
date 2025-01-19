@@ -291,6 +291,32 @@ const DatabaseTable = () => {
     }
   };
 
+  const deleteData = async () => {
+    const column = tableConfig.pk_column;
+    if (column) {
+      const selected = selectedRows.map((i) => rows[i][column]);
+      const values = selected.map((s) => {
+        const keys = Object.keys(s);
+        return s[keys[0]] as string;
+      });
+
+      const encodedValues = values.map(encodeURIComponent).join(",");
+      const path = `tables/data/${tableID}?column=${column}&values=${encodedValues}`;
+
+      try {
+        await request({
+          method: "delete",
+          path,
+        });
+
+        setSelectedRows([])
+        loadData()
+      } catch (err: any) {
+        showAlert("error", err.message);
+      }
+    }
+  };
+
   /**
    * The initial function we call to retrieve table columns and initialize
    * state preludes.
@@ -429,7 +455,7 @@ const DatabaseTable = () => {
         {/* <div className="tableToolbar"> */}
         <ButtonGroup size="small">
           {selectedRows.length && (
-            <Button onClick={ () => setOpenDeleteDialog(true) }>
+            <Button onClick={() => setOpenDeleteDialog(true)}>
               <DeleteIcon />
             </Button>
           )}
@@ -603,9 +629,11 @@ const DatabaseTable = () => {
       <DeleteItemsDialog
         open={openDeleteDialog}
         title="Delete Items"
-        content={`Delete ${selectedRows.length} item${ selectedRows.length > 1 ? 's' : '' } from ${tableID}? This operation is irreversible.`}
-        onHideDialog={ () => setOpenDeleteDialog(false) }
-        onDelete={() => console.log(selectedRows)}
+        content={`Delete ${selectedRows.length} item${
+          selectedRows.length > 1 ? "s" : ""
+        } from ${tableID}? This operation is irreversible.`}
+        onHideDialog={() => setOpenDeleteDialog(false)}
+        onDelete={deleteData}
       />
     </ThemeProvider>
   );

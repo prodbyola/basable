@@ -32,7 +32,10 @@ const DeleteItemsDialog = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onHideDialog}>Close</Button>
-        <Button onClick={onDelete} autoFocus>
+        <Button onClick={() => {
+          onHideDialog()
+          onDelete()
+        }} variant="contained" autoFocus>
           Delete
         </Button>
       </DialogActions>

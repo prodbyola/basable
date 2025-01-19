@@ -8,11 +8,19 @@ use axum::{
 };
 use axum_macros::debug_handler;
 use base::mysql::ColumnValue;
-use common::data::{columns::ColumnList, table::{TableConfig, TableExportOpts, TableExportResponse, TableQueryOpts, TableSummaries, UpdateTableData}};
+use common::data::{
+    columns::ColumnList,
+    table::{
+        TableConfig, TableExportOpts, TableExportResponse, TableQueryOpts, TableSummaries,
+        UpdateTableData,
+    },
+};
 use uuid::Uuid;
 
 use crate::{
-    http::middlewares::{AuthExtractor, DbExtractor, TableExtractor}, state::AppState, AppError
+    http::middlewares::{AuthExtractor, DbExtractor, TableExtractor},
+    state::AppState,
+    AppError,
 };
 
 #[debug_handler]
@@ -119,20 +127,19 @@ pub(crate) async fn delete_data(
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
 ) -> Result<String, AppError> {
-    let col = params.get("col");
-    let value = params.get("value");
 
-    let err = |msg: &str| AppError::HttpError(StatusCode::EXPECTATION_FAILED, msg.to_string());
-
-    match (col, value) {
-        (None, None) => Err(err("Please provide filter 'col' and 'value' query params.")),
-        (None, Some(_)) => Err(err("Please provide 'value' query param.")),
-        (Some(_), None) => Err(err("Please provide 'col' query param.")),
-        (Some(col), Some(value)) => {
-            table.delete_data(col.clone(), value.clone())?;
+    match (params.get("column"), params.get("values")) {
+        (Some(column), Some(values)) => {
+            let values: Vec<&str> = values.split(",").collect();
+            table.delete_data(column, values)?;
             Ok("Operation successful".to_string())
-        }
+        },
+        _ => Err(AppError::HttpError(
+            StatusCode::EXPECTATION_FAILED,
+            "query params 'column' and 'values' cannot be empty".to_string(),
+        ))
     }
+
 }
 
 pub(crate) async fn export(
