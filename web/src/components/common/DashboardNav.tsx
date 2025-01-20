@@ -23,14 +23,15 @@ import { VisualizationIcon } from "./icons/VisualizationIcon";
 import { HelpIcon } from "./icons/HelpIcon";
 import { LogoutIcon } from "./icons/LogoutIcon";
 import { NavItem } from "./NavItem";
-import { getTableLabel, useLogout, useStore } from "../../utils";
+import { getTableLabel, NavSubmenu, useLogout, useStore } from "../../utils";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import TableMenu from "./TableMenu";
 
 const drawerWidth = 240;
 
 function DashboardNav({ showMobileSidebar = false }) {
   const currentUser = useStore((state) => state.currentUser);
-  const tableConfigs = useStore(state => state.tableConfigs)
+  const tableConfigs = useStore((state) => state.tableConfigs);
   const location = useLocation();
   const { tableID } = useParams();
   const defaultTextColor = "#363636";
@@ -42,7 +43,9 @@ function DashboardNav({ showMobileSidebar = false }) {
   const isTableRoute = location.pathname.startsWith("/dashboard/tables/");
 
   const [openTables, setOpenTables] = React.useState(true);
-  const tables = useStore((state) => state.tables);
+  const [tableMenuAnchor, setTableMenuAnchor] =
+    React.useState<HTMLDivElement | null>(null);
+  const [ tableRightClick, setTableRightClick ] = React.useState<NavSubmenu | undefined>(undefined)
 
   return (
     <ThemeProvider theme={theme}>
@@ -205,8 +208,20 @@ function DashboardNav({ showMobileSidebar = false }) {
               expanded={openTables}
               selected={isTableRoute}
               onClick={() => setOpenTables(!openTables)}
-              subMenu={{ items: tableConfigs.map(c => ({ label: getTableLabel(c), value: c.name })), active: tableID }}
-              onSubItemClick={(item) => navigate("/dashboard/tables/" + item.value)}
+              subMenu={{
+                items: tableConfigs.map((c) => ({
+                  label: getTableLabel(c),
+                  value: c.name,
+                })),
+                active: tableID,
+              }}
+              onSubItemClick={(item) =>
+                navigate("/dashboard/tables/" + item.value)
+              }
+              onSubItemShowMenu={(el, item) => {
+                setTableMenuAnchor(el)
+                setTableRightClick(item)
+              }}
               key={tableConfigs.length}
             />
 
@@ -216,6 +231,12 @@ function DashboardNav({ showMobileSidebar = false }) {
             <NavItem label="LogOut" icon={<LogoutIcon />} onClick={logout} />
             <NavItem label="Help" icon={<HelpIcon />} />
           </div>
+          <TableMenu
+            open={Boolean(tableMenuAnchor)}
+            anchorEl={tableMenuAnchor}
+            item={tableRightClick}
+            onClose={() => setTableMenuAnchor(null)}
+          />
         </Box>
       </Drawer>
     </ThemeProvider>

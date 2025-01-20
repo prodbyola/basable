@@ -10,6 +10,7 @@ import {
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import * as React from "react";
 import theme from "../../theme";
+import { NavSubmenu } from "../../utils";
 
 const navItemStyle = {
   mt: "10px",
@@ -23,11 +24,6 @@ const navItemStyle = {
   },
 };
 
-type NavSubmenu = {
-  label: string
-  value: string
-}
-
 interface NavItemProps {
   label: string;
   icon: React.ReactNode;
@@ -40,6 +36,7 @@ interface NavItemProps {
     active?: string;
   };
   onSubItemClick?: (item: NavSubmenu) => void;
+  onSubItemShowMenu?: (anchorEl: HTMLDivElement, item: NavSubmenu) => void;
 }
 
 export const NavItem = ({
@@ -53,6 +50,7 @@ export const NavItem = ({
     items: [],
   },
   onSubItemClick,
+  onSubItemShowMenu,
 }: NavItemProps) => {
   return (
     <ThemeProvider theme={theme}>
@@ -91,6 +89,13 @@ export const NavItem = ({
                 }}
                 onClick={() =>  {
                   if(onSubItemClick) onSubItemClick(item)
+                }}
+                onContextMenu={ (evt) => {
+                  if(onSubItemShowMenu) {
+                    evt.preventDefault()
+                    const el = evt.currentTarget
+                    onSubItemShowMenu(el, item)
+                  }
                 }}
               >
                 <ListItemIcon

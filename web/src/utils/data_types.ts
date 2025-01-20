@@ -163,4 +163,10 @@ export const downloadFormats = [
   "HTML",
   "XML",
 ] as const;
- export type DownloadFormat = typeof downloadFormats[number]
+
+export type DownloadFormat = (typeof downloadFormats)[number];
+
+export type NavSubmenu = {
+  label: string;
+  value: string;
+};
