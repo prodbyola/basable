@@ -6,15 +6,9 @@ import {
   MenuItem,
 } from "@mui/material";
 import { NavSubmenu, useStore } from "../../utils";
-import {
-  Delete,
-  DeleteForever,
-  Recycling,
-  Settings,
-} from "@mui/icons-material";
+import { Delete, DeleteForever, Settings } from "@mui/icons-material";
 import { useState } from "react";
 import AlertDialog from "../AlertDialog";
-import { NavItem } from "./NavItem";
 
 type TableMenuProps = {
   open: boolean;
@@ -24,7 +18,12 @@ type TableMenuProps = {
 };
 
 const TableMenu = ({ open, anchorEl, item, onClose }: TableMenuProps) => {
-  const setOpenTableConfig = useStore((state) => state.setOpenTableConfig);
+  const setOpenTableConfig = useStore(
+    (state) => state.setOpenTableConfigDialog
+  );
+  const setTableConfig = useStore((state) => state.setCurrentTableConfig);
+  const tableConfigs = useStore((state) => state.tableConfigs);
+
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showDropDialog, setShowDropDialog] = useState(false);
 
@@ -63,6 +62,9 @@ const TableMenu = ({ open, anchorEl, item, onClose }: TableMenuProps) => {
         <MenuItem
           onClick={() => {
             onClose();
+            const tc = tableConfigs.find((tc) => tc.name === item?.value);
+            if (tc) setTableConfig(tc);
+
             setOpenTableConfig(true);
           }}
         >

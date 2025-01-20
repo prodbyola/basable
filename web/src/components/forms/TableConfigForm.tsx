@@ -24,10 +24,10 @@ import {
   useNetworkRequest,
   useStore,
 } from "../../utils";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 type ConfigProps = {
-  config: Partial<TableConfig>;
+  // config: Partial<TableConfig>;
   open: boolean;
   columns: string[];
   onHideDialog: () => void;
@@ -58,7 +58,6 @@ const getStyles = (
 };
 
 const TableConfigForm = ({
-  config,
   open,
   columns,
   onHideDialog,
@@ -70,9 +69,12 @@ const TableConfigForm = ({
 
   const showAlert = useStore((state) => state.showAlert);
   const updateTableConfig = useStore((state) => state.updateTableConfig);
+  const config = useStore(state => state.currentTableConfig)
 
-  const [formData, setFormData] = useState(config);
+  const [formData, setFormData] = useState<typeof config>({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => setFormData(config), [config])
 
   const handlePkChange = (evt: SelectChangeEvent<string>) => {
     let pk_column: string | undefined = evt.target.value;

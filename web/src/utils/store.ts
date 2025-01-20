@@ -13,15 +13,17 @@ type SnackBarOption = typeof defaultSnackbar;
 type StoreType = {
   tables: TableSummaryType[];
   tableConfigs: TableConfig[];
+  currentTableConfig: Partial<TableConfig>
   currentUser: CurrentUser;
   snackBar: SnackBarOption;
-  openTableConfig: boolean;
+  openTableConfigDialog: boolean;
   updateTables: (tables: TableSummaryType[]) => void;
   addTableConfig: (config: TableConfig) => void;
   updateTableConfig: (config: TableConfig) => void;
+  setCurrentTableConfig: (config: Partial<TableConfig>) => void
   showAlert: (alterType: "success" | "error", msg: string) => void;
   hideAlert: () => void;
-  setOpenTableConfig: (value: boolean) => void
+  setOpenTableConfigDialog: (value: boolean) => void
 
   /**
    * Reset states on logout
@@ -39,9 +41,10 @@ export const userDefaults: CurrentUser = {
 export const useStore = create<StoreType>((set, get) => ({
   tables: [],
   tableConfigs: [],
+  currentTableConfig: {},
   currentUser: userDefaults,
   snackBar: defaultSnackbar,
-  openTableConfig: false,
+  openTableConfigDialog: false,
   updateTables: (tables: TableSummaryType[]) => set({ tables }),
   addTableConfig: (config: TableConfig) => {
     const tableConfigs = get().tableConfigs;
@@ -58,6 +61,9 @@ export const useStore = create<StoreType>((set, get) => ({
       tableConfigs.splice(i, 1, config);
       set({ tableConfigs });
     }
+  },
+  setCurrentTableConfig(config) {
+    set({currentTableConfig: config})
   },
   showAlert(alterType, message) {
     const snackBar = {
@@ -77,8 +83,8 @@ export const useStore = create<StoreType>((set, get) => ({
     };
     set({ snackBar });
   },
-  setOpenTableConfig(value){
-    set({ openTableConfig: value })
+  setOpenTableConfigDialog(value){
+    set({ openTableConfigDialog: value })
   },
   logout() {
     set({

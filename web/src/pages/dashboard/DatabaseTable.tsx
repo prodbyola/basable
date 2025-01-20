@@ -42,12 +42,11 @@ const DatabaseTable = () => {
   const { tableID } = useParams();
 
   const tableConfigs = useStore((state) => state.tableConfigs);
-  const openTableConfig = useStore((state) => state.openTableConfig);
-  const setOpenTableConfig = useStore((state) => state.setOpenTableConfig);
+  const openTableConfig = useStore((state) => state.openTableConfigDialog);
+  const setOpenTableConfig = useStore((state) => state.setOpenTableConfigDialog);
 
-  const [tableConfig, setTableConfig] = React.useState<Partial<TableConfig>>(
-    {}
-  );
+  const tableConfig = useStore(state => state.currentTableConfig)
+  const setTableConfig = useStore(state => state.setCurrentTableConfig)
   const showAlert = useStore((state) => state.showAlert);
 
   const defaultQueryOpts: TableQueryOpts = {
@@ -72,7 +71,6 @@ const DatabaseTable = () => {
 
   const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
-  // const [openTableConfig, setOpenTableConfig] = React.useState(false);
   const [openSearchForm, setOpenSearchForm] = React.useState(false);
   const [downloadMenuTarget, setDownloadMenuTarget] =
     React.useState<null | HTMLElement>(null);
@@ -566,7 +564,6 @@ const DatabaseTable = () => {
         </table>
       </section>
       <TableConfigForm
-        config={tableConfig}
         open={openTableConfig}
         columns={filteredColumns.map((col) => col.name)}
         onHideDialog={() => setOpenTableConfig(false)}
