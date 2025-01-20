@@ -1,6 +1,20 @@
-import { Divider, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
-import { NavSubmenu } from "../../utils";
-import { Delete, DeleteForever, Recycling, Settings } from "@mui/icons-material";
+import {
+  Divider,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+} from "@mui/material";
+import { NavSubmenu, useStore } from "../../utils";
+import {
+  Delete,
+  DeleteForever,
+  Recycling,
+  Settings,
+} from "@mui/icons-material";
+import { useState } from "react";
+import AlertDialog from "../AlertDialog";
+import { NavItem } from "./NavItem";
 
 type TableMenuProps = {
   open: boolean;
@@ -9,35 +23,72 @@ type TableMenuProps = {
   onClose: () => void;
 };
 
-const TableMenu = ({ open, anchorEl, onClose }: TableMenuProps) => {
+const TableMenu = ({ open, anchorEl, item, onClose }: TableMenuProps) => {
+  const setOpenTableConfig = useStore((state) => state.setOpenTableConfig);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showDropDialog, setShowDropDialog] = useState(false);
+
   return (
-    <Menu
-      id="basable-table-menu"
-      open={open}
-      anchorEl={anchorEl}
-      onClose={onClose}
-    >
-      <MenuItem>
-        <ListItemIcon>
-          <Delete fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>Clear</ListItemText>
-      </MenuItem>
-      <Divider />
-      <MenuItem>
-        <ListItemIcon>
-          <DeleteForever fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>Drop</ListItemText>
-      </MenuItem>
-      <Divider />
-      <MenuItem>
-        <ListItemIcon>
-          <Settings fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>Settings</ListItemText>
-      </MenuItem>
-    </Menu>
+    <>
+      <Menu
+        id="basable-table-menu"
+        open={open}
+        anchorEl={anchorEl}
+        onClose={onClose}
+      >
+        <MenuItem
+          onClick={() => {
+            onClose();
+            setShowClearDialog(true);
+          }}
+        >
+          <ListItemIcon>
+            <Delete fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Clear</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            onClose();
+            setShowDropDialog(true);
+          }}
+        >
+          <ListItemIcon>
+            <DeleteForever fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Drop</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            onClose();
+            setOpenTableConfig(true);
+          }}
+        >
+          <ListItemIcon>
+            <Settings fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Settings</ListItemText>
+        </MenuItem>
+      </Menu>
+      <AlertDialog
+        open={showClearDialog}
+        title="Clear Table"
+        content={`WARNING! This action will clear and delete all data from '${item?.label}' table. The action cannot be undone.`}
+        actionText="Proceed"
+        onHideDialog={() => setShowClearDialog(false)}
+        onProceed={() => console.log("clear")}
+      />
+      <AlertDialog
+        open={showDropDialog}
+        title="Drop Table"
+        content={`WARNING! This action will delete '${item?.label}' table. The action cannot be undone.`}
+        actionText="Proceed"
+        onHideDialog={() => setShowDropDialog(false)}
+        onProceed={() => console.log("drop")}
+      />
+    </>
   );
 };
 

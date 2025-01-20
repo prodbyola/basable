@@ -11,16 +11,18 @@ type DeleteItemsProps = {
   open: boolean;
   title: string;
   content: string;
+  actionText: string
   onHideDialog: () => void;
-  onDelete: () => void;
+  onProceed: () => void;
 };
 
-const DeleteItemsDialog = ({
+const AlertDialog = ({
   open,
   title,
   content,
+  actionText,
   onHideDialog,
-  onDelete,
+  onProceed,
 }: DeleteItemsProps) => {
   return (
     <Dialog open={open}>
@@ -34,13 +36,13 @@ const DeleteItemsDialog = ({
         <Button onClick={onHideDialog}>Close</Button>
         <Button onClick={() => {
           onHideDialog()
-          onDelete()
+          onProceed()
         }} variant="contained" autoFocus>
-          Delete
+          { actionText }
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default DeleteItemsDialog
+export default AlertDialog

@@ -15,11 +15,13 @@ type StoreType = {
   tableConfigs: TableConfig[];
   currentUser: CurrentUser;
   snackBar: SnackBarOption;
+  openTableConfig: boolean;
   updateTables: (tables: TableSummaryType[]) => void;
   addTableConfig: (config: TableConfig) => void;
   updateTableConfig: (config: TableConfig) => void;
   showAlert: (alterType: "success" | "error", msg: string) => void;
   hideAlert: () => void;
+  setOpenTableConfig: (value: boolean) => void
 
   /**
    * Reset states on logout
@@ -39,6 +41,7 @@ export const useStore = create<StoreType>((set, get) => ({
   tableConfigs: [],
   currentUser: userDefaults,
   snackBar: defaultSnackbar,
+  openTableConfig: false,
   updateTables: (tables: TableSummaryType[]) => set({ tables }),
   addTableConfig: (config: TableConfig) => {
     const tableConfigs = get().tableConfigs;
@@ -73,6 +76,9 @@ export const useStore = create<StoreType>((set, get) => ({
       showAlert: false,
     };
     set({ snackBar });
+  },
+  setOpenTableConfig(value){
+    set({ openTableConfig: value })
   },
   logout() {
     set({

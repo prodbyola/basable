@@ -35,13 +35,16 @@ import { isAxiosError } from "axios";
 import TableNavigator from "../../components/table/Navigator";
 import TableSearchForm from "../../components/forms/TableSearchForm";
 import DownloadMenu from "../../components/table/DownloadMenu";
-import DeleteItemsDialog from "../../components/DeleteItems";
+import AlertDialog from "../../components/AlertDialog";
 
 const DatabaseTable = () => {
   const request = useNetworkRequest();
   const { tableID } = useParams();
 
   const tableConfigs = useStore((state) => state.tableConfigs);
+  const openTableConfig = useStore((state) => state.openTableConfig);
+  const setOpenTableConfig = useStore((state) => state.setOpenTableConfig);
+
   const [tableConfig, setTableConfig] = React.useState<Partial<TableConfig>>(
     {}
   );
@@ -69,7 +72,7 @@ const DatabaseTable = () => {
 
   const [tableLabel, setTableLabel] = React.useState("");
   const [hasUniqueColumn, setHasUniqueColumn] = React.useState(false);
-  const [openTableConfig, setOpenTableConfig] = React.useState(false);
+  // const [openTableConfig, setOpenTableConfig] = React.useState(false);
   const [openSearchForm, setOpenSearchForm] = React.useState(false);
   const [downloadMenuTarget, setDownloadMenuTarget] =
     React.useState<null | HTMLElement>(null);
@@ -309,8 +312,8 @@ const DatabaseTable = () => {
           path,
         });
 
-        setSelectedRows([])
-        loadData()
+        setSelectedRows([]);
+        loadData();
       } catch (err: any) {
         showAlert("error", err.message);
       }
@@ -626,14 +629,15 @@ const DatabaseTable = () => {
           });
         }}
       />
-      <DeleteItemsDialog
+      <AlertDialog
         open={openDeleteDialog}
         title="Delete Items"
         content={`Delete ${selectedRows.length} item${
           selectedRows.length > 1 ? "s" : ""
         } from ${tableID}? This operation is irreversible.`}
         onHideDialog={() => setOpenDeleteDialog(false)}
-        onDelete={deleteData}
+        onProceed={deleteData}
+        actionText="Delete"
       />
     </ThemeProvider>
   );
