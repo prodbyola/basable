@@ -196,6 +196,14 @@ impl DB for MySqlDB {
             db_size: size,
         })
     }
+
+    fn drop_table(&self, table_name: &str) -> Result<(), AppError> {
+        let query = format!("DROP TABLE {table_name}");
+        let conn = self.connector();
+        conn.exec_query(&query)?;
+
+        Ok(())
+    }
 }
 
 impl QuerySqlParser for MySqlDB {}

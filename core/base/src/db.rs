@@ -48,6 +48,9 @@ pub trait DB: VisualizeDB + QuerySqlParser + Send + Sync {
 
     /// Get total number of columns
     fn query_column_count(&self, table_name: &str) -> Result<u32, AppError>;
+
+    /// Drop and delete a table
+    fn drop_table(&self, table_name: &str) -> Result<(), AppError>;
 }
 
 pub trait QuerySqlParser {

@@ -416,6 +416,14 @@ impl TableCRUD for MySqlTable {
 
         Ok(content)
     }
+    
+    fn clear(&self) -> Result<(), AppError> {
+        let query = format!("DELETE FROM {}", self.name);
+        let conn = self.connector();
+        conn.exec_query(&query)?;
+
+        Ok(())
+    }
 }
 
 fn process_exports(

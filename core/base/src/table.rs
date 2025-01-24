@@ -62,4 +62,6 @@ pub trait TableCRUD {
     fn delete_data(&self, col: &str, values: Vec<&str>) -> Result<(), AppError>;
 
     fn export(&self, opts: TableExportOpts, db: &SharedDB) -> Result<String, AppError>;
+
+    fn clear(&self) -> Result<(), AppError>;
 }

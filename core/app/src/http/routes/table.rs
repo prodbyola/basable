@@ -127,19 +127,17 @@ pub(crate) async fn delete_data(
     TableExtractor(table): TableExtractor,
     State(_): State<AppState>,
 ) -> Result<String, AppError> {
-
     match (params.get("column"), params.get("values")) {
         (Some(column), Some(values)) => {
             let values: Vec<&str> = values.split(",").collect();
             table.delete_data(column, values)?;
             Ok("Operation successful".to_string())
-        },
+        }
         _ => Err(AppError::HttpError(
             StatusCode::EXPECTATION_FAILED,
             "query params 'column' and 'values' cannot be empty".to_string(),
-        ))
+        )),
     }
-
 }
 
 pub(crate) async fn export(
@@ -172,7 +170,30 @@ pub(crate) async fn load_tables(
     Ok(Json(tables))
 }
 
-/// Routes for database table management
+#[debug_handler]
+pub(crate) async fn clear_table(
+    Path(_): Path<String>,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(_): DbExtractor,
+    TableExtractor(table): TableExtractor,
+    State(_): State<AppState>,
+) -> Result<String, AppError> {
+    table.clear()?;
+    Ok("operation successful".to_string())
+}
+
+#[debug_handler]
+pub(crate) async fn drop_table(
+    Path(table_name): Path<String>,
+    AuthExtractor(_): AuthExtractor,
+    DbExtractor(db): DbExtractor,
+    State(_): State<AppState>,
+) -> Result<String, AppError> {
+    db.drop_table(&table_name)?;
+    Ok("operation successful".to_string())
+}
+
+/// Define routes for managing database table
 pub(super) fn table_routes() -> Router<AppState> {
     Router::new()
         .route("/", get(load_tables))
@@ -185,4 +206,6 @@ pub(super) fn table_routes() -> Router<AppState> {
         .route("/data/:table_name", patch(update_data))
         .route("/data/:table_name", delete(delete_data))
         .route("/data/export/:table_name", post(export))
+        .route("/data/clear/:table_name", delete(clear_table))
+        .route("/drop/:table_name", delete(drop_table))
 }
