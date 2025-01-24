@@ -9,6 +9,7 @@ import { NavSubmenu, useNetworkRequest, useStore } from "../../utils";
 import { Delete, DeleteForever, Settings } from "@mui/icons-material";
 import { useState } from "react";
 import AlertDialog from "../AlertDialog";
+import { useNavigate } from "react-router-dom";
 
 type TableMenuProps = {
   open: boolean;
@@ -19,14 +20,17 @@ type TableMenuProps = {
 
 const TableMenu = ({ open, anchorEl, item, onClose }: TableMenuProps) => {
   const request = useNetworkRequest();
+  const navigate = useNavigate();
 
+  const tableConfigs = useStore((state) => state.tableConfigs);
   const setOpenTableConfig = useStore(
     (state) => state.setOpenTableConfigDialog
   );
   const setTableConfig = useStore((state) => state.setCurrentTableConfig);
-  const tableConfigs = useStore((state) => state.tableConfigs);
+  const updateTableConfigs = useStore((state) => state.updateTableConfigs);
+
   const showAlert = useStore((state) => state.showAlert);
-  const updateStateTrigger = useStore(state => state.updateStateTrigger)
+  const updateStateTrigger = useStore((state) => state.updateStateTrigger);
 
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showDropDialog, setShowDropDialog] = useState(false);
@@ -39,7 +43,37 @@ const TableMenu = ({ open, anchorEl, item, onClose }: TableMenuProps) => {
       });
 
       showAlert("success", "Table cleared successfully");
-      updateStateTrigger()
+      updateStateTrigger();
+    } catch (err: any) {
+      showAlert("error", err.message);
+    }
+  };
+
+  const dropTable = async () => {
+    try {
+      await request({
+        method: "delete",
+        path: "tables/drop/" + item?.value,
+      });
+
+      showAlert("success", "Table dropped successfully");
+
+      // remove table
+      const table = tableConfigs.find((c) => c.name === item?.value);
+      if (table) {
+        const i = tableConfigs.indexOf(table);
+        tableConfigs.splice(i, 1);
+        updateTableConfigs([...tableConfigs]);
+      }
+
+      // navigate to first available table
+      if (tableConfigs.length) {
+        const f = tableConfigs[0];
+        const p = "/dashboard/tables/" + f.name;
+        navigate(p);
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err: any) {
       showAlert("error", err.message);
     }
@@ -106,7 +140,7 @@ const TableMenu = ({ open, anchorEl, item, onClose }: TableMenuProps) => {
         content={`WARNING! This action will delete '${item?.label}' table. The action cannot be undone.`}
         actionText="Proceed"
         onHideDialog={() => setShowDropDialog(false)}
-        onProceed={() => console.log("drop")}
+        onProceed={dropTable}
       />
     </>
   );

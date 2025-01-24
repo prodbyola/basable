@@ -11,29 +11,41 @@ const defaultSnackbar = {
 type SnackBarOption = typeof defaultSnackbar;
 
 type StoreType = {
+  /**
+   * List of database tables
+   */
   tables: TableSummaryType[];
+
   tableConfigs: TableConfig[];
-  currentTableConfig: Partial<TableConfig>
+  currentTableConfig: Partial<TableConfig>;
   currentUser: CurrentUser;
   snackBar: SnackBarOption;
   openTableConfigDialog: boolean;
-  /** 
+
+  /**
    * We use `stateTrigger` to communicate between components and trigger certain
    * events when needed.
    */
   stateTrigger: number;
-  updateTables: (tables: TableSummaryType[]) => void;
+
+  updateTables: (tables: TableSummaryType[]) => void
+  /**
+   * Update store's `tableConfigs` property.
+   * @param configs - New configs value
+   * @returns 
+   */
+  updateTableConfigs: (configs: TableConfig[]) => void;
   addTableConfig: (config: TableConfig) => void;
   updateTableConfig: (config: TableConfig) => void;
-  setCurrentTableConfig: (config: Partial<TableConfig>) => void
+  setCurrentTableConfig: (config: Partial<TableConfig>) => void;
   showAlert: (alterType: "success" | "error", msg: string) => void;
   hideAlert: () => void;
-  setOpenTableConfigDialog: (value: boolean) => void
+  setOpenTableConfigDialog: (value: boolean) => void;
   updateStateTrigger: () => void;
 
   /**
    * Reset states on logout
-   * @returns 
+   * @returns
    */
   logout: () => void;
 };
@@ -53,6 +65,7 @@ export const useStore = create<StoreType>((set, get) => ({
   openTableConfigDialog: false,
   stateTrigger: 0,
   updateTables: (tables: TableSummaryType[]) => set({ tables }),
+  updateTableConfigs: (tableConfigs: TableConfig[]) => set({ tableConfigs }),
   addTableConfig: (config: TableConfig) => {
     const tableConfigs = get().tableConfigs;
     tableConfigs.push(config);
@@ -70,7 +83,7 @@ export const useStore = create<StoreType>((set, get) => ({
     }
   },
   setCurrentTableConfig(config) {
-    set({currentTableConfig: config})
+    set({ currentTableConfig: config });
   },
   showAlert(alterType, message) {
     const snackBar = {
@@ -90,12 +103,12 @@ export const useStore = create<StoreType>((set, get) => ({
     };
     set({ snackBar });
   },
-  setOpenTableConfigDialog(value){
-    set({ openTableConfigDialog: value })
+  setOpenTableConfigDialog(value) {
+    set({ openTableConfigDialog: value });
   },
   updateStateTrigger() {
-    const stateTrigger = get().stateTrigger + 1
-    set({ stateTrigger })
+    const stateTrigger = get().stateTrigger + 1;
+    set({ stateTrigger });
   },
   logout() {
     set({
