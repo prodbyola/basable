@@ -5,7 +5,7 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
-import { NavSubmenu, useStore } from "../../utils";
+import { NavSubmenu, useNetworkRequest, useStore } from "../../utils";
 import { Delete, DeleteForever, Settings } from "@mui/icons-material";
 import { useState } from "react";
 import AlertDialog from "../AlertDialog";
@@ -18,14 +18,32 @@ type TableMenuProps = {
 };
 
 const TableMenu = ({ open, anchorEl, item, onClose }: TableMenuProps) => {
+  const request = useNetworkRequest();
+
   const setOpenTableConfig = useStore(
     (state) => state.setOpenTableConfigDialog
   );
   const setTableConfig = useStore((state) => state.setCurrentTableConfig);
   const tableConfigs = useStore((state) => state.tableConfigs);
+  const showAlert = useStore((state) => state.showAlert);
+  const updateStateTrigger = useStore(state => state.updateStateTrigger)
 
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showDropDialog, setShowDropDialog] = useState(false);
+
+  const clearTable = async () => {
+    try {
+      await request({
+        method: "delete",
+        path: "tables/data/clear/" + item?.value,
+      });
+
+      showAlert("success", "Table cleared successfully");
+      updateStateTrigger()
+    } catch (err: any) {
+      showAlert("error", err.message);
+    }
+  };
 
   return (
     <>
@@ -80,7 +98,7 @@ const TableMenu = ({ open, anchorEl, item, onClose }: TableMenuProps) => {
         content={`WARNING! This action will clear and delete all data from '${item?.label}' table. The action cannot be undone.`}
         actionText="Proceed"
         onHideDialog={() => setShowClearDialog(false)}
-        onProceed={() => console.log("clear")}
+        onProceed={clearTable}
       />
       <AlertDialog
         open={showDropDialog}

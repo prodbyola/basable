@@ -43,10 +43,13 @@ const DatabaseTable = () => {
 
   const tableConfigs = useStore((state) => state.tableConfigs);
   const openTableConfig = useStore((state) => state.openTableConfigDialog);
-  const setOpenTableConfig = useStore((state) => state.setOpenTableConfigDialog);
+  const setOpenTableConfig = useStore(
+    (state) => state.setOpenTableConfigDialog
+  );
+  const stateTrigger = useStore((state) => state.stateTrigger);
 
-  const tableConfig = useStore(state => state.currentTableConfig)
-  const setTableConfig = useStore(state => state.setCurrentTableConfig)
+  const tableConfig = useStore((state) => state.currentTableConfig);
+  const setTableConfig = useStore((state) => state.setCurrentTableConfig);
   const showAlert = useStore((state) => state.showAlert);
 
   const defaultQueryOpts: TableQueryOpts = {
@@ -428,6 +431,9 @@ const DatabaseTable = () => {
       updateConfigStates(tc, true);
     }
   }, [allColumns]);
+
+  // Reload the page when stateTrigger is updated.
+  React.useEffect(() => setQueryOpts({ ...defaultQueryOpts }), [stateTrigger]);
 
   // Everytime we update `queryOpts`, we trigger `loadData` function.
   React.useEffect(() => {

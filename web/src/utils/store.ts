@@ -17,6 +17,11 @@ type StoreType = {
   currentUser: CurrentUser;
   snackBar: SnackBarOption;
   openTableConfigDialog: boolean;
+  /** 
+   * We use `stateTrigger` to communicate between components and trigger certain
+   * events when needed.
+   */
+  stateTrigger: number;
   updateTables: (tables: TableSummaryType[]) => void;
   addTableConfig: (config: TableConfig) => void;
   updateTableConfig: (config: TableConfig) => void;
@@ -24,6 +29,7 @@ type StoreType = {
   showAlert: (alterType: "success" | "error", msg: string) => void;
   hideAlert: () => void;
   setOpenTableConfigDialog: (value: boolean) => void
+  updateStateTrigger: () => void;
 
   /**
    * Reset states on logout
@@ -45,6 +51,7 @@ export const useStore = create<StoreType>((set, get) => ({
   currentUser: userDefaults,
   snackBar: defaultSnackbar,
   openTableConfigDialog: false,
+  stateTrigger: 0,
   updateTables: (tables: TableSummaryType[]) => set({ tables }),
   addTableConfig: (config: TableConfig) => {
     const tableConfigs = get().tableConfigs;
@@ -85,6 +92,10 @@ export const useStore = create<StoreType>((set, get) => ({
   },
   setOpenTableConfigDialog(value){
     set({ openTableConfigDialog: value })
+  },
+  updateStateTrigger() {
+    const stateTrigger = get().stateTrigger + 1
+    set({ stateTrigger })
   },
   logout() {
     set({
